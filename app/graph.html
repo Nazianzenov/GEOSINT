@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeOSINT — Knowledge Graph</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  body { overflow: hidden; }
+  #g-top { display:flex; align-items:center; gap:14px; padding:10px 16px; background:var(--bg-1);
+           border-bottom:1px solid var(--line); }
+  #g-top .brand a { color:var(--txt); text-decoration:none; }
+  #legend { display:flex; gap:14px; font:11px var(--mono); color:var(--txt-dim); flex:1; }
+  #legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; }
+  #graph { position:absolute; inset:47px 0 0 0; }
+  #g-hint { position:fixed; bottom:10px; left:14px; font:11px var(--mono); color:var(--txt-dim); z-index:10; }
+</style>
+</head>
+<body>
+<div id="g-top">
+  <div class="brand"><a href="index.html">◢ Ge<span class="brand-o">OSINT</span></a>
+    <span class="brand-sub">KNOWLEDGE GRAPH</span></div>
+  <div id="legend">
+    <span><i style="background:#4cc2ff"></i>category</span>
+    <span><i style="background:#ffb454"></i>country</span>
+    <span><i style="background:#7ee787"></i>continent</span>
+    <span style="margin-left:8px">node size = number of wiki cards · click a node to search it</span>
+  </div>
+  <a class="wiki-btn" href="search.html">⌕ SEARCH</a>
+  <a class="wiki-btn" href="/wiki/" target="_blank">⌘ WIKI</a>
+</div>
+<div id="graph"></div>
+<div id="g-hint">drag to pan · wheel to zoom · hover for counts</div>
+<script src="vendor/force-graph.min.js"></script>
+<script>
+"use strict";
+const COLORS = { category: "#4cc2ff", country: "#ffb454", continent: "#7ee787" };
+fetch("data/graph.json").then(r => r.json()).then(data => {
+  const counts = Object.fromEntries(data.nodes.map(n => [n.id, n.count]));
+  const g = ForceGraph()(document.getElementById("graph"))
+    .graphData(data)
+    .backgroundColor("#0b0e14")
+    .nodeId("id")
+    .nodeLabel(n => `${n.label} — ${n.count} cards`)
+    .nodeVal(n => Math.max(2, Math.sqrt(n.count)))
+    .nodeCanvasObjectMode(() => "after")
+    .nodeCanvasObject((n, ctx, scale) => {
+      if (scale < 1.1 && n.kind === "country" && n.count < 40) return;
+      ctx.font = `${Math.max(9, 11 / scale)}px Segoe UI`;
+      ctx.fillStyle = "#d7dde8";
+      ctx.textAlign = "center";
+      ctx.fillText(n.label, n.x, n.y - Math.sqrt(n.count) - 3);
+    })
+    .nodeColor(n => COLORS[n.kind] || "#8a93a6")
+    .linkColor(() => "#232a3b")
+    .linkWidth(l => Math.min(3, Math.sqrt(l.w) / 2))
+    .onNodeClick(n => {
+      if (n.kind === "category") location.href = "search.html?cat=" + encodeURIComponent(n.id.slice(2));
+      else if (n.kind === "country") location.href = "search.html?country=" + encodeURIComponent(n.label);
+      else if (n.kind === "continent") location.href = "search.html?continent=" + encodeURIComponent(n.label);
+    });
+  g.d3Force("charge").strength(-60);
+});
+</script>
+</body>
+</html>

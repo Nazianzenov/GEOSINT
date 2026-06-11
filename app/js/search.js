@@ -13,7 +13,8 @@ let DATA = null, MS = null;
 const state = { country: null, continent: null, cats: new Set(), photos: false };
 
 /* display order + which categories render as photo grids */
-const GROUP_ORDER = ["country-facts", "recognition", "landmarks", "bollards", "utility-poles",
+const GROUP_ORDER = ["country-facts", "recognition", "landmarks", "unesco", "castles",
+  "national-parks", "airports", "flora", "bollards", "utility-poles",
   "traffic-lights", "license-plates", "flags", "sceneries", "architecture", "road-markings",
   "road-signs", "driving-side", "language-scripts", "domains-phones", "streetview-meta",
   "vegetation-climate", "methodology", "page"];
@@ -35,6 +36,8 @@ async function init() {
   const params = new URLSearchParams(location.search);
   if (params.get("q")) $("#s-q").value = params.get("q");
   if (params.get("country")) state.country = params.get("country");
+  if (params.get("continent")) state.continent = params.get("continent");
+  if (params.get("cat")) state.cats.add(params.get("cat"));
   $("#s-q").addEventListener("input", debounce(run, 180));
   $("#s-country").addEventListener("change", () => {
     const v = DATA.countryKey[norm($("#s-country").value)];

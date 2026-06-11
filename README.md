@@ -34,6 +34,8 @@ python -m venv .venv
 | **Meteorology** | 2 | Open-Meteo: ERA5 reanalysis archive (any date since 1940) or forecast model for recent dates — hourly temp, cloud cover, precipitation, snow depth, wind. Deep links to Ventusky/Zoom Earth/NASA Worldview at the same date/place |
 | **Image Intelligence** | 3 | Drag-drop an image: local EXIF parse (GPS → jump to map + camera view cone, timestamp → auto-fills Sun & Weather modules), **full ExifTool dump** (all tags, via the locally installed ExifTool — nothing leaves the machine), reverse-search launchers for Google Lens / Yandex / Bing / TinEye (URL mode auto-submits) |
 | **Wiki Search** | 5 / F | Entity-aware smart search over every piece of wiki information (2,600+ tagged cards): "asian bollards" → Asia bollard photo grid; a country name → everything about that country grouped by category; free text scored by MiniSearch (BM25, fuzzy, prefix). Facet sidebar: country, continent, category, photos-only. Rebuild index: `tools\build_search_index.py` (automatic in `run.ps1 -RebuildWiki`) |
+| **Data Layers** | 6 / D | Plot **OSM features in the current view** (12 presets: mines & quarries, hospitals, power plants, wind turbines, military, lighthouses… or any custom `key=value` tag) via a locally **cached Overpass proxy** (7-day TTL). **GBIF species distribution overlays** by name (e.g. silver birch) — occurrence-density tiles on the map. Terrain hillshade base layer; elevation readout at the active point; Windy wind-map embed in the Weather module |
+| **Knowledge Graph** | via search | `/app/graph.html` — force-directed graph of categories ↔ countries ↔ continents (node size = wiki cards); click any node to run that search. The WIKI button now opens the **smart search** as the primary navigation; classic page browsing stays at `/wiki/` |
 | **Tool Launcher** | 4 | ~35 curated tools, each opening **centred on your active point**: Google Earth web, Esri Wayback, Sentinel/Copernicus, NASA Worldview, Zoom Earth, Mapillary, KartaView, Yandex/Baidu, Overpass Turbo, Bellingcat OSM Search, OpenInfraMap, OpenRailwayMap, PeakVisor/PeakFinder, ShadeMap, Flightradar24, MarineTraffic, … |
 | **Wiki** | top-right | MkDocs Material site: methodology (workflow, chronolocation, verification), GeoHints-style identification catalogues (bollards, poles, road lines, signs, plates, architecture, vegetation, scripts, domains/phones, Street View meta), per-continent recognition notes, country quick-reference table, landmark gazetteer, master source list. **Every claim is referenced** to a standard, paper, database or maintained community catalogue |
 
@@ -63,6 +65,28 @@ Detection re-runs on every page load — install a tool and refresh; no config n
 | Internet | needed for tiles/geocoding/weather/external tools; the wiki and EXIF parsing work offline |
 | Reverse image with **local** files | engines can't be auto-submitted a local file — the app opens the engine and you drag/paste the image in (URL-based search *is* fully automated). This is an engine-side limitation, not a missing feature |
 | AI geolocators (GeoSpy/Picarta) | linked but flagged: they upload your image to a third party |
+
+## Open datasets (all free / non-commercial licensed)
+
+`tools/fetch_datasets.py` (30-day cache, run by `run.ps1 -RebuildWiki`) pulls:
+
+| Dataset | Rows | Source / license |
+|---|---|---|
+| UNESCO World Heritage sites | ~1,250 | Wikidata SPARQL (CC0) |
+| National parks | ~2,400 | Wikidata (CC0) |
+| Castles & palaces (heritage-listed) | ~5,600 | Wikidata (CC0) |
+| Airports (large+medium) | ~5,300 | OurAirports (public domain) |
+| Botanical reference | 54 species | GBIF (CC0) + Wikipedia (CC BY-SA), `tools/build_flora.py` |
+
+All rows are searchable cards with coordinates ("⌖ open on map"). The wiki's
+**Datasets → Databases catalogue** page lists ~20 more geo-OSINT databases (USGS MRDS,
+Austria's IRIS mining registry, Global Energy Monitor, WDPA, healthsites.io…).
+
+## Caching policy
+
+Everything external is cached: Wikimedia images (30 days, `wiki/wm_manifest.json`),
+datasets (30 days, `data/*.json`), Overpass queries (7 days, `cache/overpass/`),
+elevation lookups (in-session). Map tiles use the browser cache.
 
 ## Editing the wiki
 

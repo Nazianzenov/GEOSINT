@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """GeOSINT - wiki search index builder.
 
 Extracts every atomic piece of wiki information into a tagged "card" and
@@ -27,9 +27,22 @@ import re
 import sys
 from pathlib import Path
 
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "wiki" / "docs"
+DATA_DIR = ROOT / "data"
 OUT = ROOT / "app" / "data" / "search-index.json"
+GRAPH_OUT = ROOT / "app" / "data" / "graph.json"
+WM_MANIFEST = ROOT / "wiki" / "wm_manifest.json"
+
+# dataset file -> (category key, label, wiki summary page)
+DATASETS = {
+    "unesco": ("unesco", "UNESCO sites", "/wiki/data/unesco/"),
+    "national-parks": ("national-parks", "National parks", "/wiki/data/national-parks/"),
+    "castles": ("castles", "Castles & palaces", "/wiki/data/castles/"),
+    "airports": ("airports", "Airports", "/wiki/data/airports/"),
+}
 
 CONTINENTS = ["Africa", "Asia", "Europe", "North America", "Oceania", "South America"]
 
@@ -57,6 +70,8 @@ CATEGORY_LABEL = {
     "streetview-meta": "Street View meta", "country-facts": "Country quick facts",
     "recognition": "Country recognition", "landmarks": "Landmarks",
     "methodology": "Methodology", "page": "Wiki pages",
+    "unesco": "UNESCO sites", "national-parks": "National parks",
+    "castles": "Castles & palaces", "airports": "Airports", "flora": "Botanical",
 }
 
 # canonicalization of multi-name cells; extended by the flags gallery at runtime
@@ -138,6 +153,13 @@ CATEGORY_ALIAS = {
     "landmark": "landmarks", "landmarks": "landmarks", "mountain": "landmarks",
     "mountains": "landmarks", "tower": "landmarks", "bridge": "landmarks",
     "facts": "country-facts", "recognition": "recognition",
+    "unesco": "unesco", "heritage": "unesco", "world heritage": "unesco",
+    "park": "national-parks", "parks": "national-parks", "national park": "national-parks",
+    "national parks": "national-parks",
+    "castle": "castles", "castles": "castles", "palace": "castles", "palaces": "castles",
+    "airport": "airports", "airports": "airports", "airfield": "airports",
+    "flora": "flora", "tree": "flora", "trees": "flora", "plant": "flora",
+    "plants": "flora", "species": "flora", "botanical": "flora",
 }
 
 FIG_RE = re.compile(
@@ -289,6 +311,61 @@ class Indexer:
                      x=strip_md(para.group(1)) if para else "",
                      g="page", page=page_url(md))
 
+    def datasets(self):
+        """Ingest data/*.json coordinate datasets (UNESCO, parks, castles, airports)."""
+        for fname, (g, label, page) in DATASETS.items():
+            f = DATA_DIR / f"{fname}.json"
+            if not f.is_file():
+                continue
+            d = json.loads(f.read_text(encoding="utf-8"))
+            for r in d["rows"]:
+                country = self.canon(r.get("c") or "") or None
+                if country:
+                    self.country_continent.setdefault(country, None)
+                self.add(t=r["n"], x=f'{r["n"]} {country or ""} {r.get("x", "")} {label}',
+                         c=[country] if country else [],
+                         k=self.country_continent.get(country),
+                         g=g, ll=[r["lat"], r["lng"]], page=r.get("url"))
+
+    def flora(self):
+        f = DATA_DIR / "flora.json"
+        if not f.is_file():
+            return
+        wm = json.loads(WM_MANIFEST.read_text(encoding="utf-8")) if WM_MANIFEST.is_file() else {}
+        localize = {url: "/wiki/assets/wm/" + meta["file"] for url, meta in wm.items()}
+        slug = lambda gr: re.sub(r"[^a-z]+", "-", gr.lower()).strip("-")
+        for s in json.loads(f.read_text(encoding="utf-8"))["species"]:
+            img = s.get("img")
+            self.add(t=f'{s["common"]} ({s["sci"]})',
+                     x=f'{s["common"]} {s["sci"]} {s["hint"]} {s.get("summary", "")[:200]}',
+                     g="flora", img=localize.get(img, img),
+                     map=(f'/app/index.html#species={s["gbif"]}&name='
+                          f'{s["common"].replace(" ", "%20")}') if s.get("gbif") else None,
+                     page=f"/wiki/flora/{slug(s['group'])}/")
+
+    def graph(self):
+        """Knowledge graph: categories ↔ countries ↔ continents (+ wiki pages)."""
+        cat_count, country_count, cc = {}, {}, {}
+        for card in self.cards:
+            cat_count[card["g"]] = cat_count.get(card["g"], 0) + 1
+            for ctry in card.get("c", []):
+                country_count[ctry] = country_count.get(ctry, 0) + 1
+                cc[(ctry, card["g"])] = cc.get((ctry, card["g"]), 0) + 1
+        top = dict(sorted(country_count.items(), key=lambda x: -x[1])[:80])
+        nodes = [{"id": f"g:{g}", "label": CATEGORY_LABEL.get(g, g), "kind": "category",
+                  "count": n} for g, n in cat_count.items() if g != "page"]
+        nodes += [{"id": f"c:{c}", "label": c, "kind": "country", "count": n}
+                  for c, n in top.items()]
+        seen_k = {self.country_continent.get(c) for c in top if self.country_continent.get(c)}
+        nodes += [{"id": f"k:{k}", "label": k, "kind": "continent", "count": 1} for k in seen_k]
+        links = [{"source": f"c:{c}", "target": f"g:{g}", "w": n}
+                 for (c, g), n in cc.items() if c in top and n >= 3 and g != "page"]
+        links += [{"source": f"c:{c}", "target": f"k:{self.country_continent[c]}", "w": 2}
+                  for c in top if self.country_continent.get(c)]
+        GRAPH_OUT.write_text(json.dumps({"nodes": nodes, "links": links},
+                                        ensure_ascii=False), encoding="utf-8")
+        print(f"graph: {len(nodes)} nodes, {len(links)} links -> {GRAPH_OUT}")
+
     # ── driver ────────────────────────────────────────────────────────
     def run(self):
         files = {p.relative_to(DOCS).as_posix(): p for p in DOCS.rglob("*.md")}
@@ -312,6 +389,8 @@ class Indexer:
             elif rel.startswith("identify/"):
                 self.bold_entries(md, text, PAGE_CATEGORY.get(md.stem, "page"))
                 self.md_images(md, text)
+        self.datasets()
+        self.flora()
         out = {
             "cards": self.cards,
             "countries": self.country_continent,
@@ -321,6 +400,7 @@ class Indexer:
         }
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+        self.graph()
         cats = {}
         for c in self.cards:
             cats[c["g"]] = cats.get(c["g"], 0) + 1

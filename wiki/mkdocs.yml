@@ -62,5 +62,22 @@ nav:
   - Landmarks:
       - Natural landmarks: landmarks/natural.md
       - Man-made landmarks: landmarks/manmade.md
+  - Datasets:
+      - Databases catalogue: data/databases.md
+      - UNESCO sites: data/unesco.md
+      - National parks: data/national-parks.md
+      - Castles & palaces: data/castles.md
+      - Airports: data/airports.md
+  - Botanical reference:
+      - Overview: flora/index.md
+      - Boreal & northern: flora/boreal-northern.md
+      - Temperate: flora/temperate.md
+      - Mediterranean: flora/mediterranean.md
+      - Arid & desert: flora/arid-desert.md
+      - Tropical: flora/tropical.md
+      - East Asia: flora/east-asia.md
+      - Oceania & Americas: flora/oceania-americas.md
+      - Crops & landscape: flora/crops-landscape.md
+      - Coastal: flora/coastal.md
   - Sources & databases: sources.md
   - Importing GeoHints photos: importing.md
