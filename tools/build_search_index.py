@@ -356,13 +356,13 @@ class Indexer:
             for ctry in card.get("c", []):
                 country_count[ctry] = country_count.get(ctry, 0) + 1
                 cc.setdefault(ctry, {})[g] = cc.setdefault(ctry, {}).get(g, 0) + 1
-        top = sorted(country_count.items(), key=lambda x: -x[1])[:60]
+        ranked = sorted(country_count.items(), key=lambda x: -x[1])
         out = {
             "categories": [{"g": g, "label": CATEGORY_LABEL.get(g, g), "total": n}
                            for g, n in sorted(cat_count.items(), key=lambda x: -x[1])],
             "countries": [{"n": c, "k": self.country_continent.get(c), "total": n}
-                          for c, n in top],
-            "counts": {c: cc.get(c, {}) for c, _ in top},
+                          for c, n in ranked],          # all; matrix slices client-side
+            "counts": cc,
         }
         GRAPH_OUT.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
         print(f"graph data: {len(out['countries'])} countries × "

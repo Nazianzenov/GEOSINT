@@ -106,13 +106,14 @@ function switchTab(t) {
 /* ════════ MATRIX — the honest view of dense bipartite data ════════ */
 function buildMatrix() {
   const cats = D.categories;
-  const max = Math.max(...D.countries.map(c =>
+  const rows = D.countries.slice(0, 60);   // matrix shows top-60; explorer has all
+  const max = Math.max(...rows.map(c =>
     Math.max(1, ...cats.map(g => (D.counts[c.n] || {})[g.g] || 0))));
   const shade = v => v ? `rgba(76,194,255,${(0.13 + 0.87 * Math.log(v + 1) / Math.log(max + 1)).toFixed(2)})` : "transparent";
   let html = "<table><thead><tr><th></th>" + cats.map(g =>
     `<th><div data-g="${esc(g.g)}" title="${esc(g.label)} — ${g.total} cards">${esc(g.label)}</div></th>`
   ).join("") + "</tr></thead><tbody>";
-  for (const c of D.countries) {
+  for (const c of rows) {
     html += `<tr><th data-c="${esc(c.n)}" title="everything on ${esc(c.n)}">${esc(c.n)} <small>${c.total}</small></th>`;
     for (const g of cats) {
       const v = (D.counts[c.n] || {})[g.g] || 0;
