@@ -6,6 +6,8 @@
 
 const $ = (s) => document.querySelector(s);
 const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const esc = (s) => String(s).replace(/[&<>"']/g,
+  (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
 
 let DATA = null, MS = null;
 const state = { country: null, continent: null, cats: new Set(), photos: false };
@@ -191,8 +193,8 @@ function photoGrid(items, cap) {
       c.page ? `<a href="${c.page}" target="_blank">wiki</a>` : "",
     ].filter(Boolean).join(" · ");
     grid.insertAdjacentHTML("beforeend",
-      `<div class="pcard"><img src="${c.img}" loading="lazy" alt="">
-       <div class="cap"><b>${(c.c || []).join(", ") || c.t}</b><span>${links}</span></div></div>`);
+      `<div class="pcard"><img src="${esc(c.img)}" loading="lazy" alt="">
+       <div class="cap"><b>${esc((c.c || []).join(", ") || c.t)}</b><span>${links}</span></div></div>`);
   });
   renderSlice(0, cap);
   wrap.appendChild(grid);
@@ -220,10 +222,10 @@ function factList(items, cap, text) {
     const where = [(c.c || []).join(", "), c.k].filter(Boolean).join(" · ");
     const mapLink = c.ll ? ` · <a href="/app/index.html#ll=${c.ll[0]},${c.ll[1]}" target="_blank">⌖ open on map</a>` : "";
     wrap.insertAdjacentHTML("beforeend",
-      `<div class="fcard"><b>${c.t}</b>${where && where !== c.t ? ` <span class="muted">(${where})</span>` : ""}
-       ${c.img ? `<br><img src="${c.img}" loading="lazy" style="max-width:300px;border-radius:4px;margin:6px 0">` : ""}
-       <div>${hl(c.x || "")}</div>
-       <div class="src"><a href="${c.page}" target="_blank">source page</a>${mapLink}</div></div>`);
+      `<div class="fcard"><b>${esc(c.t)}</b>${where && where !== c.t ? ` <span class="muted">(${esc(where)})</span>` : ""}
+       ${c.img ? `<br><img src="${esc(c.img)}" loading="lazy" style="max-width:300px;border-radius:4px;margin:6px 0">` : ""}
+       <div>${hl(esc(c.x || ""))}</div>
+       <div class="src"><a href="${esc(c.page || "#")}" target="_blank">source page</a>${mapLink}</div></div>`);
   });
   renderSlice(0, cap);
   if (items.length > cap) {

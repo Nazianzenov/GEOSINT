@@ -126,7 +126,8 @@ def render_fragment(url_name, events, heading_level="###"):
             if not open_div:
                 out.append('<div class="gh-gallery">')
                 open_div = True
-            cap = (f'{country} · <a href="{maps}" target="_blank">map</a>'
+            country = html.escape(country)
+            cap = (f'{country} · <a href="{html.escape(maps, quote=True)}" target="_blank">map</a>'
                    if maps else country)
             out.append(f'<figure><img src="{img}" loading="lazy">'
                        f"<figcaption>{cap}</figcaption></figure>")

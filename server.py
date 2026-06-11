@@ -149,9 +149,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":
+            self.wfile.write(body)
 
     def send_file(self, path: Path):
         ctype = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
@@ -159,8 +161,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
-        self.wfile.write(data)
+        if self.command != "HEAD":
+            self.wfile.write(data)
+
+    def do_HEAD(self):
+        self.do_GET()
 
     def redirect(self, location):
         self.send_response(302)
@@ -169,9 +176,11 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def serve_static(self, base: Path, rel: str):
-        # Safe path resolution: never escape the base directory.
+        # Safe path resolution: never escape the base directory. The check is
+        # separator-aware (plain startswith would let ".../app" match ".../app2").
         target = (base / unquote(rel)).resolve()
-        if not str(target).startswith(str(base.resolve())):
+        root = base.resolve()
+        if target != root and root not in target.parents:
             return self.send_json({"error": "forbidden"}, 403)
         if target.is_dir():
             target = target / "index.html"
@@ -304,10 +313,11 @@ class Handler(BaseHTTPRequestHandler):
                          "https://www.google.com/earth/about/versions/#earth-pro"
             }, 409)
 
+        import html as _html
         name = str(payload.get("name") or f"{lat:.5f}, {lng:.5f}")[:120]
         rng = max(100, min(float(payload.get("range") or 1200), 5_000_000))
         kml = KML_TEMPLATE.format(
-            name=name.replace("<", "&lt;").replace(">", "&gt;"),
+            name=_html.escape(name),
             lat=lat, lng=lng, range=rng, tilt=35,
         )
         kml_path = Path(tempfile.gettempdir()) / "geosint_flyto.kml"

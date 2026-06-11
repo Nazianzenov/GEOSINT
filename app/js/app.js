@@ -18,6 +18,9 @@ const state = {
 
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
+/* HTML-escape untrusted strings (EXIF fields, geocoder responses) before innerHTML */
+const esc = (s) => String(s).replace(/[&<>"']/g,
+  (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
 
 /* ════════════════════════ formatting ═══════════════════════════ */
 const fmtDD = (ll, p = 5) => `${ll.lat.toFixed(p)}, ${ll.lng.toFixed(p)}`;
@@ -213,7 +216,7 @@ function initSearch() {
         const data = await r.json();
         box.innerHTML = data.length
           ? data.map((d, i) =>
-              `<div class="search-item" data-i="${i}"><b>${d.name || d.display_name.split(",")[0]}</b> <span class="tag">${d.type}</span><small>${d.display_name}</small></div>`).join("")
+              `<div class="search-item" data-i="${i}"><b>${esc(d.name || d.display_name.split(",")[0])}</b> <span class="tag">${esc(d.type || "")}</span><small>${esc(d.display_name)}</small></div>`).join("")
           : `<div class="search-item">no results</div>`;
         box.hidden = false;
         box.querySelectorAll("[data-i]").forEach((el) => el.onclick = () => {
@@ -554,7 +557,7 @@ async function exiftoolDump() {
     const keys = Object.keys(j.tags);
     out.innerHTML = `<h3>ExifTool — ${keys.length} tags</h3>
       <div class="table-scroll"><table class="kv">${keys.map((k) =>
-        `<tr><td>${k}</td><td>${String(j.tags[k]).slice(0, 200)}</td></tr>`).join("")}</table></div>`;
+        `<tr><td>${esc(k)}</td><td>${esc(String(j.tags[k]).slice(0, 200))}</td></tr>`).join("")}</table></div>`;
   } catch { out.innerHTML = `<p class="nomatch">✗ local server unreachable</p>`; }
 }
 
@@ -577,7 +580,8 @@ async function loadImage(file) {
     return;
   }
   const rows = [];
-  const add = (k, v) => v != null && v !== "" && rows.push(`<tr><td>${k}</td><td>${v}</td></tr>`);
+  // EXIF strings are attacker-controlled file content — always escape.
+  const add = (k, v, raw) => v != null && v !== "" && rows.push(`<tr><td>${k}</td><td>${raw ? v : esc(v)}</td></tr>`);
   add("Camera", [ex.Make, ex.Model].filter(Boolean).join(" "));
   add("Taken", ex.DateTimeOriginal ? new Date(ex.DateTimeOriginal).toLocaleString() : null);
   add("Software", ex.Software);
@@ -601,7 +605,7 @@ async function loadImage(file) {
         { color: "#7ee787", weight: 1, fillOpacity: .15 }));
     }
   } else {
-    add("GPS", "<i>none embedded</i>");
+    add("GPS", "<i>none embedded</i>", true);
   }
   out.innerHTML = `<h3>EXIF</h3><table class="kv">${rows.join("")}</table>${gpsHtml}
     ${exiftoolButton()}
