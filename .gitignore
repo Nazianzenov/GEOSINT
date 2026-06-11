@@ -1,0 +1,15 @@
+# python
+.venv/
+__pycache__/
+*.pyc
+
+# generated build artifacts (rebuilt by run.ps1)
+wiki/site/
+app/data/search-index.json
+app/data/graph.json
+
+# user-saved GeoHints pages (large, user-provided)
+import/
+
+# runtime caches that regenerate themselves
+cache/

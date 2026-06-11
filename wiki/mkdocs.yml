@@ -1,0 +1,66 @@
+site_name: GeOSINT Field Wiki
+site_description: Sourced reference for geographical OSINT — identification features, regions, landmarks, methodology.
+site_url: ""
+use_directory_urls: true
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: black
+    accent: light blue
+  font:
+    text: Segoe UI
+    code: Cascadia Code
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.tooltips
+    - toc.integrate
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.tasklist
+
+nav:
+  - Home: index.md
+  - Methodology:
+      - Geolocation workflow: methodology/workflow.md
+      - Chronolocation (sun & shadows): methodology/chronolocation.md
+      - Image verification & EXIF: methodology/verification.md
+  - Identification features:
+      - Driving side: identify/driving-side.md
+      - Bollards: identify/bollards.md
+      - Utility poles & street lights: identify/utility-poles.md
+      - Road markings & lines: identify/road-markings.md
+      - Road signs & chevrons: identify/road-signs.md
+      - Traffic lights: identify/traffic-lights.md
+      - License plates: identify/license-plates.md
+      - Flags: identify/flags.md
+      - Architecture by region: identify/architecture.md
+      - Vegetation & climate: identify/vegetation-climate.md
+      - Languages & scripts: identify/language-scripts.md
+      - Internet domains & phone codes: identify/domains-phones.md
+      - Street View meta (cars, cameras, coverage): identify/streetview-meta.md
+  - World reference:
+      - Quick-reference table: world/index.md
+      - Europe: world/europe.md
+      - Asia: world/asia.md
+      - Africa: world/africa.md
+      - North & Central America: world/north-america.md
+      - South America: world/south-america.md
+      - Oceania: world/oceania.md
+  - Landmarks:
+      - Natural landmarks: landmarks/natural.md
+      - Man-made landmarks: landmarks/manmade.md
+  - Sources & databases: sources.md
+  - Importing GeoHints photos: importing.md

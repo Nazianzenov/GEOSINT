@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:geohints.com)",
+      "PowerShell(python -m venv .venv)",
+      "PowerShell(.venv\\\\Scripts\\\\python -m pip install --quiet mkdocs-material)",
+      "PowerShell(foreach \\($u in @\\(\"https://commons.wikimedia.org/wiki/Special:FilePath/%D0%93%D0%B0%D1%82%D1%87%D0%B8%D0%BD%D0%B0._%D0%A3%D0%BB%D0%B8%D1%86%D0%B0_%D0%92%D0%BE%D0%BB%D0%BE%D0%B4%D0%B0%D1%80%D1%81%D0%BA%D0%BE%D0%B3%D0%BE%2C_28.jpg?width=300\",\"https://commons.wikimedia.org/wiki/Special:FilePath/View_of_Mount_Fuji_from_%C5%8Cwakudani_20211202.jpg?width=220\",\"https://commons.wikimedia.org/wiki/Special:FilePath/Saint_Basil%27s_Cathedral_in_Moscow.jpg?width=200\",\"https://commons.wikimedia.org/wiki/Special:FilePath/Burj_Khalifa_%28worlds_tallest_building%29_and_the_Dubai_skyline_%2825781049892%29.jpg?width=260\"\\)\\) { try { $r = Invoke-WebRequest -UseBasicParsing -Method Head -Uri $u; \"$\\($r.StatusCode\\) $\\($r.Headers['Content-Type']\\) <- $\\($u.Substring\\(50,40\\)\\)...\" } catch { \"FAIL <- $u\" } })",
+      "Skill(run)",
+      "Skill(run:*)"
+    ]
+  }
+}
