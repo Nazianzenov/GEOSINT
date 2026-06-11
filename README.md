@@ -84,9 +84,20 @@ Austria's IRIS mining registry, Global Energy Monitor, WDPA, healthsites.io…).
 
 ## Caching policy
 
-Everything external is cached: Wikimedia images (30 days, `wiki/wm_manifest.json`),
-datasets (30 days, `data/*.json`), Overpass queries (7 days, `cache/overpass/`),
-elevation lookups (in-session). Map tiles use the browser cache.
+Everything external is disk-cached locally:
+
+| What | TTL | Where |
+|---|---|---|
+| **Map tiles** (all base layers, via `/tiles/`) | 30 days | `cache/tiles/` — revisited areas load instantly and work offline |
+| Historical weather (immutable) & elevation | ~forever | `cache/pget/` |
+| Weather forecasts | 3 h | `cache/pget/` |
+| Geocoding (Nominatim), GBIF lookups | 30 days | `cache/pget/` |
+| Overpass/OSM queries | 30 days + **stale-on-error** | `cache/overpass/` |
+| Wikimedia images | 30 days | `wiki/docs/assets/wm/` |
+| Datasets & flora | 30 days | `data/*.json` |
+
+The `/api/pget` proxy only fetches allowlisted hosts; the Overpass proxy remembers the
+last healthy mirror and falls back across four instances.
 
 ## Editing the wiki
 

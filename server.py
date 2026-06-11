@@ -14,6 +14,7 @@ import hashlib
 import json
 import mimetypes
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -30,11 +31,38 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parent
 APP_DIR = ROOT / "app"
 WIKI_SITE = ROOT / "wiki" / "site"
-OVERPASS_CACHE = ROOT / "cache" / "overpass"
-OVERPASS_TTL = 7 * 86400
+CACHE = ROOT / "cache"
+OVERPASS_CACHE = CACHE / "overpass"
+TILE_CACHE = CACHE / "tiles"
+PGET_CACHE = CACHE / "pget"
+OVERPASS_TTL = 30 * 86400
 OVERPASS_MIRRORS = [
-    "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+]
+_preferred_mirror = [None]      # last mirror that answered (tried first)
+
+# /tiles/<layer>/<z>/<x>/<y> -> upstream template, cached 30 days on disk
+TILE_LAYERS = {
+    "osm": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "carto-dark": "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+    "esri-sat": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    "esri-hillshade": "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+    "esri-labels": "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+    "opentopo": "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+}
+TILE_TTL = 30 * 86400
+
+# /api/pget?u=<url> — generic cached GET proxy, allowlisted prefixes only.
+# Historical weather and elevation never change -> effectively permanent.
+PGET_ALLOW = [
+    ("https://archive-api.open-meteo.com/v1/archive?", 3650 * 86400),
+    ("https://api.open-meteo.com/v1/elevation?", 3650 * 86400),
+    ("https://api.open-meteo.com/v1/forecast?", 3 * 3600),
+    ("https://nominatim.openstreetmap.org/search?", 30 * 86400),
+    ("https://api.gbif.org/v1/species/match?", 30 * 86400),
 ]
 UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")
@@ -148,6 +176,16 @@ def tool_status():
     return out
 
 
+def cache_fresh(path: Path, ttl: int) -> bool:
+    return path.is_file() and time.time() - path.stat().st_mtime < ttl
+
+
+def upstream_get(url: str, timeout=30) -> bytes:
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -199,11 +237,73 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_file(target)
         self.send_json({"error": "not found", "path": rel}, 404)
 
+    def send_cached_body(self, body: bytes, ctype: str, hit: str, browser_ttl=0):
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("X-Cache", hit)
+        if browser_ttl:
+            self.send_header("Cache-Control", f"public, max-age={browser_ttl}")
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
+    # ---- cached tile proxy: /tiles/<layer>/<z>/<x>/<y> -------------------
+    def api_tile(self, path):
+        parts = path.strip("/").split("/")          # tiles, layer, z, x, y
+        if len(parts) != 5 or parts[1] not in TILE_LAYERS:
+            return self.send_json({"error": "unknown tile layer"}, 404)
+        layer = parts[1]
+        try:
+            z, x, y = (int(re.sub(r"\D", "", p)) for p in parts[2:5])
+        except ValueError:
+            return self.send_json({"error": "bad tile coords"}, 400)
+        if not (0 <= z <= 20):
+            return self.send_json({"error": "bad zoom"}, 400)
+        f = TILE_CACHE / layer / str(z) / str(x) / f"{y}.png"
+        if cache_fresh(f, TILE_TTL):
+            return self.send_cached_body(f.read_bytes(), "image/png", "hit", TILE_TTL)
+        url = TILE_LAYERS[layer].format(z=z, x=x, y=y)
+        try:
+            body = upstream_get(url, timeout=20)
+            f.parent.mkdir(parents=True, exist_ok=True)
+            f.write_bytes(body)
+            return self.send_cached_body(body, "image/png", "miss", TILE_TTL)
+        except Exception:
+            if f.is_file():                          # stale beats nothing
+                return self.send_cached_body(f.read_bytes(), "image/png", "stale", 3600)
+            return self.send_json({"error": "tile upstream unreachable"}, 502)
+
+    # ---- generic cached GET proxy: /api/pget?u=<allowlisted url> ---------
+    def api_pget(self, query):
+        url = urllib.parse.parse_qs(query).get("u", [""])[0]
+        ttl = next((t for prefix, t in PGET_ALLOW if url.startswith(prefix)), None)
+        if ttl is None:
+            return self.send_json({"error": "url not allowlisted"}, 403)
+        f = PGET_CACHE / (hashlib.sha1(url.encode()).hexdigest() + ".json")
+        if cache_fresh(f, ttl):
+            return self.send_cached_body(f.read_bytes(), "application/json; charset=utf-8", "hit")
+        try:
+            body = upstream_get(url, timeout=30)
+            json.loads(body)
+            PGET_CACHE.mkdir(parents=True, exist_ok=True)
+            f.write_bytes(body)
+            return self.send_cached_body(body, "application/json; charset=utf-8", "miss")
+        except Exception as e:
+            if f.is_file():
+                return self.send_cached_body(f.read_bytes(), "application/json; charset=utf-8", "stale")
+            return self.send_json({"error": f"upstream failed: {str(e)[:160]}"}, 502)
+
     # ---- routes --------------------------------------------------------
     def do_GET(self):
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
         if path in ("/", "/index.html"):
             return self.redirect("/app/")
+        if path.startswith("/tiles/"):
+            return self.api_tile(path)
+        if path == "/api/pget":
+            return self.api_pget(parsed.query)
         if path == "/wiki":
             return self.redirect("/wiki/")
         if path == "/api/status":
@@ -266,23 +366,25 @@ class Handler(BaseHTTPRequestHandler):
             return
         data = ("data=" + urllib.parse.quote(q)).encode()
         last_err = "no mirror reachable"
-        for mirror in OVERPASS_MIRRORS:
+        mirrors = OVERPASS_MIRRORS[:]
+        if _preferred_mirror[0] in mirrors:          # last healthy mirror first
+            mirrors.remove(_preferred_mirror[0])
+            mirrors.insert(0, _preferred_mirror[0])
+        for mirror in mirrors:
             try:
                 req = urllib.request.Request(mirror, data=data,
                                              headers={"User-Agent": UA})
-                with urllib.request.urlopen(req, timeout=90) as resp:
+                with urllib.request.urlopen(req, timeout=40) as resp:
                     body = resp.read()
                 json.loads(body)            # validate before caching
+                _preferred_mirror[0] = mirror
                 cached.write_bytes(body)
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_header("Content-Length", str(len(body)))
-                self.send_header("X-Cache", "miss")
-                self.end_headers()
-                self.wfile.write(body)
-                return
+                return self.send_cached_body(body, "application/json; charset=utf-8", "miss")
             except Exception as e:
                 last_err = str(e)[:200]
+        if cached.is_file():                # expired cache beats an error
+            return self.send_cached_body(cached.read_bytes(),
+                                         "application/json; charset=utf-8", "stale")
         return self.send_json({"error": f"Overpass unreachable: {last_err}"}, 502)
 
     # ---- API: ExifTool deep metadata dump -------------------------------

@@ -21,6 +21,9 @@ const $$ = (s) => document.querySelectorAll(s);
 /* HTML-escape untrusted strings (EXIF fields, geocoder responses) before innerHTML */
 const esc = (s) => String(s).replace(/[&<>"']/g,
   (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+/* All point-API calls go through the server's cached proxy (immutable data —
+   historical weather, elevation — is cached effectively forever). */
+const cachedFetch = (url) => fetch("/api/pget?u=" + encodeURIComponent(url));
 
 /* ════════════════════════ formatting ═══════════════════════════ */
 const fmtDD = (ll, p = 5) => `${ll.lat.toFixed(p)}, ${ll.lng.toFixed(p)}`;
@@ -96,20 +99,18 @@ async function copyText(t) {
 
 /* ════════════════════════════ map ══════════════════════════════ */
 function initMap() {
-  const osm = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  // all layers go through the server's 30-day disk tile cache (/tiles/...)
+  const osm = L.tileLayer("/tiles/osm/{z}/{x}/{y}", {
     maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' });
-  const esriSat = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+  const esriSat = L.tileLayer("/tiles/esri-sat/{z}/{x}/{y}", {
     maxZoom: 19, attribution: "Imagery &copy; Esri — Maxar, Earthstar Geographics" });
-  const topo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
+  const topo = L.tileLayer("/tiles/opentopo/{z}/{x}/{y}", {
     maxZoom: 17, attribution: '&copy; OpenStreetMap, SRTM | style &copy; <a href="https://opentopomap.org">OpenTopoMap</a>' });
-  const dark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  const dark = L.tileLayer("/tiles/carto-dark/{z}/{x}/{y}", {
     maxZoom: 20, attribution: '&copy; OpenStreetMap &copy; <a href="https://carto.com/">CARTO</a>' });
-  const hillshade = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", {
+  const hillshade = L.tileLayer("/tiles/esri-hillshade/{z}/{x}/{y}", {
     maxZoom: 16, attribution: "Hillshade &copy; Esri — terrain/relief view" });
-  const esriLabels = L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
+  const esriLabels = L.tileLayer("/tiles/esri-labels/{z}/{x}/{y}", {
     maxZoom: 19, attribution: "Labels &copy; Esri" });
 
   state.map = L.map("map", { center: [30, 10], zoom: 3, layers: [dark], zoomControl: true });
@@ -159,7 +160,7 @@ function fetchElevation(ll) {
     const key = `${ll.lat.toFixed(3)},${ll.lng.toFixed(3)}`;
     if (!_elevCache.has(key)) {
       try {
-        const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${ll.lat.toFixed(4)}&longitude=${ll.lng.toFixed(4)}`);
+        const r = await cachedFetch(`https://api.open-meteo.com/v1/elevation?latitude=${ll.lat.toFixed(4)}&longitude=${ll.lng.toFixed(4)}`);
         const j = await r.json();
         _elevCache.set(key, Math.round(j.elevation[0]));
       } catch { return; }
@@ -238,8 +239,7 @@ function initSearch() {
     }
     t = setTimeout(async () => {
       try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=7&q=${encodeURIComponent(q)}`,
-          { headers: { "Accept-Language": "en" } });
+        const r = await cachedFetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=7&accept-language=en&q=${encodeURIComponent(q)}`);
         const data = await r.json();
         box.innerHTML = data.length
           ? data.map((d, i) =>
@@ -480,7 +480,7 @@ async function fetchWeather() {
   const url = `${base}?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&start_date=${date}&end_date=${date}&hourly=${hourly}&timezone=auto`;
   $("#wx-meta").textContent = "fetching…";
   try {
-    const r = await fetch(url);
+    const r = await cachedFetch(url);
     const j = await r.json();
     if (j.error) throw new Error(j.reason);
     renderWeather(j, date, ageDays > 6);
@@ -818,20 +818,24 @@ async function launchTool(t) {
 }
 
 /* ═══════════════════════ DATA LAYERS ═══════════════════════════ */
-/* OSM feature presets — each maps to Overpass selectors run on the view bbox */
+/* OSM feature presets — exact-match selectors only (regex selectors are an
+   order of magnitude slower on Overpass). minZoom guards dense categories. */
 const OSM_PRESETS = [
-  ["Mines & quarries", ['nwr["man_made"~"mineshaft|adit"]', 'nwr["landuse"="quarry"]', 'nwr["historic"="mine"]']],
-  ["Hospitals & clinics", ['nwr["amenity"~"hospital|clinic"]']],
-  ["Power plants & substations", ['nwr["power"~"plant|substation"]']],
-  ["Wind turbines", ['nwr["generator:source"="wind"]']],
-  ["Fuel stations", ['nwr["amenity"="fuel"]']],
-  ["Railway stations", ['nwr["railway"="station"]']],
-  ["Places of worship", ['nwr["amenity"="place_of_worship"]']],
-  ["Towers & masts", ['nwr["man_made"~"^(tower|mast|communications_tower)$"]']],
-  ["Airfields & helipads", ['nwr["aeroway"~"aerodrome|helipad"]']],
-  ["Military areas", ['nwr["landuse"="military"]', 'nwr["military"]']],
-  ["Water towers", ['nwr["man_made"="water_tower"]']],
-  ["Lighthouses", ['nwr["man_made"="lighthouse"]']],
+  ["Mines & quarries", ['nwr["man_made"="mineshaft"]', 'nwr["man_made"="adit"]',
+    'way["landuse"="quarry"]', 'nwr["historic"="mine"]'], 8],
+  ["Hospitals & clinics", ['nwr["amenity"="hospital"]', 'nwr["amenity"="clinic"]'], 10],
+  ["Power plants & substations", ['nwr["power"="plant"]', 'nwr["power"="substation"]'], 9],
+  ["Wind turbines", ['nwr["generator:source"="wind"]'], 8],
+  ["Fuel stations", ['nwr["amenity"="fuel"]'], 11],
+  ["Railway stations", ['node["railway"="station"]'], 9],
+  ["Places of worship", ['nwr["amenity"="place_of_worship"]'], 12],
+  ["Towers & masts", ['nwr["man_made"="tower"]', 'nwr["man_made"="mast"]',
+    'nwr["man_made"="communications_tower"]'], 11],
+  ["Airfields & helipads", ['nwr["aeroway"="aerodrome"]', 'nwr["aeroway"="helipad"]'], 8],
+  ["Military areas", ['way["landuse"="military"]', 'nwr["military"="base"]',
+    'nwr["military"="barracks"]'], 8],
+  ["Water towers", ['nwr["man_made"="water_tower"]'], 9],
+  ["Lighthouses", ['nwr["man_made"="lighthouse"]'], 6],
 ];
 
 function initData() {
@@ -840,11 +844,14 @@ function initData() {
     const o = document.createElement("option"); o.value = i; o.textContent = name;
     sel.appendChild(o);
   });
-  $("#data-run").addEventListener("click", () => runOverpass(OSM_PRESETS[+sel.value][1], OSM_PRESETS[+sel.value][0]));
+  $("#data-run").addEventListener("click", () => {
+    const [name, selectors, minZoom] = OSM_PRESETS[+sel.value];
+    runOverpass(selectors, name, minZoom);
+  });
   $("#data-run-custom").addEventListener("click", () => {
     const m = $("#data-custom").value.trim().match(/^([\w:]+)\s*=\s*([\w:;|-]+)$/);
     if (!m) return status("custom tag must look like  key=value", true);
-    runOverpass([`nwr["${m[1]}"="${m[2]}"]`], `${m[1]}=${m[2]}`);
+    runOverpass([`nwr["${m[1]}"="${m[2]}"]`], `${m[1]}=${m[2]}`, 10);
   });
   $("#data-clear").addEventListener("click", () => {
     state.dataLayer.clearLayers();
@@ -854,17 +861,26 @@ function initData() {
   $("#wx-wind-load").addEventListener("click", loadWindEmbed);
 }
 
-async function runOverpass(selectors, label) {
-  if (state.map.getZoom() < 8) return status("zoom in (≥ city scale) before plotting OSM features", true, 6000);
+async function runOverpass(selectors, label, minZoom = 10) {
+  if (state.map.getZoom() < minZoom) {
+    return status(`zoom in to at least level ${minZoom} for "${label}" (current: ${state.map.getZoom()})`, true, 6000);
+  }
   const b = state.map.getBounds();
   const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map((v) => v.toFixed(4)).join(",");
-  const q = `[out:json][timeout:60];(${selectors.map((s) => `${s}(${bbox});`).join("")});out center 600;`;
+  const q = `[out:json][timeout:25];(${selectors.map((s) => `${s}(${bbox});`).join("")});out center 600;`;
+  const t0 = Date.now();
+  const tick = setInterval(() => {
+    $("#data-status").textContent =
+      `querying OSM for ${label}… ${Math.round((Date.now() - t0) / 1000)}s ` +
+      `(first run on an area can take ~10-30s; repeats are cached)`;
+  }, 500);
   $("#data-status").textContent = `querying OSM for ${label}…`;
   try {
     const r = await fetch("/api/overpass", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ q }),
     });
+    clearInterval(tick);
     const j = await r.json();
     if (j.error) throw new Error(j.error);
     state.dataLayer.clearLayers();
@@ -882,9 +898,11 @@ async function runOverpass(selectors, label) {
       state.dataLayer.addLayer(mk);
       n++;
     }
-    $("#data-status").textContent = `${label}: ${n} features in view (cached 7 days; 600 max)`;
+    $("#data-status").textContent =
+      `${label}: ${n} features in view · ${Math.round((Date.now() - t0) / 1000)}s (cached 7 days; 600 max)`;
     status(`${n} × ${label} plotted`);
   } catch (err) {
+    clearInterval(tick);
     $("#data-status").textContent = "";
     status(err.message || "Overpass failed", true, 8000);
   }
@@ -895,7 +913,7 @@ async function gbifOverlay(name, knownKey) {
   try {
     let key = knownKey, shown = name;
     if (!key) {
-      const r = await fetch("https://api.gbif.org/v1/species/match?name=" + encodeURIComponent(name));
+      const r = await cachedFetch("https://api.gbif.org/v1/species/match?name=" + encodeURIComponent(name));
       const j = await r.json();
       if (!j.usageKey) return status(`GBIF: no match for "${name}"`, true);
       key = j.usageKey; shown = j.canonicalName || name;
