@@ -2,7 +2,12 @@
 
 ## Rapeseed (*Brassica napus*)
 
+![Rapeseed](../assets/wm/Brassica_napus_-_K-hler-s_Medizinal-Pflanzen-169_w640_9e9d55e0.jpg)
+{ width=340 }
+
 **Geolocation tell:** Blinding yellow spring fields: N/C Europe, Canada, China
+
+Rapeseed, also known as rape and oilseed rape and canola, is a yellow-flowered member of the Brassicaceae family. *([Wikipedia](https://en.wikipedia.org/wiki/Rapeseed), CC BY-SA)*
 
 [**⌖ live distribution map**](/app/index.html#species=3042636&name=Rapeseed) · [POWO](https://powo.science.kew.org/results?q=Brassica%20napus) · [GBIF](https://www.gbif.org/species/3042636)
 

@@ -35,7 +35,7 @@ Opuntia ficus-indica, the Indian fig opuntia, fig opuntia, or prickly pear, is a
 
 ## Date palm (*Phoenix dactylifera*)
 
-![Date palm](../assets/wm/Dates005_w640_960a57c3.jpg)
+![Date palm](../assets/wm/Lush-Oasis-of-Date-Palm-Trees_w640_685b3126.jpg)
 { width=340 }
 
 **Geolocation tell:** Hot-desert oases: N. Africa, Gulf, Iran; California's Coachella

@@ -2,7 +2,7 @@
 
 ## Coconut palm (*Cocos nucifera*)
 
-![Coconut palm](../assets/wm/Cocos_nucifera_-_K-hler-s_Medizinal-Pflanzen-187_w640_0618efe7.jpg)
+![Coconut palm](../assets/wm/Corong-Corong-Beach-Coconut-palm-trees-El-Nido-Palawan-Island-Philippines_w640_03d9596a.jpg)
 { width=340 }
 
 **Geolocation tell:** Leaning over beaches throughout the humid tropics
@@ -13,7 +13,7 @@ The coconut is a member of the palm family (Arecaceae) and the only living speci
 
 ## Oil palm (*Elaeis guineensis*)
 
-![Oil palm](../assets/wm/Elaeis_guineensis_-_K-hler-s_Medizinal-Pflanzen-056_w640_1bc12778.jpg)
+![Oil palm](../assets/wm/Oil-palm-plantation-in-Paloh-Hinai-Pahang_w640_7e23cd66.jpg)
 { width=340 }
 
 **Geolocation tell:** Plantation grids = Malaysia/Indonesia/W. Africa; NOT a wild beach palm
@@ -24,7 +24,7 @@ Elaeis guineensis is a species of palm commonly called oil palm but also sometim
 
 ## Banana/plantain (*Musa × paradisiaca*)
 
-![Banana/plantain](../assets/wm/Bananavarieties_w640_99afda65.jpg)
+![Banana/plantain](https://commons.wikimedia.org/wiki/Special:FilePath/04.%20Mature%20Vegatative%20Myndoli%20Banana%20plants%20at%208-10%20plants.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Smallholder clumps across all humid tropics
@@ -35,7 +35,7 @@ A banana is an elongated, edible fruit that is botanically a berry produced by s
 
 ## Mango (*Mangifera indica*)
 
-![Mango](../assets/wm/Mangoes_-Magnifera_indica-_from_India_w640_3426f6c1.jpg)
+![Mango](../assets/wm/Close-up-View-Under-Mango-Tree-Canopy-Nazra-Village-Bihar_w640_e723721d.jpg)
 { width=340 }
 
 **Geolocation tell:** Huge dark-domed village shade tree: S/SE Asia, Africa, LatAm

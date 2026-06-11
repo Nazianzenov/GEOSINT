@@ -2,7 +2,7 @@
 
 ## Olive (*Olea europaea*)
 
-![Olive](../assets/wm/Olivesfromjordan_w640_58539b34.jpg)
+![Olive](../assets/wm/Olive-groves-in-Andalucia_w640_f4399075.jpg)
 { width=340 }
 
 **Geolocation tell:** Silvery groves = Mediterranean climate worldwide
@@ -57,7 +57,7 @@ Nerium oleander, commonly known as oleander, rose laurel, be-still tree or roseb
 
 ## Citrus (orange) (*Citrus × sinensis*)
 
-![Citrus (orange)](../assets/wm/Oranges_-_whole-halved-segment_w640_ff3aab9f.jpg)
+![Citrus (orange)](../assets/wm/Florida-orange-grove_w640_e165c30a.jpg)
 { width=340 }
 
 **Geolocation tell:** Street oranges = Seville/Athens/Valencia; groves = subtropics

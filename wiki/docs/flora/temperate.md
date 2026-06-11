@@ -35,7 +35,7 @@ The London plane, or sometimes hybrid plane, Platanus × hispanica, is a tree 
 
 ## Horse chestnut (*Aesculus hippocastanum*)
 
-![Horse chestnut](../assets/wm/Illustration_Aesculus_hippocastanum0_clean_w640_82d27b46.jpg)
+![Horse chestnut](../assets/wm/Horse-chestnut-Aesculus-hippocastanum---geograph.org.uk---755747_w640_e0d1a638.jpg)
 { width=340 }
 
 **Geolocation tell:** Hand-shaped leaves, conkers; C. European parks and beer gardens

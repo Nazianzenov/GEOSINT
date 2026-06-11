@@ -142,6 +142,30 @@ SPECIES = [
 ]
 
 
+# Wikipedia lead images for crop species are often the FRUIT, not the plant —
+# useless for field recognition. Explicit Commons overrides (plant/landscape).
+IMG_OVERRIDES = {
+    "Citrus (orange)": "Florida orange grove.JPG",
+    "Olive": "Olive groves in Andalucia.jpg",
+    "Date palm": "Lush Oasis of Date Palm Trees.jpg",
+    "Banana/plantain": "04. Mature Vegatative Myndoli Banana plants at 8-10 plants.jpg",
+    "Mango": "Close-up View Under Mango Tree Canopy – Nazra Village, Bihar.jpg",
+    "Coconut palm": "Corong Corong Beach, Coconut palm trees, El Nido, Palawan Island, Philippines.jpg",
+    "Oil palm": "Oil palm plantation in Paloh Hinai, Pahang.jpg",
+    "Horse chestnut": "Horse chestnut (Aesculus hippocastanum) - geograph.org.uk - 755747.jpg",
+    "Tea": "Tea plantations in Munnar, Kerala.jpg",
+    "Rice": "Longsheng Rice Terraces November 2017 014.jpg",
+}
+
+
+def override_url(common):
+    f = IMG_OVERRIDES.get(common)
+    if not f:
+        return None
+    return ("https://commons.wikimedia.org/wiki/Special:FilePath/"
+            + urllib.parse.quote(f) + "?width=640")
+
+
 def http_json(url):
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=60) as r:
@@ -161,11 +185,21 @@ def thumb_url(src, width=640):
     return f"https://commons.wikimedia.org/wiki/Special:FilePath/{leaf}?width={width}"
 
 
+def apply_overrides(d):
+    for e in d["species"]:
+        ov = override_url(e["common"])
+        if ov:
+            e["img"] = ov
+    return d
+
+
 def build_data(force):
     if DATA.is_file() and not force:
         d = json.loads(DATA.read_text(encoding="utf-8"))
         if datetime.now(timezone.utc) - datetime.fromisoformat(d["fetched"]) < TTL:
             print(f"  flora.json fresh ({len(d['species'])} species, cache hit)")
+            d = apply_overrides(d)
+            DATA.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
             return d
     out = []
     for group, common, sci, wp, hint in SPECIES:
@@ -189,7 +223,7 @@ def build_data(force):
         out.append(entry)
         print(f"  {common}: gbif={entry.get('gbif')} img={'y' if entry.get('img') else 'n'}")
         time.sleep(0.5)
-    d = {"fetched": datetime.now(timezone.utc).isoformat(), "species": out}
+    d = apply_overrides({"fetched": datetime.now(timezone.utc).isoformat(), "species": out})
     DATA.parent.mkdir(exist_ok=True)
     DATA.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
     return d

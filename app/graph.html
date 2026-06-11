@@ -3,76 +3,216 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GeOSINT — Knowledge Graph</title>
+<title>GeOSINT — Coverage Matrix & Explorer</title>
 <link rel="stylesheet" href="css/app.css">
 <style>
-  body { overflow: hidden; }
-  #g-top { display:flex; align-items:center; gap:14px; padding:10px 16px; background:var(--bg-1);
-           border-bottom:1px solid var(--line); }
+  body { overflow: auto; }
+  #g-top { display:flex; align-items:center; gap:12px; padding:10px 16px; background:var(--bg-1);
+           border-bottom:1px solid var(--line); position:sticky; top:0; z-index:60; }
   #g-top .brand a { color:var(--txt); text-decoration:none; }
-  #legend { display:flex; gap:14px; font:11px var(--mono); color:var(--txt-dim); flex:1; }
-  #legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; }
-  #graph { position:absolute; inset:47px 0 0 0; }
-  #g-hint { position:fixed; bottom:10px; left:14px; font:11px var(--mono); color:var(--txt-dim); z-index:10; }
+  .tab { font:600 12px var(--sans); letter-spacing:.08em; padding:6px 14px; border-radius:4px;
+         border:1px solid var(--line); color:var(--txt-dim); cursor:pointer; }
+  .tab.on { border-color:var(--accent); color:var(--accent); }
+  #g-hint { flex:1; font:11px var(--mono); color:var(--txt-dim); }
+  #wrap { padding:16px 20px 60px; }
+
+  /* ── matrix ── */
+  #matrix table { border-collapse: collapse; font:11px var(--sans); }
+  #matrix th, #matrix td { padding:0; }
+  #matrix thead th { position:sticky; top:47px; background:var(--bg-1); z-index:5;
+    height:120px; vertical-align:bottom; min-width:24px; }
+  #matrix thead th > div { writing-mode:vertical-rl; transform:rotate(195deg);
+    transform:rotate(180deg); padding:6px 5px; color:var(--txt-dim); cursor:pointer;
+    white-space:nowrap; font-weight:600; }
+  #matrix thead th > div:hover { color:var(--accent); }
+  #matrix tbody th { position:sticky; left:0; background:var(--bg-1); text-align:right;
+    padding:2px 9px 2px 4px; color:var(--txt); font-weight:500; cursor:pointer; white-space:nowrap; }
+  #matrix tbody th:hover { color:var(--accent); }
+  #matrix tbody th small { color:var(--txt-dim); }
+  #matrix td { width:24px; height:18px; border:1px solid #11151f; cursor:pointer; }
+  #matrix td:hover { outline:2px solid var(--accent); outline-offset:-2px; }
+
+  /* ── explorer ── */
+  #explorer { display:flex; flex-direction:column; align-items:center; }
+  #ex-controls { display:flex; gap:8px; align-items:center; margin-bottom:6px; width:100%; max-width:980px; }
+  #ex-pick { flex:1; max-width:420px; background:var(--bg); color:var(--txt);
+    border:1px solid var(--line); border-radius:4px; padding:7px 10px; font:13px var(--mono); }
+  #ex-svg { max-width:100%; }
+  #ex-svg text { font:11px "Segoe UI"; fill:#c4cddc; cursor:pointer; }
+  #ex-svg text:hover { fill:var(--accent); }
+  #ex-svg text.focal { font:600 15px "Segoe UI"; fill:#fff; }
+  #ex-svg line { stroke:#2b3450; }
+  #ex-svg circle { cursor:pointer; }
 </style>
 </head>
 <body>
 <div id="g-top">
   <div class="brand"><a href="index.html">◢ Ge<span class="brand-o">OSINT</span></a>
-    <span class="brand-sub">KNOWLEDGE GRAPH</span></div>
-  <div id="legend">
-    <span><i style="background:#4cc2ff"></i>category</span>
-    <span><i style="background:#ffb454"></i>country</span>
-    <span><i style="background:#7ee787"></i>continent</span>
-    <span style="margin-left:8px">node size = number of wiki cards · click a node to search it</span>
-  </div>
+    <span class="brand-sub">WIKI COVERAGE</span></div>
+  <span class="tab on" id="tab-matrix">▦ MATRIX</span>
+  <span class="tab" id="tab-explorer">◉ EXPLORER</span>
+  <span id="g-hint"></span>
   <a class="wiki-btn" href="search.html">⌕ SEARCH</a>
   <a class="wiki-btn" href="/wiki/" target="_blank">⌘ WIKI</a>
 </div>
-<div id="graph"></div>
-<div id="g-hint">drag to pan · wheel to zoom · hover for counts</div>
-<script src="vendor/force-graph.min.js"></script>
+<div id="wrap">
+  <div id="matrix"></div>
+  <div id="explorer" hidden>
+    <div id="ex-controls">
+      <input id="ex-pick" list="ex-options" placeholder="focus a country, category or continent…">
+      <datalist id="ex-options"></datalist>
+      <a class="btn" id="ex-search" target="_blank">open in search ⇗</a>
+    </div>
+    <svg id="ex-svg"></svg>
+  </div>
+</div>
 <script>
 "use strict";
-const COLORS = { category: "#4cc2ff", country: "#ffb454", continent: "#7ee787" };
-fetch("data/graph.json").then(r => r.json()).then(data => {
-  // log-capped radius: a 5,000-card category must not become a blob
-  const radius = n => Math.min(16, 3 + Math.log2(n.count + 1) * 1.5);
-  let fitted = false;
-  const g = ForceGraph()(document.getElementById("graph"))
-    .graphData(data)
-    .backgroundColor("#0b0e14")
-    .nodeId("id")
-    .nodeLabel(n => `${n.label} — ${n.count} cards`)
-    .nodeVal(n => radius(n))
-    .nodeRelSize(1)
-    .nodeCanvasObjectMode(() => "after")
-    .nodeCanvasObject((n, ctx, scale) => {
-      // label culling: categories & continents always; countries when zoomed
-      // in or significant. Dark halo keeps text readable over links.
-      if (n.kind === "country" && scale < 1.3 && n.count < 150) return;
-      const size = Math.max(8.5, 11 / scale);
-      ctx.font = `${n.kind === "country" ? "" : "600 "}${size}px Segoe UI`;
-      ctx.textAlign = "center";
-      ctx.lineWidth = Math.max(2, 4 / scale);
-      ctx.strokeStyle = "#0b0e14";
-      ctx.strokeText(n.label, n.x, n.y - radius(n) - 3);
-      ctx.fillStyle = n.kind === "country" ? "#aeb7c8" : "#e8edf5";
-      ctx.fillText(n.label, n.x, n.y - radius(n) - 3);
-    })
-    .nodeColor(n => COLORS[n.kind] || "#8a93a6")
-    .linkColor(() => "#2b3450")
-    .linkWidth(l => Math.min(2.5, 0.4 + Math.sqrt(l.w) / 6))
-    .onNodeClick(n => {
-      if (n.kind === "category") location.href = "search.html?cat=" + encodeURIComponent(n.id.slice(2));
-      else if (n.kind === "country") location.href = "search.html?country=" + encodeURIComponent(n.label);
-      else if (n.kind === "continent") location.href = "search.html?continent=" + encodeURIComponent(n.label);
-    })
-    .onEngineStop(() => { if (!fitted) { fitted = true; g.zoomToFit(500, 70); } });
-  g.d3Force("charge").strength(-180).distanceMax(450);
-  g.d3Force("link").distance(l => 35 + 120 / Math.sqrt(l.w || 1));
-  setTimeout(() => { if (!fitted) g.zoomToFit(400, 70); }, 1200);  // early frame
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const CONTINENTS = ["Africa","Asia","Europe","North America","Oceania","South America"];
+let D = null;
+
+const searchURL = {
+  country: n => "search.html?country=" + encodeURIComponent(n),
+  category: g => "search.html?cat=" + encodeURIComponent(g),
+  continent: k => "search.html?continent=" + encodeURIComponent(k),
+  cell: (c, g) => `search.html?country=${encodeURIComponent(c)}&cat=${encodeURIComponent(g)}`,
+};
+
+fetch("data/graph.json").then(r => r.json()).then(d => {
+  D = d;
+  buildMatrix();
+  buildExplorerControls();
+  $("#tab-matrix").onclick = () => switchTab("matrix");
+  $("#tab-explorer").onclick = () => switchTab("explorer");
+  const h = location.hash.match(/^#explorer(?:=(.+))?/);
+  if (h) { switchTab("explorer"); focusNode(decodeURIComponent(h[1] || "Europe")); }
+  else focusNode("Europe");
 });
+
+function switchTab(t) {
+  $("#matrix").hidden = t !== "matrix";
+  $("#explorer").hidden = t !== "explorer";
+  $("#tab-matrix").classList.toggle("on", t === "matrix");
+  $("#tab-explorer").classList.toggle("on", t === "explorer");
+  $("#g-hint").textContent = t === "matrix"
+    ? "cell shade = wiki cards for country × category · click a cell, row or column to search it"
+    : "click a neighbour to re-focus · sizes & line widths = card counts";
+  history.replaceState(null, "", t === "matrix" ? "#" : "#explorer");
+}
+
+/* ════════ MATRIX — the honest view of dense bipartite data ════════ */
+function buildMatrix() {
+  const cats = D.categories;
+  const max = Math.max(...D.countries.map(c =>
+    Math.max(1, ...cats.map(g => (D.counts[c.n] || {})[g.g] || 0))));
+  const shade = v => v ? `rgba(76,194,255,${(0.13 + 0.87 * Math.log(v + 1) / Math.log(max + 1)).toFixed(2)})` : "transparent";
+  let html = "<table><thead><tr><th></th>" + cats.map(g =>
+    `<th><div data-g="${esc(g.g)}" title="${esc(g.label)} — ${g.total} cards">${esc(g.label)}</div></th>`
+  ).join("") + "</tr></thead><tbody>";
+  for (const c of D.countries) {
+    html += `<tr><th data-c="${esc(c.n)}" title="everything on ${esc(c.n)}">${esc(c.n)} <small>${c.total}</small></th>`;
+    for (const g of cats) {
+      const v = (D.counts[c.n] || {})[g.g] || 0;
+      html += `<td data-c="${esc(c.n)}" data-g="${esc(g.g)}" style="background:${shade(v)}"
+        title="${esc(c.n)} × ${esc(g.label)}: ${v} cards"></td>`;
+    }
+    html += "</tr>";
+  }
+  $("#matrix").innerHTML = html + "</tbody></table>";
+  $("#matrix").addEventListener("click", e => {
+    const t = e.target.closest("[data-c],[data-g]");
+    if (!t) return;
+    const c = t.dataset.c, g = t.dataset.g;
+    if (c && g) location.href = searchURL.cell(c, g);
+    else if (c) location.href = searchURL.country(c);
+    else if (g) location.href = searchURL.category(g);
+  });
+}
+
+/* ════════ EXPLORER — deterministic ego view, no physics ════════ */
+function nodeKind(name) {
+  if (CONTINENTS.includes(name)) return "continent";
+  if (D.countries.some(c => c.n === name)) return "country";
+  if (D.categories.some(g => g.label === name || g.g === name)) return "category";
+  return null;
+}
+
+function neighbours(name, kind) {
+  if (kind === "country") {
+    const row = D.counts[name] || {};
+    const out = D.categories.filter(g => row[g.g])
+      .map(g => ({ name: g.label, kind: "category", w: row[g.g] }));
+    const k = (D.countries.find(c => c.n === name) || {}).k;
+    if (k) out.push({ name: k, kind: "continent", w: 1 });
+    return out;
+  }
+  if (kind === "category") {
+    const g = D.categories.find(x => x.label === name || x.g === name);
+    return D.countries.filter(c => (D.counts[c.n] || {})[g.g])
+      .map(c => ({ name: c.n, kind: "country", w: D.counts[c.n][g.g] }));
+  }
+  return D.countries.filter(c => c.k === name)
+    .map(c => ({ name: c.n, kind: "country", w: c.total }));
+}
+
+function buildExplorerControls() {
+  const dl = $("#ex-options");
+  [...CONTINENTS,
+   ...D.categories.map(g => g.label),
+   ...D.countries.map(c => c.n).sort()]
+    .forEach(v => { const o = document.createElement("option"); o.value = v; dl.appendChild(o); });
+  $("#ex-pick").addEventListener("change", () => {
+    if (nodeKind($("#ex-pick").value)) focusNode($("#ex-pick").value);
+  });
+}
+
+const KCOLOR = { category: "#4cc2ff", country: "#ffb454", continent: "#7ee787" };
+
+function focusNode(name) {
+  const kind = nodeKind(name);
+  if (!kind) return;
+  const all = neighbours(name, kind).sort((a, b) => b.w - a.w);
+  const ns = all.slice(0, 26);
+  const W = Math.min(innerWidth - 60, 1000), H = Math.min(innerHeight - 160, 780);
+  const cx = W / 2, cy = H / 2, R = Math.min(cx, cy) - 95;
+  const maxW = Math.max(...ns.map(n => n.w), 1);
+  const svg = $("#ex-svg");
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+  let out = "";
+  ns.forEach((n, i) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / ns.length;
+    const x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+    n.x = x; n.y = y;
+    out += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}"
+      stroke-width="${(0.6 + 3.4 * Math.sqrt(n.w / maxW)).toFixed(1)}"/>`;
+  });
+  ns.forEach((n, i) => {
+    const r = 4 + 8 * Math.sqrt(n.w / maxW);
+    const lx = cx + (R + 26) * Math.cos(-Math.PI / 2 + (i * 2 * Math.PI) / ns.length);
+    const ly = cy + (R + 26) * Math.sin(-Math.PI / 2 + (i * 2 * Math.PI) / ns.length);
+    const anchor = Math.abs(lx - cx) < 30 ? "middle" : (lx > cx ? "start" : "end");
+    out += `<circle cx="${n.x}" cy="${n.y}" r="${r.toFixed(1)}" fill="${KCOLOR[n.kind]}"
+        data-n="${esc(n.name)}"><title>${esc(n.name)} — ${n.w} cards</title></circle>
+      <text x="${lx}" y="${ly + 4}" text-anchor="${anchor}" data-n="${esc(n.name)}">${esc(n.name)}${n.kind === "continent" ? "" : " · " + n.w}</text>`;
+  });
+  out += `<circle cx="${cx}" cy="${cy}" r="17" fill="${KCOLOR[kind]}"/>
+    <text class="focal" x="${cx}" y="${cy - 26}" text-anchor="middle">${esc(name)}</text>`;
+  if (all.length > ns.length) {
+    out += `<text x="${cx}" y="${H - 8}" text-anchor="middle" style="fill:#8a93a6">
+      showing top ${ns.length} of ${all.length} — full list in search</text>`;
+  }
+  svg.innerHTML = out;
+  svg.querySelectorAll("[data-n]").forEach(el =>
+    el.addEventListener("click", () => focusNode(el.dataset.n)));
+  const g = D.categories.find(x => x.label === name);
+  $("#ex-search").href = kind === "category" ? searchURL.category(g ? g.g : name)
+    : kind === "country" ? searchURL.country(name) : searchURL.continent(name);
+  $("#ex-pick").value = name;
+  history.replaceState(null, "", "#explorer=" + encodeURIComponent(name));
+}
 </script>
 </body>
 </html>

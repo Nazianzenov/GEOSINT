@@ -344,51 +344,29 @@ class Indexer:
                      page=f"/wiki/flora/{slug(s['group'])}/")
 
     def graph(self):
-        """Knowledge graph: categories ↔ countries ↔ continents. Kept readable:
-        top-50 countries, every category guaranteed at least one anchor link."""
-        cat_count, country_count, cc, kc = {}, {}, {}, {}
+        """Country × category data for the matrix + ego-explorer views.
+        A global force graph of this (dense, near-bipartite) data is a
+        hairball by construction — so we ship the matrix instead."""
+        cat_count, country_count, cc = {}, {}, {}
         for card in self.cards:
             g = card["g"]
+            if g == "page":
+                continue
             cat_count[g] = cat_count.get(g, 0) + 1
             for ctry in card.get("c", []):
                 country_count[ctry] = country_count.get(ctry, 0) + 1
-                cc[(ctry, g)] = cc.get((ctry, g), 0) + 1
-                k = self.country_continent.get(ctry)
-                if k:
-                    kc[(k, g)] = kc.get((k, g), 0) + 1
-        top = dict(sorted(country_count.items(), key=lambda x: -x[1])[:50])
-        cats = {g: n for g, n in cat_count.items() if g != "page"}
-        nodes = [{"id": f"g:{g}", "label": CATEGORY_LABEL.get(g, g), "kind": "category",
-                  "count": n} for g, n in cats.items()]
-        nodes += [{"id": f"c:{c}", "label": c, "kind": "country", "count": n}
-                  for c, n in top.items()]
-        conts = ["Africa", "Asia", "Europe", "North America", "Oceania", "South America"]
-        nodes += [{"id": f"k:{k}", "label": k, "kind": "continent",
-                   "count": sum(n for (kk, _), n in kc.items() if kk == k) or 1}
-                  for k in conts]
-        links = [{"source": f"c:{c}", "target": f"g:{g}", "w": n}
-                 for (c, g), n in cc.items() if c in top and n >= 5 and g in cats]
-        links += [{"source": f"k:{k}", "target": f"g:{g}", "w": n}
-                  for (k, g), n in kc.items() if n >= 25 and g in cats]
-        links += [{"source": f"c:{c}", "target": f"k:{self.country_continent[c]}", "w": 3}
-                  for c in top if self.country_continent.get(c)]
-        # no flung-off isolated categories: anchor each to its strongest partner
-        linked = {l["source"] for l in links} | {l["target"] for l in links}
-        for g in cats:
-            if f"g:{g}" in linked:
-                continue
-            best_c = max(((c, n) for (c, gg), n in cc.items() if gg == g),
-                         key=lambda x: x[1], default=None)
-            if best_c and best_c[0] in top:
-                links.append({"source": f"c:{best_c[0]}", "target": f"g:{g}", "w": best_c[1]})
-            else:
-                best_k = max(((k, n) for (k, gg), n in kc.items() if gg == g),
-                             key=lambda x: x[1], default=None)
-                links.append({"source": f"k:{best_k[0] if best_k else 'Europe'}",
-                              "target": f"g:{g}", "w": 1})
-        GRAPH_OUT.write_text(json.dumps({"nodes": nodes, "links": links},
-                                        ensure_ascii=False), encoding="utf-8")
-        print(f"graph: {len(nodes)} nodes, {len(links)} links -> {GRAPH_OUT}")
+                cc.setdefault(ctry, {})[g] = cc.setdefault(ctry, {}).get(g, 0) + 1
+        top = sorted(country_count.items(), key=lambda x: -x[1])[:60]
+        out = {
+            "categories": [{"g": g, "label": CATEGORY_LABEL.get(g, g), "total": n}
+                           for g, n in sorted(cat_count.items(), key=lambda x: -x[1])],
+            "countries": [{"n": c, "k": self.country_continent.get(c), "total": n}
+                          for c, n in top],
+            "counts": {c: cc.get(c, {}) for c, _ in top},
+        }
+        GRAPH_OUT.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+        print(f"graph data: {len(out['countries'])} countries × "
+              f"{len(out['categories'])} categories -> {GRAPH_OUT}")
 
     # ── driver ────────────────────────────────────────────────────────
     def run(self):

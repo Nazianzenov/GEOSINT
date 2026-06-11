@@ -13,7 +13,12 @@ Eucalyptus globulus, commonly known as southern blue gum or blue gum, is a speci
 
 ## Grass tree (*Xanthorrhoea*)
 
+![Grass tree](../assets/wm/Xanthorrhoea_semiplana_-_Anstey_Hill_w640_a45153c1.jpg)
+{ width=340 }
+
 **Geolocation tell:** Black trunk + grass skirt = Australia only
+
+Xanthorrhoea is a genus of about 30 species of succulent flowering plants in the family Asphodelaceae. They are endemic to Australia. Common names for the plants include grasstree, grass gum-tree, kangaroo tail, balga, yakka, yamina, and black boy. The most common species is Xanthorrhoea australis, and some of these names are applied specifically to this species. *([Wikipedia](https://en.wikipedia.org/wiki/Xanthorrhoea), CC BY-SA)*
 
 [**⌖ live distribution map**](/app/index.html#species=2779409&name=Grass%20tree) · [POWO](https://powo.science.kew.org/results?q=Xanthorrhoea) · [GBIF](https://www.gbif.org/species/2779409)
 
@@ -30,7 +35,12 @@ Araucaria heterophylla is a species of conifer. As its vernacular name Norfolk I
 
 ## Monkey puzzle (*Araucaria araucana*)
 
+![Monkey puzzle](../assets/wm/Araucaria_en_Parque_Nacional_Conguillio_w640_8d7facb2.jpg)
+{ width=340 }
+
 **Geolocation tell:** Chile/Argentina Andes — reptilian branches
+
+Araucaria araucana, commonly called the pewen, monkey-puzzle, pehuen or piñonero or Chile pine, is an evergreen tree belonging to the family Araucariaceae and growing to a height of 30–40 m (98–131 ft) and a trunk diameter of 1–1.5 m (3.3–4.9 ft). Native to central and southern Chile and western Argentina, it is the hardiest species in the conifer genus Araucaria. *([Wikipedia](https://en.wikipedia.org/wiki/Araucaria_araucana), CC BY-SA)*
 
 [**⌖ live distribution map**](/app/index.html#species=2684984&name=Monkey%20puzzle) · [POWO](https://powo.science.kew.org/results?q=Araucaria%20araucana) · [GBIF](https://www.gbif.org/species/2684984)
 
@@ -58,12 +68,22 @@ The Douglas fir is an evergreen conifer species in the pine family, Pinaceae. It
 
 ## Tree fern (*Cyathea*)
 
+![Tree fern](../assets/wm/Cyathea_w640_7adee640.jpg)
+{ width=340 }
+
 **Geolocation tell:** NZ/SE Australia/tropical highlands understory
+
+Cyathea is a genus of tree ferns, the type genus of the fern order Cyatheales. *([Wikipedia](https://en.wikipedia.org/wiki/Cyathea), CC BY-SA)*
 
 [**⌖ live distribution map**](/app/index.html#species=2650273&name=Tree%20fern) · [POWO](https://powo.science.kew.org/results?q=Cyathea) · [GBIF](https://www.gbif.org/species/2650273)
 
 ## Pōhutukawa (*Metrosideros excelsa*)
 
+![Pōhutukawa](../assets/wm/PohutukawaCornwallis_w640_73bdbbaa.jpg)
+{ width=340 }
+
 **Geolocation tell:** Red December bloom on N. New Zealand coasts
+
+Pōhutukawa, also known as the New Zealand Christmas tree, or iron tree, is a coastal evergreen tree in the myrtle family, Myrtaceae, that produces a brilliant display of red flowers, each consisting of a mass of stamens. The pōhutukawa is one of twelve Metrosideros species endemic to New Zealand. Renowned for its vibrant colour and its ability to survive even perched on rocky, precarious cliffs, it has found an important place in New Zealand culture for its strength and beauty, and is regarded as a chiefly tree by Māori. *([Wikipedia](https://en.wikipedia.org/wiki/P%C5%8Dhutukawa), CC BY-SA)*
 
 [**⌖ live distribution map**](/app/index.html#species=3185393&name=P%C5%8Dhutukawa) · [POWO](https://powo.science.kew.org/results?q=Metrosideros%20excelsa) · [GBIF](https://www.gbif.org/species/3185393)
