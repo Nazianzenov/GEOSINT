@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """GeOSINT - Wikimedia image cache.
 
 Scans wiki/docs/**/*.md for Wikimedia image URLs
@@ -27,6 +27,8 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "wiki" / "docs"
 ASSETS = DOCS / "assets" / "wm"
@@ -36,7 +38,9 @@ MAX_AGE = timedelta(days=30)
 # Wikimedia requires a descriptive User-Agent (meta.wikimedia.org/wiki/User-Agent_policy)
 UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 
-URL_RE = re.compile(r"https://commons\.wikimedia\.org/wiki/Special:FilePath/[^\s)\"'<>]+")
+URL_RE = re.compile(
+    r"https://(?:commons\.wikimedia\.org/wiki/Special:FilePath/"
+    r"|upload\.wikimedia\.org/wikipedia/commons/)[^\s)\"'<>]+")
 EXT = {"image/png": ".png", "image/jpeg": ".jpg", "image/svg+xml": ".svg",
        "image/gif": ".gif", "image/webp": ".webp", "image/tiff": ".tif"}
 
