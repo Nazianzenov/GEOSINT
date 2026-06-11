@@ -51,6 +51,13 @@
     <span class="brand-sub">WIKI COVERAGE</span></div>
   <span class="tab on" id="tab-matrix">▦ MATRIX</span>
   <span class="tab" id="tab-explorer">◉ EXPLORER</span>
+  <select id="m-top" title="How many countries to show (ranked by wiki coverage)"
+          style="background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:4px;padding:5px 8px;font:12px var(--mono)">
+    <option value="10">top 10</option>
+    <option value="50" selected>top 50</option>
+    <option value="100">top 100</option>
+    <option value="0">all countries</option>
+  </select>
   <span id="g-hint"></span>
   <a class="wiki-btn" href="search.html">⌕ SEARCH</a>
   <a class="wiki-btn" href="/wiki/" target="_blank">⌘ WIKI</a>
@@ -87,6 +94,7 @@ fetch("data/graph.json").then(r => r.json()).then(d => {
   buildExplorerControls();
   $("#tab-matrix").onclick = () => switchTab("matrix");
   $("#tab-explorer").onclick = () => switchTab("explorer");
+  $("#m-top").onchange = buildMatrix;
   const h = location.hash.match(/^#explorer(?:=(.+))?/);
   if (h) { switchTab("explorer"); focusNode(decodeURIComponent(h[1] || "Europe")); }
   else focusNode("Europe");
@@ -94,6 +102,7 @@ fetch("data/graph.json").then(r => r.json()).then(d => {
 
 function switchTab(t) {
   $("#matrix").hidden = t !== "matrix";
+  $("#m-top").hidden = t !== "matrix";
   $("#explorer").hidden = t !== "explorer";
   $("#tab-matrix").classList.toggle("on", t === "matrix");
   $("#tab-explorer").classList.toggle("on", t === "explorer");
@@ -106,7 +115,8 @@ function switchTab(t) {
 /* ════════ MATRIX — the honest view of dense bipartite data ════════ */
 function buildMatrix() {
   const cats = D.categories;
-  const rows = D.countries.slice(0, 60);   // matrix shows top-60; explorer has all
+  const n = +$("#m-top").value;
+  const rows = n ? D.countries.slice(0, n) : D.countries;
   const max = Math.max(...rows.map(c =>
     Math.max(1, ...cats.map(g => (D.counts[c.n] || {})[g.g] || 0))));
   const shade = v => v ? `rgba(76,194,255,${(0.13 + 0.87 * Math.log(v + 1) / Math.log(max + 1)).toFixed(2)})` : "transparent";
@@ -123,15 +133,16 @@ function buildMatrix() {
     html += "</tr>";
   }
   $("#matrix").innerHTML = html + "</tbody></table>";
-  $("#matrix").addEventListener("click", e => {
-    const t = e.target.closest("[data-c],[data-g]");
-    if (!t) return;
-    const c = t.dataset.c, g = t.dataset.g;
-    if (c && g) location.href = searchURL.cell(c, g);
-    else if (c) location.href = searchURL.country(c);
-    else if (g) location.href = searchURL.category(g);
-  });
 }
+
+$("#matrix").addEventListener("click", e => {
+  const t = e.target.closest("[data-c],[data-g]");
+  if (!t) return;
+  const c = t.dataset.c, g = t.dataset.g;
+  if (c && g) location.href = searchURL.cell(c, g);
+  else if (c) location.href = searchURL.country(c);
+  else if (g) location.href = searchURL.category(g);
+});
 
 /* ════════ EXPLORER — deterministic ego view, no physics ════════ */
 function nodeKind(name) {
