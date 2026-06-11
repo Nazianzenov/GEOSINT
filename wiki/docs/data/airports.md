@@ -8,43 +8,43 @@ Every entry is in the **[smart search](/app/search.html)** with coordinates — 
 
 | Country | Entries |
 |---|---|
-| US | 917 |
-| CN | 334 |
-| RU | 255 |
-| CA | 250 |
-| AU | 195 |
-| IN | 139 |
-| BR | 138 |
-| FR | 135 |
-| JP | 108 |
-| GB | 89 |
-| ID | 83 |
-| DE | 75 |
-| AR | 73 |
-| IT | 73 |
-| MX | 71 |
-| TR | 66 |
-| IR | 64 |
-| ZA | 62 |
-| CO | 60 |
-| PH | 57 |
-| ES | 55 |
-| VE | 49 |
-| SE | 46 |
-| TH | 43 |
-| NO | 43 |
-| SA | 40 |
-| DZ | 39 |
-| PK | 39 |
-| NZ | 38 |
-| EG | 33 |
-| CL | 33 |
-| UA | 32 |
-| FI | 31 |
-| PT | 31 |
-| PE | 31 |
-| IQ | 30 |
-| NG | 29 |
-| GR | 29 |
-| MY | 29 |
-| KZ | 28 |
+| United States | 917 |
+| China | 334 |
+| Russia | 255 |
+| Canada | 250 |
+| Australia | 195 |
+| India | 139 |
+| Brazil | 138 |
+| France | 135 |
+| Japan | 108 |
+| United Kingdom | 89 |
+| Indonesia | 83 |
+| Germany | 75 |
+| Argentina | 73 |
+| Italy | 73 |
+| Mexico | 71 |
+| Turkey | 66 |
+| Iran | 64 |
+| South Africa | 62 |
+| Colombia | 60 |
+| Philippines | 57 |
+| Spain | 55 |
+| Venezuela | 49 |
+| Sweden | 46 |
+| Thailand | 43 |
+| Norway | 43 |
+| Saudi Arabia | 40 |
+| Algeria | 39 |
+| Pakistan | 39 |
+| New Zealand | 38 |
+| Egypt | 33 |
+| Chile | 33 |
+| Ukraine | 32 |
+| Finland | 31 |
+| Portugal | 31 |
+| Peru | 31 |
+| Iraq | 30 |
+| Nigeria | 29 |
+| Greece | 29 |
+| Malaysia | 29 |
+| Kazakhstan | 28 |

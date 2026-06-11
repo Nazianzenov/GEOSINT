@@ -36,30 +36,42 @@
 "use strict";
 const COLORS = { category: "#4cc2ff", country: "#ffb454", continent: "#7ee787" };
 fetch("data/graph.json").then(r => r.json()).then(data => {
-  const counts = Object.fromEntries(data.nodes.map(n => [n.id, n.count]));
+  // log-capped radius: a 5,000-card category must not become a blob
+  const radius = n => Math.min(16, 3 + Math.log2(n.count + 1) * 1.5);
+  let fitted = false;
   const g = ForceGraph()(document.getElementById("graph"))
     .graphData(data)
     .backgroundColor("#0b0e14")
     .nodeId("id")
     .nodeLabel(n => `${n.label} — ${n.count} cards`)
-    .nodeVal(n => Math.max(2, Math.sqrt(n.count)))
+    .nodeVal(n => radius(n))
+    .nodeRelSize(1)
     .nodeCanvasObjectMode(() => "after")
     .nodeCanvasObject((n, ctx, scale) => {
-      if (scale < 1.1 && n.kind === "country" && n.count < 40) return;
-      ctx.font = `${Math.max(9, 11 / scale)}px Segoe UI`;
-      ctx.fillStyle = "#d7dde8";
+      // label culling: categories & continents always; countries when zoomed
+      // in or significant. Dark halo keeps text readable over links.
+      if (n.kind === "country" && scale < 1.3 && n.count < 150) return;
+      const size = Math.max(8.5, 11 / scale);
+      ctx.font = `${n.kind === "country" ? "" : "600 "}${size}px Segoe UI`;
       ctx.textAlign = "center";
-      ctx.fillText(n.label, n.x, n.y - Math.sqrt(n.count) - 3);
+      ctx.lineWidth = Math.max(2, 4 / scale);
+      ctx.strokeStyle = "#0b0e14";
+      ctx.strokeText(n.label, n.x, n.y - radius(n) - 3);
+      ctx.fillStyle = n.kind === "country" ? "#aeb7c8" : "#e8edf5";
+      ctx.fillText(n.label, n.x, n.y - radius(n) - 3);
     })
     .nodeColor(n => COLORS[n.kind] || "#8a93a6")
-    .linkColor(() => "#232a3b")
-    .linkWidth(l => Math.min(3, Math.sqrt(l.w) / 2))
+    .linkColor(() => "#2b3450")
+    .linkWidth(l => Math.min(2.5, 0.4 + Math.sqrt(l.w) / 6))
     .onNodeClick(n => {
       if (n.kind === "category") location.href = "search.html?cat=" + encodeURIComponent(n.id.slice(2));
       else if (n.kind === "country") location.href = "search.html?country=" + encodeURIComponent(n.label);
       else if (n.kind === "continent") location.href = "search.html?continent=" + encodeURIComponent(n.label);
-    });
-  g.d3Force("charge").strength(-60);
+    })
+    .onEngineStop(() => { if (!fitted) { fitted = true; g.zoomToFit(500, 70); } });
+  g.d3Force("charge").strength(-180).distanceMax(450);
+  g.d3Force("link").distance(l => 35 + 120 / Math.sqrt(l.w || 1));
+  setTimeout(() => { if (!fitted) g.zoomToFit(400, 70); }, 1200);  // early frame
 });
 </script>
 </body>

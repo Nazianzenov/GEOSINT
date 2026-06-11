@@ -150,6 +150,11 @@ def fetch_wikidata(key, spec):
 
 
 def fetch_airports():
+    # countries.csv (same public-domain dataset) maps ISO codes -> names,
+    # so airport rows carry real country names like every other dataset.
+    raw = http_get("https://davidmegginson.github.io/ourairports-data/countries.csv")
+    iso = {rec["code"]: rec["name"]
+           for rec in csv.DictReader(io.StringIO(raw.decode("utf-8")))}
     raw = http_get("https://davidmegginson.github.io/ourairports-data/airports.csv")
     rows = []
     for rec in csv.DictReader(io.StringIO(raw.decode("utf-8"))):
@@ -162,7 +167,7 @@ def fetch_airports():
         rows.append({
             "n": f'{rec["name"]} ({rec["iata_code"] or rec["ident"]})',
             "lat": round(lat, 5), "lng": round(lng, 5),
-            "c": rec["iso_country"],       # ISO code; resolved client-side if possible
+            "c": canon_country(iso.get(rec["iso_country"], rec["iso_country"])),
             "url": f'https://ourairports.com/airports/{rec["ident"]}/',
             "x": rec["type"].replace("_", " "),
         })
