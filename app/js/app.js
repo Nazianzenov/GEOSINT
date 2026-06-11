@@ -105,13 +105,17 @@ function initMap() {
     maxZoom: 17, attribution: '&copy; OpenStreetMap, SRTM | style &copy; <a href="https://opentopomap.org">OpenTopoMap</a>' });
   const dark = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     maxZoom: 20, attribution: '&copy; OpenStreetMap &copy; <a href="https://carto.com/">CARTO</a>' });
+  const hillshade = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 16, attribution: "Hillshade &copy; Esri — terrain/relief view" });
   const esriLabels = L.tileLayer(
     "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
     maxZoom: 19, attribution: "Labels &copy; Esri" });
 
   state.map = L.map("map", { center: [30, 10], zoom: 3, layers: [dark], zoomControl: true });
   L.control.layers(
-    { "Dark (CARTO)": dark, "OpenStreetMap": osm, "Satellite (Esri)": esriSat, "Topographic": topo },
+    { "Dark (CARTO)": dark, "OpenStreetMap": osm, "Satellite (Esri)": esriSat,
+      "Topographic": topo, "Terrain hillshade (Esri)": hillshade },
     { "Place labels (Esri)": esriLabels },
     { position: "topleft" }
   ).addTo(state.map);
@@ -119,6 +123,8 @@ function initMap() {
 
   state.sunLayer = L.layerGroup().addTo(state.map);
   state.imgLayer = L.layerGroup().addTo(state.map);
+  state.dataLayer = L.layerGroup().addTo(state.map);
+  state.gbifLayers = {};   // name -> tileLayer
 
   state.map.on("mousemove", (e) => { $("#cursor-coords").textContent = fmtDD(e.latlng); });
   state.map.on("click", (e) => {
@@ -137,10 +143,31 @@ function setPoint(ll, opts = {}) {
     state.marker.on("dragend", () => setPoint(state.marker.getLatLng()));
   } else state.marker.setLatLng(state.point);
   $("#active-coords").textContent = fmtDD(state.point);
+  fetchElevation(state.point);
   if (opts.fly) state.map.flyTo(state.point, opts.zoom || Math.max(state.map.getZoom(), 13), { duration: 1.2 });
   if (state.module === "sun") renderSun();
   if (state.module === "tools") renderTools();
   if (state.module === "weather") $("#wx-meta").textContent = `Point: ${fmtDD(state.point)} — pick a date and fetch.`;
+}
+
+/* ── elevation readout (Open-Meteo elevation API, cached per point) ── */
+const _elevCache = new Map();
+let _elevTimer;
+function fetchElevation(ll) {
+  clearTimeout(_elevTimer);
+  _elevTimer = setTimeout(async () => {
+    const key = `${ll.lat.toFixed(3)},${ll.lng.toFixed(3)}`;
+    if (!_elevCache.has(key)) {
+      try {
+        const r = await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${ll.lat.toFixed(4)}&longitude=${ll.lng.toFixed(4)}`);
+        const j = await r.json();
+        _elevCache.set(key, Math.round(j.elevation[0]));
+      } catch { return; }
+    }
+    if (state.point && state.point.lat === ll.lat) {
+      $("#active-coords").textContent = `${fmtDD(state.point)} · ${_elevCache.get(key)} m`;
+    }
+  }, 350);
 }
 
 /* ── context menu ── */
@@ -237,7 +264,8 @@ function initSearch() {
 }
 
 /* ════════════════════════ panel / modules ══════════════════════ */
-const MODULE_TITLES = { sun: "Sun & Shadow", weather: "Meteorology", image: "Image Intelligence", tools: "Tool Launcher" };
+const MODULE_TITLES = { sun: "Sun & Shadow", weather: "Meteorology", image: "Image Intelligence",
+  tools: "Tool Launcher", data: "Data Layers" };
 
 function openModule(name) {
   if (state.module === name) return closePanel();
@@ -789,6 +817,111 @@ async function launchTool(t) {
   window.open(needsPt ? t.url(p.lat.toFixed(5), p.lng.toFixed(5), z) : t.url(), "_blank");
 }
 
+/* ═══════════════════════ DATA LAYERS ═══════════════════════════ */
+/* OSM feature presets — each maps to Overpass selectors run on the view bbox */
+const OSM_PRESETS = [
+  ["Mines & quarries", ['nwr["man_made"~"mineshaft|adit"]', 'nwr["landuse"="quarry"]', 'nwr["historic"="mine"]']],
+  ["Hospitals & clinics", ['nwr["amenity"~"hospital|clinic"]']],
+  ["Power plants & substations", ['nwr["power"~"plant|substation"]']],
+  ["Wind turbines", ['nwr["generator:source"="wind"]']],
+  ["Fuel stations", ['nwr["amenity"="fuel"]']],
+  ["Railway stations", ['nwr["railway"="station"]']],
+  ["Places of worship", ['nwr["amenity"="place_of_worship"]']],
+  ["Towers & masts", ['nwr["man_made"~"^(tower|mast|communications_tower)$"]']],
+  ["Airfields & helipads", ['nwr["aeroway"~"aerodrome|helipad"]']],
+  ["Military areas", ['nwr["landuse"="military"]', 'nwr["military"]']],
+  ["Water towers", ['nwr["man_made"="water_tower"]']],
+  ["Lighthouses", ['nwr["man_made"="lighthouse"]']],
+];
+
+function initData() {
+  const sel = $("#data-preset");
+  OSM_PRESETS.forEach(([name], i) => {
+    const o = document.createElement("option"); o.value = i; o.textContent = name;
+    sel.appendChild(o);
+  });
+  $("#data-run").addEventListener("click", () => runOverpass(OSM_PRESETS[+sel.value][1], OSM_PRESETS[+sel.value][0]));
+  $("#data-run-custom").addEventListener("click", () => {
+    const m = $("#data-custom").value.trim().match(/^([\w:]+)\s*=\s*([\w:;|-]+)$/);
+    if (!m) return status("custom tag must look like  key=value", true);
+    runOverpass([`nwr["${m[1]}"="${m[2]}"]`], `${m[1]}=${m[2]}`);
+  });
+  $("#data-clear").addEventListener("click", () => {
+    state.dataLayer.clearLayers();
+    $("#data-status").textContent = "";
+  });
+  $("#gbif-add").addEventListener("click", () => gbifOverlay($("#gbif-name").value.trim()));
+  $("#wx-wind-load").addEventListener("click", loadWindEmbed);
+}
+
+async function runOverpass(selectors, label) {
+  if (state.map.getZoom() < 8) return status("zoom in (≥ city scale) before plotting OSM features", true, 6000);
+  const b = state.map.getBounds();
+  const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map((v) => v.toFixed(4)).join(",");
+  const q = `[out:json][timeout:60];(${selectors.map((s) => `${s}(${bbox});`).join("")});out center 600;`;
+  $("#data-status").textContent = `querying OSM for ${label}…`;
+  try {
+    const r = await fetch("/api/overpass", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q }),
+    });
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    state.dataLayer.clearLayers();
+    let n = 0;
+    for (const el of j.elements || []) {
+      const lat = el.lat ?? el.center?.lat, lon = el.lon ?? el.center?.lon;
+      if (lat == null) continue;
+      const name = el.tags?.name || el.tags?.operator || label;
+      const mk = L.circleMarker([lat, lon], {
+        radius: 6, color: "#ffb454", fillColor: "#ffb454", fillOpacity: 0.55, weight: 1.5,
+      }).bindPopup(
+        `<b>${esc(name)}</b><br><span style="font-family:monospace">${lat.toFixed(5)}, ${lon.toFixed(5)}</span><br>` +
+        `<a href="https://www.openstreetmap.org/${el.type}/${el.id}" target="_blank">OSM object</a> · ` +
+        `<a href="#" onclick="setPoint(L.latLng(${lat},${lon}));return false">set active point</a>`);
+      state.dataLayer.addLayer(mk);
+      n++;
+    }
+    $("#data-status").textContent = `${label}: ${n} features in view (cached 7 days; 600 max)`;
+    status(`${n} × ${label} plotted`);
+  } catch (err) {
+    $("#data-status").textContent = "";
+    status(err.message || "Overpass failed", true, 8000);
+  }
+}
+
+async function gbifOverlay(name, knownKey) {
+  if (!name && !knownKey) return;
+  try {
+    let key = knownKey, shown = name;
+    if (!key) {
+      const r = await fetch("https://api.gbif.org/v1/species/match?name=" + encodeURIComponent(name));
+      const j = await r.json();
+      if (!j.usageKey) return status(`GBIF: no match for "${name}"`, true);
+      key = j.usageKey; shown = j.canonicalName || name;
+    }
+    if (state.gbifLayers[key]) return status("overlay already active");
+    const tl = L.tileLayer(
+      `https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${key}&style=purpleYellow.point`,
+      { opacity: 0.85, attribution: "Occurrences © GBIF" }).addTo(state.map);
+    state.gbifLayers[key] = tl;
+    const chip = document.createElement("span");
+    chip.className = "tag desktop";
+    chip.style.cssText = "cursor:pointer;margin:4px 6px 0 0;display:inline-block";
+    chip.textContent = `● ${shown} ✕`;
+    chip.onclick = () => { state.map.removeLayer(tl); delete state.gbifLayers[key]; chip.remove(); };
+    $("#gbif-active").appendChild(chip);
+    status(`GBIF distribution overlay: ${shown}`);
+  } catch { status("GBIF unreachable", true); }
+}
+
+function loadWindEmbed() {
+  const p = state.point || state.map.getCenter();
+  $("#wx-wind").innerHTML =
+    `<iframe width="100%" height="380" style="border:1px solid var(--line);border-radius:4px" loading="lazy"
+      src="https://embed.windy.com/embed2.html?lat=${p.lat.toFixed(3)}&lon=${p.lng.toFixed(3)}&detailLat=${p.lat.toFixed(3)}&detailLon=${p.lng.toFixed(3)}&zoom=6&level=surface&overlay=wind&menu=&message=true&marker=true&calendar=now&type=map&location=coordinates&metricWind=km%2Fh&metricTemp=%C2%B0C"></iframe>`;
+}
+
 /* ═══════════════════════ wiring / keyboard ═════════════════════ */
 function initKeys() {
   document.addEventListener("keydown", (e) => {
@@ -801,7 +934,8 @@ function initKeys() {
     }
     if (inField) return;
     if (e.key === "/") { e.preventDefault(); $("#search").focus(); }
-    const mods = { 1: "sun", 2: "weather", 3: "image", 4: "tools", s: "sun", w: "weather", i: "image", t: "tools" };
+    const mods = { 1: "sun", 2: "weather", 3: "image", 4: "tools", 6: "data",
+      s: "sun", w: "weather", i: "image", t: "tools", d: "data" };
     if (mods[e.key.toLowerCase()]) openModule(mods[e.key.toLowerCase()]);
     if (e.key.toLowerCase() === "m") toggleMeasure();
     if (e.key === "5" || e.key.toLowerCase() === "f") window.open("search.html", "_blank");
@@ -822,10 +956,12 @@ async function initStatus() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  initMap(); initSearch(); initSun(); initWeather(); initImage(); initKeys(); initStatus();
-  // deep link from search results: /app/index.html#ll=lat,lng
+  initMap(); initSearch(); initSun(); initWeather(); initImage(); initData(); initKeys(); initStatus();
+  // deep links: #ll=lat,lng (from search) and #species=gbifKey&name=... (from flora wiki)
   const ll = location.hash.match(/^#ll=(-?[\d.]+),(-?[\d.]+)/);
   if (ll) setPoint(L.latLng(+ll[1], +ll[2]), { fly: true, zoom: 13 });
+  const sp = location.hash.match(/^#species=(\d+)(?:&name=([^&]+))?/);
+  if (sp) { openModule("data"); gbifOverlay(decodeURIComponent(sp[2] || "species"), +sp[1]); }
   $$(".rail-btn[data-module]").forEach((b) => b.addEventListener("click", () => openModule(b.dataset.module)));
   $("#panel-close").addEventListener("click", closePanel);
   $("#btn-measure").addEventListener("click", () => toggleMeasure());

@@ -19,7 +19,7 @@
   <div id="active-coords" class="coord-readout" title="Active point (click map to set)">no active point</div>
   <button id="btn-copy-dd" class="icon-btn" title="Copy decimal coordinates">⧉ DD</button>
   <button id="btn-copy-dms" class="icon-btn" title="Copy DMS coordinates">⧉ DMS</button>
-  <a class="wiki-btn" href="/wiki/" target="_blank" title="Open the GeOSINT field wiki">⌘ WIKI</a>
+  <a class="wiki-btn" href="search.html" target="_blank" title="Wiki via smart search (browse pages from there, or the graph view)">⌘ WIKI</a>
 </header>
 
 <div id="layout">
@@ -28,6 +28,7 @@
     <button class="rail-btn" data-module="weather" title="Historical &amp; current weather [2]"><span>☂</span><label>WX</label></button>
     <button class="rail-btn" data-module="image"   title="Image intelligence — EXIF + reverse search [3]"><span>▣</span><label>IMG</label></button>
     <button class="rail-btn" data-module="tools"   title="External tool launcher [4]"><span>⌬</span><label>TOOLS</label></button>
+    <button class="rail-btn" data-module="data"    title="Data layers — OSM features &amp; species distributions on the map [6]"><span>⛏</span><label>DATA</label></button>
     <a class="rail-btn" href="search.html" target="_blank" title="Smart wiki search — countries, bollards, anything [5]" style="text-decoration:none"><span>⌕</span><label>FIND</label></a>
     <div class="rail-spacer"></div>
     <button class="rail-btn" id="btn-measure" title="Measure distance [M] — click map points, Esc to clear"><span>⤢</span><label>RULER</label></button>
@@ -90,8 +91,12 @@
         <h3>Hourly <span class="muted">(location local time)</span></h3>
         <div class="table-scroll"><table id="wx-table" class="data"></table></div>
         <div class="linkrow" id="wx-links"></div>
+        <h3>Wind &amp; weather map <span class="muted">(Windy embed)</span></h3>
+        <button class="btn" id="wx-wind-load">≋ LOAD WIND MAP AT ACTIVE POINT</button>
+        <div id="wx-wind"></div>
         <p class="srcnote">Data: <a href="https://open-meteo.com/en/docs/historical-weather-api" target="_blank">Open-Meteo</a>
-           (ERA5 / ERA5-Land reanalysis, ECMWF). Archive lags ~5 days behind real time; recent dates use the forecast API.</p>
+           (ERA5 / ERA5-Land reanalysis, ECMWF). Archive lags ~5 days behind real time; recent dates use the forecast API.
+           Wind map: <a href="https://www.windy.com/" target="_blank">Windy</a> embed (free non-commercial).</p>
       </section>
 
       <!-- ════════ IMAGE ════════ -->
@@ -129,6 +134,44 @@
         <p class="hint">Every tool opens centred on the <b>active point</b> (click the map to set it).
            Desktop tools launch locally.</p>
         <div id="tools-list"></div>
+      </section>
+
+      <!-- ════════ DATA LAYERS ════════ -->
+      <section id="module-data" hidden>
+        <p class="hint">Plot <b>OpenStreetMap features in the current map view</b> (zoom in to at
+           least city scale first). Results cached locally for 7 days.</p>
+        <div class="field-row">
+          <div class="field grow">
+            <label for="data-preset">Feature set</label>
+            <select id="data-preset"></select>
+          </div>
+          <button class="btn accent" id="data-run">PLOT</button>
+          <button class="btn" id="data-clear">CLEAR</button>
+        </div>
+        <div class="field-row">
+          <div class="field grow">
+            <label>…or custom OSM tag (key=value)</label>
+            <input type="text" id="data-custom" placeholder="man_made=lighthouse" spellcheck="false">
+          </div>
+          <button class="btn" id="data-run-custom">PLOT</button>
+        </div>
+        <div id="data-status" class="muted"></div>
+
+        <h3>Species distribution overlay <span class="muted">(GBIF)</span></h3>
+        <p class="hint">Live occurrence-density tiles for any species — e.g. <i>Betula pendula</i>
+           (silver birch) to compare a scene's vegetation against the real range.
+           See the wiki's <a href="/wiki/flora/" target="_blank">botanical reference</a> for
+           one-click species maps.</p>
+        <div class="field-row">
+          <div class="field grow">
+            <label>Species (common or scientific name)</label>
+            <input type="text" id="gbif-name" placeholder="Betula pendula" spellcheck="false">
+          </div>
+          <button class="btn accent" id="gbif-add">OVERLAY</button>
+        </div>
+        <div id="gbif-active"></div>
+        <p class="srcnote">OSM data © OpenStreetMap contributors (ODbL) via Overpass;
+           species tiles: <a href="https://www.gbif.org/" target="_blank">GBIF</a> occurrence density (CC0/CC-BY).</p>
       </section>
 
     </div>

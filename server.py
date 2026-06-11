@@ -10,6 +10,7 @@ Run:  python server.py [--port 8650] [--no-browser]
 
 import argparse
 import glob
+import hashlib
 import json
 import mimetypes
 import os
@@ -18,6 +19,9 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
+import urllib.parse
+import urllib.request
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -26,6 +30,13 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parent
 APP_DIR = ROOT / "app"
 WIKI_SITE = ROOT / "wiki" / "site"
+OVERPASS_CACHE = ROOT / "cache" / "overpass"
+OVERPASS_TTL = 7 * 86400
+OVERPASS_MIRRORS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+]
+UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")
 
 KML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
@@ -232,7 +243,47 @@ class Handler(BaseHTTPRequestHandler):
             return self.api_flyto(payload)
         if path == "/api/launch":
             return self.api_launch(payload)
+        if path == "/api/overpass":
+            return self.api_overpass(payload)
         self.send_json({"error": "not found"}, 404)
+
+    # ---- API: cached Overpass proxy --------------------------------------
+    def api_overpass(self, payload):
+        """Run an Overpass QL query with a 7-day local file cache."""
+        q = str(payload.get("q") or "")
+        if not (10 < len(q) < 6000) or "out" not in q:
+            return self.send_json({"error": "invalid query"}, 400)
+        OVERPASS_CACHE.mkdir(parents=True, exist_ok=True)
+        cached = OVERPASS_CACHE / (hashlib.sha1(q.encode()).hexdigest() + ".json")
+        if cached.is_file() and time.time() - cached.stat().st_mtime < OVERPASS_TTL:
+            body = cached.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("X-Cache", "hit")
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        data = ("data=" + urllib.parse.quote(q)).encode()
+        last_err = "no mirror reachable"
+        for mirror in OVERPASS_MIRRORS:
+            try:
+                req = urllib.request.Request(mirror, data=data,
+                                             headers={"User-Agent": UA})
+                with urllib.request.urlopen(req, timeout=90) as resp:
+                    body = resp.read()
+                json.loads(body)            # validate before caching
+                cached.write_bytes(body)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("X-Cache", "miss")
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except Exception as e:
+                last_err = str(e)[:200]
+        return self.send_json({"error": f"Overpass unreachable: {last_err}"}, 502)
 
     # ---- API: ExifTool deep metadata dump -------------------------------
     def api_exif(self, raw: bytes):
