@@ -31,7 +31,7 @@
     <button class="rail-btn" data-module="data"    title="Data layers — OSM features &amp; species distributions on the map [6]"><span>⛏</span><label>DATA</label></button>
     <a class="rail-btn" href="search.html" target="_blank" title="Smart wiki search — countries, bollards, anything [5]" style="text-decoration:none"><span>⌕</span><label>FIND</label></a>
     <div class="rail-spacer"></div>
-    <button class="rail-btn" id="btn-measure" title="Measure distance [M] — click map points, Esc to clear"><span>⤢</span><label>RULER</label></button>
+    <button class="rail-btn" id="btn-measure" title="Measure distance [M] — click to add points; right-drag a point to move; hold Shift for a range ring; Esc clears"><span>⤢</span><label>RULER</label></button>
     <button class="rail-btn" id="btn-help" title="Keyboard shortcuts"><span>?</span><label>KEYS</label></button>
   </nav>
 
@@ -48,6 +48,8 @@
       <section id="module-sun" hidden>
         <p class="hint">Chronolocation: verify a photo's claimed time/place from sun position and shadows.
            Set the active point on the map first.</p>
+        <a class="btn accent" href="sun.html" target="_blank" style="display:inline-block;margin-bottom:10px"
+           title="Full-screen studio: upload a photo, click-measure object &amp; shadow, own map + geocoder">⤢ Open Sun &amp; Shadow Studio (image + measure)</a>
         <div class="field-row">
           <div class="field grow">
             <label for="sun-dt">Date &amp; time (as shown / claimed)</label>
@@ -195,7 +197,7 @@
       <tr><td><kbd>/</kbd></td><td>focus search</td></tr>
       <tr><td><kbd>1–4</kbd></td><td>Sun · Weather · Image · Tools</td></tr>
       <tr><td><kbd>5</kbd> / <kbd>F</kbd></td><td>smart wiki search (new tab)</td></tr>
-      <tr><td><kbd>M</kbd></td><td>measure tool (click points; Esc clears)</td></tr>
+      <tr><td><kbd>M</kbd></td><td>measure: click to add points · right-drag a point to move · hold <kbd>Shift</kbd> for a range ring · Esc clears</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>close panel / cancel</td></tr>
       <tr><td>right-click map</td><td>copy coords &amp; quick-open menu</td></tr>
     </table>

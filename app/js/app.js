@@ -11,7 +11,7 @@ const state = {
   module: null,           // open panel module name
   sunLayer: null,         // L.layerGroup for sun/shadow lines
   imgLayer: null,         // photo GPS marker + view cone
-  measure: { on: false, pts: [], line: null, tip: null },
+  measure: { on: false, pts: [], line: null, tip: null, verts: [], dragIdx: null, shift: false, radius: null },
   tools: null,            // /api/status -> local desktop tool availability
   lastFile: null,         // last image dropped into the Image module
 };
@@ -122,6 +122,7 @@ function initMap() {
   ).addTo(state.map);
   L.control.scale({ imperial: true }).addTo(state.map);
 
+  state.boundaryLayer = L.layerGroup().addTo(state.map);  // admin-area highlight (under markers)
   state.sunLayer = L.layerGroup().addTo(state.map);
   state.imgLayer = L.layerGroup().addTo(state.map);
   state.dataLayer = L.layerGroup().addTo(state.map);
@@ -138,6 +139,7 @@ function initMap() {
 }
 
 function setPoint(ll, opts = {}) {
+  clearBoundary();                      // moving the active point drops any area highlight
   state.point = L.latLng(ll.lat, ll.lng);
   if (!state.marker) {
     state.marker = L.marker(state.point, { draggable: true }).addTo(state.map);
@@ -174,6 +176,7 @@ function fetchElevation(ll) {
 
 /* ── context menu ── */
 function showCtx(e) {
+  if (state.measure._suppressCtx) return;           // right-click began on a measure vertex
   const ll = e.latlng, menu = $("#ctx-menu");
   const items = [
     ["Set active point here", () => setPoint(ll)],
@@ -194,34 +197,127 @@ function showCtx(e) {
 const hideCtx = () => { $("#ctx-menu").hidden = true; };
 document.addEventListener("click", (e) => { if (!$("#ctx-menu").contains(e.target)) hideCtx(); });
 
-/* ── measure tool ── */
+/* ── measure tool ──
+   Left-click adds vertices. Right-drag a vertex to move it (distances update live).
+   Hold Shift while dragging to ring the radius of the edge being changed. */
 function toggleMeasure(force) {
   const m = state.measure;
   m.on = force !== undefined ? force : !m.on;
   $("#btn-measure").classList.toggle("armed", m.on);
   state.map.getContainer().style.cursor = m.on ? "crosshair" : "";
-  if (!m.on) {
-    if (m.line) state.map.removeLayer(m.line);
-    if (m.tip) state.map.removeLayer(m.tip);
-    Object.assign(m, { pts: [], line: null, tip: null });
-  } else status("measure: click points on the map — Esc to finish", false, 6000);
+  if (!m.on) clearMeasure();
+  else status("measure: left-click to add points · right-drag a point to move · hold Shift for a range ring · Esc clears", false, 7000);
 }
-function measureClick(ll) {
+
+function clearMeasure() {
   const m = state.measure;
-  m.pts.push(ll);
+  endVertexDrag();                                  // detach any live drag listeners
+  [m.line, m.tip, ...(m.verts || [])].forEach((l) => l && state.map.removeLayer(l));
+  clearRadius();
+  Object.assign(m, { pts: [], line: null, tip: null, verts: [], dragIdx: null, shift: false, radius: null });
+}
+
+function measureClick(ll) {
+  state.measure.pts.push(ll);
+  renderMeasure();
+}
+
+/* full (re)build of polyline + draggable vertex handles — only on add/remove, not per drag-frame */
+function renderMeasure() {
+  const m = state.measure;
   if (!m.line) m.line = L.polyline(m.pts, { color: "#ffb454", weight: 2, dashArray: "6 4" }).addTo(state.map);
   else m.line.setLatLngs(m.pts);
+  (m.verts || []).forEach((v) => state.map.removeLayer(v));
+  m.verts = m.pts.map((p, i) => {
+    const v = L.circleMarker(p, {
+      radius: 5, color: "#ffb454", weight: 2, fillColor: "#0b0e14", fillOpacity: 1, bubblingMouseEvents: false,
+    }).addTo(state.map);
+    v.on("mousedown", (e) => { if (e.originalEvent.button === 2) startVertexDrag(i, e); });
+    return v;
+  });
+  updateMeasureTotal();
+}
+
+/* lightweight per-frame update of the running total tooltip */
+function updateMeasureTotal() {
+  const m = state.measure;
   let total = 0;
   for (let i = 1; i < m.pts.length; i++) total += haversine(m.pts[i - 1], m.pts[i]);
-  const txt = m.pts.length > 1
-    ? `${fmtDist(total)} · ${(total / 1609.344).toFixed(2)} mi`
-    : "click next point";
-  if (m.tip) state.map.removeLayer(m.tip);
-  m.tip = L.marker(ll, {
-    interactive: false,
-    icon: L.divIcon({ className: "measure-tip", html: txt, iconAnchor: [-8, 8] }),
-  }).addTo(state.map);
+  const txt = m.pts.length > 1 ? `${fmtDist(total)} · ${(total / 1609.344).toFixed(2)} mi` : "click next point";
+  const last = m.pts[m.pts.length - 1];
+  const icon = L.divIcon({ className: "measure-tip", html: txt, iconAnchor: [-8, 8] });
+  if (!m.tip) m.tip = L.marker(last, { interactive: false, icon }).addTo(state.map);
+  else m.tip.setLatLng(last).setIcon(icon);
 }
+
+function startVertexDrag(i, e) {
+  const m = state.measure;
+  L.DomEvent.preventDefault(e.originalEvent);       // no text selection
+  m.dragIdx = i;
+  m._suppressCtx = true;                            // swallow the contextmenu on right-button release
+  state.map.dragging.disable();                     // don't pan the map while moving the vertex
+  hideCtx();
+  state.map.on("mousemove", onVertexDrag);
+  state.map.on("mouseup", endVertexDrag);
+  document.addEventListener("mouseup", endVertexDrag);  // catch releases outside the map
+  if (m.shift) updateRadius();
+}
+
+function onVertexDrag(e) {
+  const m = state.measure;
+  if (m.dragIdx == null) return;
+  m.pts[m.dragIdx] = e.latlng;
+  m.line.setLatLngs(m.pts);
+  m.verts[m.dragIdx].setLatLng(e.latlng);
+  updateMeasureTotal();
+  if (m.shift) updateRadius();
+}
+
+function endVertexDrag() {
+  const m = state.measure;
+  state.map.off("mousemove", onVertexDrag);
+  state.map.off("mouseup", endVertexDrag);
+  document.removeEventListener("mouseup", endVertexDrag);
+  state.map.dragging.enable();
+  if (m.dragIdx == null) return;
+  m.dragIdx = null;
+  clearRadius();
+  setTimeout(() => { m._suppressCtx = false; }, 50);
+}
+
+/* range ring: circle centred on the anchor neighbour, radius = length of the edge being dragged */
+function updateRadius() {
+  const m = state.measure;
+  if (m.dragIdx == null) return;
+  const i = m.dragIdx;
+  const anchorIdx = i > 0 ? i - 1 : (m.pts.length > 1 ? i + 1 : -1);
+  if (anchorIdx < 0) return clearRadius();          // a lone point has no edge
+  const anchor = m.pts[anchorIdx], dist = haversine(anchor, m.pts[i]);
+  if (!m.radius) {
+    m.radius = L.circle(anchor, { radius: dist, color: "#4cc2ff", weight: 1.5, dashArray: "4 4",
+      fillColor: "#4cc2ff", fillOpacity: .06, interactive: false }).addTo(state.map);
+  }
+  m.radius.setLatLng(anchor).setRadius(dist);
+}
+
+function clearRadius() {
+  const m = state.measure;
+  if (!m.radius) return;
+  state.map.removeLayer(m.radius);
+  m.radius = null;
+}
+
+/* ── administrative-area boundary highlight (Nominatim polygon_geojson) ── */
+function showBoundary(geojson) {
+  state.boundaryLayer.clearLayers();
+  const layer = L.geoJSON(geojson, {
+    interactive: false,
+    style: { color: "#4cc2ff", weight: 2, opacity: .9, fillColor: "#4cc2ff", fillOpacity: .07 },
+  }).addTo(state.boundaryLayer);
+  try { state.map.fitBounds(layer.getBounds(), { padding: [30, 30], maxZoom: 13 }); }
+  catch { /* degenerate geometry */ }
+}
+function clearBoundary() { if (state.boundaryLayer) state.boundaryLayer.clearLayers(); }
 
 /* ════════════════════════ geocoding search ═════════════════════ */
 function initSearch() {
@@ -240,16 +336,31 @@ function initSearch() {
     }
     t = setTimeout(async () => {
       try {
-        const r = await cachedFetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=7&accept-language=en&q=${encodeURIComponent(q)}`);
-        const data = await r.json();
+        const r = await cachedFetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=7&accept-language=en&polygon_geojson=1&polygon_threshold=0.001&q=${encodeURIComponent(q)}`);
+        const raw = await r.json();
+        // OSM sometimes stores one place as both a way and a relation (e.g. Windhoek):
+        // identical name/type/coord, different object. Collapse, preferring the relation
+        // (the canonical multipolygon boundary, and the better source for the highlight).
+        const RANK = { relation: 3, way: 2, node: 1 };
+        const seen = new Map();
+        for (const d of raw) {
+          const key = `${d.addresstype}|${(+d.lat).toFixed(4)},${(+d.lon).toFixed(4)}|${d.display_name}`;
+          const prev = seen.get(key);
+          if (!prev || (RANK[d.osm_type] || 0) > (RANK[prev.osm_type] || 0)) seen.set(key, d);
+        }
+        const data = [...seen.values()];
         box.innerHTML = data.length
           ? data.map((d, i) =>
-              `<div class="search-item" data-i="${i}"><b>${esc(d.name || d.display_name.split(",")[0])}</b> <span class="tag">${esc(d.type || "")}</span><small>${esc(d.display_name)}</small></div>`).join("")
+              `<div class="search-item" data-i="${i}"><b>${esc(d.name || d.display_name.split(",")[0])}</b> <span class="tag">${esc(d.addresstype || d.type || "")}</span><small>${esc(d.display_name)}</small></div>`).join("")
           : `<div class="search-item">no results</div>`;
         box.hidden = false;
         box.querySelectorAll("[data-i]").forEach((el) => el.onclick = () => {
           const d = data[+el.dataset.i];
-          setPoint(L.latLng(+d.lat, +d.lon), { fly: true, zoom: d.type === "country" ? 6 : 13 });
+          const poly = d.geojson && /Polygon$/.test(d.geojson.type);   // Polygon | MultiPolygon
+          // for an area, fitBounds to the polygon instead of flying to the label point
+          setPoint(L.latLng(+d.lat, +d.lon),
+            poly ? {} : { fly: true, zoom: d.addresstype === "country" ? 6 : 13 });
+          if (poly) showBoundary(d.geojson);
           box.hidden = true; input.blur();
         });
       } catch { box.innerHTML = `<div class="search-item">Nominatim unreachable</div>`; box.hidden = false; }
@@ -277,12 +388,14 @@ function openModule(name) {
   $$(".rail-btn[data-module]").forEach((b) => b.classList.toggle("active", b.dataset.module === name));
   state.map.invalidateSize();
   if (name === "sun") renderSun();
+  else state.sunLayer.clearLayers();              // sun/shadow overlay only shows in its own module
   if (name === "tools") renderTools();
 }
 function closePanel() {
   state.module = null;
   $("#panel").hidden = true;
   $$(".rail-btn[data-module]").forEach((b) => b.classList.remove("active"));
+  state.sunLayer.clearLayers();
   state.map.invalidateSize();
 }
 
@@ -361,9 +474,7 @@ function renderSun() {
 
   if (alt > 0) {
     const p = state.point;
-    state.sunLayer.addLayer(L.polyline([p, project(p, az, 400)], { color: "#ffd23e", weight: 3, opacity: .9 }));
     state.sunLayer.addLayer(L.polyline([p, project(p, shadowAz, 200)], { color: "#30363f", weight: 5, opacity: .85 }));
-    state.sunLayer.addLayer(L.circleMarker(project(p, az, 400), { radius: 7, color: "#ffd23e", fillColor: "#ffd23e", fillOpacity: 1 }));
   }
   drawSunChart(sd, lat, lng);
 
@@ -1003,6 +1114,13 @@ function initKeys() {
     if (mods[e.key.toLowerCase()]) openModule(mods[e.key.toLowerCase()]);
     if (e.key.toLowerCase() === "m") toggleMeasure();
     if (e.key === "5" || e.key.toLowerCase() === "f") window.open("search.html", "_blank");
+  });
+  // Shift toggles the measure range ring live while a vertex is being right-dragged
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Shift") { state.measure.shift = true; if (state.measure.dragIdx != null) updateRadius(); }
+  });
+  document.addEventListener("keyup", (e) => {
+    if (e.key === "Shift") { state.measure.shift = false; clearRadius(); }
   });
 }
 
