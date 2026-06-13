@@ -48,7 +48,7 @@ The server detects locally installed tools (shown in the Tools module under
 |---|---|---|
 | **ExifTool** | ✓ installed (`winget install OliverBetz.ExifTool`) | "FULL METADATA" button in the Image module runs it on your file via `/api/exif` — all ~hundreds of tags, locally |
 | **Google Earth Pro** | ✓ installed | Tools module entry generates a KML and flies GE Pro to the active point (`/api/flyto`) |
-| **QGIS** | not installed — `winget install OSGeo.QGIS.LTR` (~2 GB) | one-click launch from the Tools module once installed |
+| **QGIS** | installed (`winget install OSGeo.QGIS.LTR`) | launches via its `qgis-ltr.bat` (sets up the Qt/GDAL env). The Data-layers module's **Open in QGIS** button hands off the plotted OSM features + active point as a GeoJSON layer (`/api/qgis`) |
 | **Sherloq** (image forensics) | not installed — `git clone https://github.com/GuidoBartoli/sherloq tools\sherloq` + venv per its README | one-click launch once present in `tools\sherloq` |
 
 Detection re-runs on every page load — install a tool and refresh; no config needed.

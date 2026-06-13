@@ -115,11 +115,15 @@ def find_google_earth_pro():
 
 
 def find_qgis():
+    # Prefer the .bat launcher: it sets up the Qt/GDAL/Python environment the
+    # qgis-*-bin.exe needs. Launching the bare exe usually fails on missing DLLs.
     return _first_existing([
+        r"C:\Program Files\QGIS*\bin\qgis-ltr.bat",
+        r"C:\Program Files\QGIS*\bin\qgis.bat",
+        r"C:\OSGeo4W\bin\qgis-ltr.bat",
+        r"C:\OSGeo4W\bin\qgis.bat",
         r"C:\Program Files\QGIS*\bin\qgis-ltr-bin.exe",
         r"C:\Program Files\QGIS*\bin\qgis-bin.exe",
-        r"C:\OSGeo4W\bin\qgis-ltr-bin.exe",
-        r"C:\OSGeo4W\bin\qgis-bin.exe",
     ])
 
 
@@ -345,7 +349,36 @@ class Handler(BaseHTTPRequestHandler):
             return self.api_launch(payload)
         if path == "/api/overpass":
             return self.api_overpass(payload)
+        if path == "/api/qgis":
+            return self.api_qgis(payload)
         self.send_json({"error": "not found"}, 404)
+
+    # ---- API: hand off GeoJSON to QGIS ----------------------------------
+    def api_qgis(self, payload):
+        """Write a GeoJSON FeatureCollection to disk and open it in QGIS as a layer."""
+        qgis = find_qgis()
+        if qgis is None:
+            return self.send_json({"error": "QGIS not found. Install: winget install OSGeo.QGIS.LTR"}, 409)
+        fc = payload.get("geojson")
+        if not isinstance(fc, dict) or fc.get("type") != "FeatureCollection":
+            return self.send_json({"error": "geojson FeatureCollection required"}, 400)
+        feats = fc.get("features")
+        if not isinstance(feats, list) or not (1 <= len(feats) <= 5000):
+            return self.send_json({"error": "1-5000 features required"}, 400)
+        out = CACHE / "qgis"
+        out.mkdir(parents=True, exist_ok=True)
+        name = re.sub(r"[^A-Za-z0-9_-]+", "_", str(payload.get("name") or "geosint"))[:40] or "geosint"
+        f = out / f"{name}.geojson"
+        f.write_text(json.dumps(fc), encoding="utf-8")
+        try:
+            if qgis.suffix.lower() == ".bat":
+                subprocess.Popen(["cmd", "/c", str(qgis), str(f)],
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            else:
+                subprocess.Popen([str(qgis), str(f)])
+            return self.send_json({"ok": True, "file": str(f), "features": len(feats)})
+        except OSError as e:
+            return self.send_json({"error": str(e)}, 500)
 
     # ---- API: cached Overpass proxy --------------------------------------
     def api_overpass(self, payload):
@@ -442,6 +475,11 @@ class Handler(BaseHTTPRequestHandler):
             if key == "sherloq":
                 gui = ROOT / "tools" / "sherloq" / "gui" / "sherloq.py"
                 subprocess.Popen([str(path), str(gui)], cwd=str(gui.parent))
+            elif path.suffix.lower() == ".bat":
+                # run the launcher .bat via a hidden cmd so it sets up its
+                # environment and no console window lingers
+                subprocess.Popen(["cmd", "/c", str(path)],
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             else:
                 subprocess.Popen([str(path)])
             return self.send_json({"ok": True, "launched": str(path)})

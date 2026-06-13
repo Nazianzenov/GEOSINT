@@ -148,6 +148,7 @@ function setPoint(ll, opts = {}) {
   if (opts.fly) state.map.flyTo(state.point, opts.zoom || Math.max(state.map.getZoom(), 13), { duration: 1.2 });
   if (state.module === "sun") renderSun();
   if (state.module === "tools") renderTools();
+  if (state.module === "data") syncQgisButton();
   if (state.module === "weather") $("#wx-meta").textContent = `Point: ${fmtDD(state.point)} — pick a date and fetch.`;
 }
 
@@ -855,10 +856,53 @@ function initData() {
   });
   $("#data-clear").addEventListener("click", () => {
     state.dataLayer.clearLayers();
+    state.lastData = null;
     $("#data-status").textContent = "";
+    syncQgisButton();
   });
   $("#gbif-add").addEventListener("click", () => gbifOverlay($("#gbif-name").value.trim()));
   $("#wx-wind-load").addEventListener("click", loadWindEmbed);
+  const qb = $("#data-qgis");
+  if (qb) qb.addEventListener("click", openInQgis);
+  syncQgisButton();
+}
+
+/* Enable the QGIS button only when QGIS is installed; relabel by what we'd send. */
+function syncQgisButton() {
+  const qb = $("#data-qgis");
+  if (!qb) return;
+  const has = state.tools && state.tools.qgis && state.tools.qgis.found;
+  const n = state.lastData ? state.lastData.features.length : 0;
+  qb.disabled = !has;
+  qb.title = has ? "Open the plotted features and/or active point in QGIS as a layer"
+                 : "QGIS not detected — install it to enable hand-off";
+  qb.textContent = !has ? "QGIS not installed"
+    : n ? `▦ OPEN ${n} FEATURE${n > 1 ? "S" : ""} IN QGIS`
+        : "▦ OPEN ACTIVE POINT IN QGIS";
+}
+
+async function openInQgis() {
+  const features = [];
+  if (state.lastData && state.lastData.features.length) {
+    for (const el of state.lastData.features) {
+      features.push({ type: "Feature", geometry: { type: "Point", coordinates: [el.lon, el.lat] },
+        properties: { name: el.name, osm_type: el.type, osm_id: el.id, ...el.tags } });
+    }
+  }
+  if (state.point) {
+    features.push({ type: "Feature", geometry: { type: "Point", coordinates: [state.point.lng, state.point.lat] },
+      properties: { name: "active point" } });
+  }
+  if (!features.length) return status("plot a dataset or set the active point first", true);
+  const label = (state.lastData && state.lastData.label) || "active-point";
+  try {
+    const r = await fetch("/api/qgis", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ geojson: { type: "FeatureCollection", features }, name: label }),
+    });
+    const j = await r.json();
+    status(j.error ? j.error : `QGIS opening with ${j.features} feature(s)…`, !!j.error, 8000);
+  } catch { status("local server unreachable", true); }
 }
 
 async function runOverpass(selectors, label, minZoom = 10) {
@@ -884,11 +928,12 @@ async function runOverpass(selectors, label, minZoom = 10) {
     const j = await r.json();
     if (j.error) throw new Error(j.error);
     state.dataLayer.clearLayers();
-    let n = 0;
+    const feats = [];
     for (const el of j.elements || []) {
       const lat = el.lat ?? el.center?.lat, lon = el.lon ?? el.center?.lon;
       if (lat == null) continue;
       const name = el.tags?.name || el.tags?.operator || label;
+      feats.push({ lat, lon, name, type: el.type, id: el.id, tags: el.tags || {} });
       const mk = L.circleMarker([lat, lon], {
         radius: 6, color: "#ffb454", fillColor: "#ffb454", fillOpacity: 0.55, weight: 1.5,
       }).bindPopup(
@@ -896,11 +941,12 @@ async function runOverpass(selectors, label, minZoom = 10) {
         `<a href="https://www.openstreetmap.org/${el.type}/${el.id}" target="_blank">OSM object</a> · ` +
         `<a href="#" onclick="setPoint(L.latLng(${lat},${lon}));return false">set active point</a>`);
       state.dataLayer.addLayer(mk);
-      n++;
     }
+    state.lastData = { label, features: feats };
     $("#data-status").textContent =
-      `${label}: ${n} features in view · ${Math.round((Date.now() - t0) / 1000)}s (cached 7 days; 600 max)`;
-    status(`${n} × ${label} plotted`);
+      `${label}: ${feats.length} features in view · ${Math.round((Date.now() - t0) / 1000)}s (cached 7 days; 600 max)`;
+    status(`${feats.length} × ${label} plotted`);
+    syncQgisButton();
   } catch (err) {
     clearInterval(tick);
     $("#data-status").textContent = "";
@@ -970,6 +1016,7 @@ async function initStatus() {
       `local tools: ${found}/${Object.keys(j.tools).length} · ` +
       `wiki: ${j.wiki_built ? "✓ built" : "✗ not built (run run.bat)"}`;
     if (state.module === "tools") renderTools();
+    syncQgisButton();
   } catch { $("#ge-status").textContent = "local API offline"; }
 }
 
