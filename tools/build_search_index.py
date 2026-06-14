@@ -17,7 +17,7 @@ Card schema:
   page      wiki page URL (with anchor where possible)
   ll        [lat, lng]            (optional, landmarks)
 
-Tagging is derived from the structure itself: GeoHints gallery captions carry
+Tagging is derived from the structure itself: gallery captions carry
 the country, gallery ### headings carry the continent, bold-leading table
 rows / bullets carry the country, and the page a card lives on carries its
 category. Run:  .venv\\Scripts\\python tools\\build_search_index.py

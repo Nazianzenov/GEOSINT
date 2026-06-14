@@ -25,11 +25,11 @@ established community-verified guide. The main source classes:
 | National regulations | [US MUTCD (FHWA)](https://mutcd.fhwa.dot.gov/), national road-design manuals |
 | Peer-reviewed science | [Beck et al. 2018, Köppen-Geiger maps, *Scientific Data*](https://www.nature.com/articles/sdata2018214) |
 | Public databases | [CIA World Factbook](https://www.cia.gov/the-world-factbook/), [GeoNames](https://www.geonames.org/), [IANA ccTLD registry](https://www.iana.org/domains/root/db), [Open-Meteo/ERA5](https://open-meteo.com/) |
-| Community-verified geolocation guides | [GeoHints](https://geohints.com/), [PlonkIt](https://www.plonkit.net/), [Geometas](https://geometas.com/), [Bellingcat toolkit](https://bellingcat.gitbook.io/toolkit) |
+| Community-verified geolocation guides | [PlonkIt](https://www.plonkit.net/), [Geometas](https://geometas.com/), [Bellingcat toolkit](https://bellingcat.gitbook.io/toolkit) |
 
 !!! warning "Community guides change"
     Street View-meta facts (camera generations, coverage) drift as Google re-shoots roads.
-    GeoHints/PlonkIt/Geometas are actively maintained — when a claim matters to a real case,
+    PlonkIt/Geometas are actively maintained — when a claim matters to a real case,
     re-check it against the live guide before relying on it.
 
 !!! tip "Smart search"
@@ -41,7 +41,7 @@ established community-verified guide. The main source classes:
 ## Page map
 
 - **[Methodology](methodology/workflow.md)** — the investigative process itself.
-- **[Identification features](identify/driving-side.md)** — GeoHints-style clue catalogues.
+- **[Identification features](identify/driving-side.md)** — visual clue catalogues.
 - **[World reference](world/index.md)** — per-continent country recognition notes + quick table.
 - **[Landmarks](landmarks/natural.md)** — natural and man-made anchors with coordinates.
 - **[Sources](sources.md)** — every database and tool in one list.

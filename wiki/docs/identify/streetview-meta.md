@@ -3,7 +3,7 @@
 When your source image **is** Street View (or you're searching within it), the capture
 system itself is evidence. These "metas" are community-documented and **change as Google
 re-shoots** — always confirm against the live catalogues:
-[GeoHints — Coverage & Camera](https://geohints.com/), [PlonkIt country guides](https://www.plonkit.net/),
+[PlonkIt country guides](https://www.plonkit.net/) and
 [Geometas](https://geometas.com/).[^sources]
 
 ## Coverage as a filter
@@ -18,7 +18,7 @@ re-shoots** — always confirm against the live catalogues:
 
 ## Camera generations (Google)
 
-Documented with examples on GeoHints:[^gens]
+Documented with photo examples per country:[^gens]
 
 | Generation | Visual tells | Era |
 |---|---|---|
@@ -42,7 +42,7 @@ Visible fragments of the capture vehicle are country-stable for a given coverage
 !!! warning "Fast-moving facts"
     Car-meta details (snorkels, straps, escorts) are re-verified continuously by the
     GeoGuessr community and **go stale** when Google re-drives a country. Treat any car meta
-    as a hypothesis and confirm on [GeoHints/Car](https://geohints.com/) for the imagery's
+    as a hypothesis and confirm against a live car-meta reference for the imagery's
     capture date.
 
 ## Using capture dates
@@ -52,9 +52,9 @@ keeps **historical passes** (clock icon). For investigations: establish what the
 like on multiple dates; combine with [Esri Wayback](https://livingatlas.arcgis.com/wayback/)
 satellite history.[^wayback]
 
-[^sources]: GeoHints ([geohints.com](https://geohints.com/)), PlonkIt ([plonkit.net](https://www.plonkit.net/guide)), Geometas ([geometas.com](https://geometas.com/)) — the three community-verified meta catalogues.
+[^sources]: PlonkIt ([plonkit.net](https://www.plonkit.net/guide)) and Geometas ([geometas.com](https://geometas.com/)) — community-verified meta catalogues.
 [^coverage]: Wikipedia, [Coverage of Google Street View](https://en.wikipedia.org/wiki/Coverage_of_Google_Street_View) (tracked per country with dates); Google, [Street View coverage map](https://www.google.com/streetview/explore/).
 [^germany]: Google Germany blog (June 2023), announcement of refreshed German Street View coverage; coverage histories in the Wikipedia article above.
-[^gens]: GeoHints, camera-generation photo comparisons; PlonkIt guide introductions document generation tells per country.
-[^cars]: GeoHints "Google Cars" section ([geohints.com/cars](https://geohints.com/cars)) — photographed fleet differences per country.
+[^gens]: PlonkIt guide introductions document camera-generation tells per country.
+[^cars]: Google Street View car/fleet photo differences per country.
 [^wayback]: Esri, [World Imagery Wayback](https://livingatlas.arcgis.com/wayback/) — every historical version of the Esri basemap, with capture metadata.

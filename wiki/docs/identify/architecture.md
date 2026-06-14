@@ -1,8 +1,8 @@
 # Architecture by region
 
 Buildings are slow-changing, standard-driven, and visible in every photo — read the **roof,
-wall material and window pattern** first. Visual references: the **GeoHints photo gallery
-at the bottom of this page** (67 photos by continent) and the cited literature.[^geohints]
+wall material and window pattern** first. Visual references: the **Photo gallery
+at the bottom of this page** (67 photos by continent) and the cited literature.
 
 ## Visual reference (Wikimedia Commons, free licenses)
 
@@ -51,7 +51,6 @@ at the bottom of this page** (67 photos by continent) and the cited literature.[
 - **Australia**: single-storey brick-veneer with corrugated "Colorbond" steel roofs;
   Queenslander stilt houses in QLD.[^queenslander]
 
-[^geohints]: GeoHints, [Architecture](https://geohints.com/architecture) — regional photo set.
 [^medit]: Oliver, P. (ed.), *Encyclopedia of Vernacular Architecture of the World*, CUP 1997 — Mediterranean tile traditions.
 [^falu]: Swedish National Heritage Board (Riksantikvarieämbetet) on [Falu rödfärg tradition](https://www.raa.se/); Falun mine UNESCO listing.
 [^fachwerk]: Deutsche Fachwerkstraße documentation, [fachwerkstrasse.de](https://www.deutsche-fachwerkstrasse.de/).
@@ -63,7 +62,7 @@ at the bottom of this page** (67 photos by continent) and the cited literature.[
 [^latam]: Gilbert, A., *The Latin American City*, LAB 1998 — incremental self-build construction.
 [^japan-house]: Nishi & Hozumi, *What is Japanese Architecture?*, Kodansha.
 [^shophouse]: Singapore URA, [Shophouse conservation guidelines](https://www.ura.gov.sg/Corporate/Guidelines/Conservation).
-[^africa-roof]: World Bank housing surveys; visible in [GeoHints scenery sets](https://geohints.com/).
+[^africa-roof]: World Bank housing surveys.
 [^queenslander]: Queensland Government heritage register, [The Queenslander house](https://www.qld.gov.au/environment/land/heritage).
 
 <!-- GEOHINTS:architecture START -->
@@ -75,9 +74,8 @@ at the bottom of this page** (67 photos by continent) and the cited literature.[
 .gh-gallery figcaption { font-size: .72rem; text-align: center; }
 </style>
 
-## GeoHints photo gallery — Architecture
+## Photo gallery — Architecture
 
-From your browser-saved copy of <https://geohints.com/meta/architecture>.
 
 
 ### Africa
@@ -183,6 +181,6 @@ From your browser-saved copy of <https://geohints.com/meta/architecture>.
 </div>
 
 
-*Images hotlinked from [GeoHints](https://geohints.com/) - they load directly from the site in your browser and are not stored in this wiki. Curation credit: the GeoHints community ([Ko-fi](https://ko-fi.com/mousewithbeer87045)). Street imagery (c) Google. Requires internet to display.*
+*Images load directly from their source in your browser and are not stored in this wiki. Street imagery (c) Google. Requires internet to display.*
 
 <!-- GEOHINTS:architecture END -->

@@ -1,9 +1,9 @@
 # Utility poles & street lights
 
 Power/telecom poles are everywhere in street imagery and their **material, shape and
-hole-pattern** are nationally consistent. Visual catalogue: the **GeoHints photo gallery
+hole-pattern** are nationally consistent. Visual catalogue: the **Photo gallery
 at the bottom of this page** (402 photos, per continent)
-and [Geometas — Utility poles](https://geometas.com/metas/categories/utility_poles/).[^geohints]
+and [Geometas — Utility poles](https://geometas.com/metas/categories/utility_poles/).
 
 ## Material as a first split
 
@@ -17,20 +17,20 @@ and [Geometas — Utility poles](https://geometas.com/metas/categories/utility_p
 
 - **Spain & Portugal**: concrete poles with **ladder-like rows of holes**. Spanish ones are
   commonly square-section, Portuguese often round with paired holes — compare photos in the
-  catalogue before deciding.[^geohints]
+  catalogue before deciding.
 - **Hungary**: concrete poles with a distinctive **A-frame / double-strut** arrangement on
-  many road-side lines.[^geohints]
+  many road-side lines.
 - **Russia/Ukraine/CIS**: wooden pole bolted onto a **slanted concrete footing** — a very
-  recognisable composite.[^geohints]
+  recognisable composite.
 - **Japan**: dense forests of cylindrical concrete poles carrying **bulky grey cylindrical
   transformers** and heavy cable bundles — overhead wiring was never buried.[^japan]
 - **France**: mix of concrete and old **square-lattice steel** poles; lattice ones are a
-  strong France signal in W. Europe.[^geohints]
+  strong France signal in W. Europe.
 - **Italy**: concrete poles often with a **tapering round section and visible ring joints**.
 - **Brazil**: concrete, frequently with the **lower section painted** (yellow/black or
   white/black bands) in cities.
 - **Thailand**: tall **square-section concrete** poles with small round holes, often double
-  crossarms; cables extremely cluttered.[^geohints]
+  crossarms; cables extremely cluttered.
 - **Turkey**: galvanized steel polygonal poles widespread on highways.
 
 ## Insulators & crossarms
@@ -48,7 +48,6 @@ Weak as a country tell, useful regionally:
 - **Lamp arm styles** are municipal, not national — use only to match a *specific* city
   against candidate imagery.
 
-[^geohints]: GeoHints, [Poles](https://geohints.com/poles); Geometas, [Utility poles category](https://geometas.com/metas/categories/utility_poles/) — per-country photo references.
 [^japan]: Ministry of Land, Infrastructure, Transport and Tourism (Japan), [無電柱化の推進 (utility-pole undergrounding programme)](https://www.mlit.go.jp/road/road/traffic/chicyuka/) — documents Japan's ~36 million above-ground poles and low undergrounding rate.
 [^led]: Northern Lights / IEA street-lighting conversion reports; visible empirically in night-time colour imagery — NASA, [Black Marble VIIRS night lights](https://blackmarble.gsfc.nasa.gov/).
 
@@ -61,9 +60,8 @@ Weak as a country tell, useful regionally:
 .gh-gallery figcaption { font-size: .72rem; text-align: center; }
 </style>
 
-## GeoHints photo gallery — Utility Poles
+## Photo gallery — Utility Poles
 
-From your browser-saved copy of <https://geohints.com/meta/utilityPoles>.
 
 
 ### Africa
@@ -504,6 +502,6 @@ From your browser-saved copy of <https://geohints.com/meta/utilityPoles>.
 </div>
 
 
-*Images hotlinked from [GeoHints](https://geohints.com/) - they load directly from the site in your browser and are not stored in this wiki. Curation credit: the GeoHints community ([Ko-fi](https://ko-fi.com/mousewithbeer87045)). Street imagery (c) Google. Requires internet to display.*
+*Images load directly from their source in your browser and are not stored in this wiki. Street imagery (c) Google. Requires internet to display.*
 
 <!-- GEOHINTS:utilityPoles END -->

@@ -33,4 +33,4 @@ All RHT except Guyana & Suriname (LHT). Guides: [PlonkIt](https://www.plonkit.ne
 | **Easter Island** (CL) | Moai; Chilean plates 3,700 km from the mainland |
 
 [^plonkit]: PlonkIt country pages, [plonkit.net/guide](https://www.plonkit.net/guide).
-[^co]: Colombia's Resolución 12379 vehicle plate standard (yellow private plates); photo-documented at GeoHints [Plates](https://geohints.com/plates).
+[^co]: Colombia's Resolución 12379 vehicle plate standard (yellow private plates).

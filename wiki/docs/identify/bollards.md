@@ -1,10 +1,9 @@
 # Bollards (roadside delineator posts)
 
 Roadside delineators follow **national standards**, making them one of the most reliable
-country fingerprints on rural roads. The canonical visual catalogues are
-[GeoHints — Bollards](https://geohints.com/bollards) and
+country fingerprints on rural roads. A canonical visual catalogue is
 [Geometas — Bollards](https://geometas.com/metas/categories/bollards/); cross-check there for
-photos of every variant below.[^geohints][^geometas]
+photos of every variant below.[^geometas]
 
 ## Reference photos (openly licensed)
 
@@ -15,8 +14,7 @@ photos of every variant below.[^geohints][^geometas]
 
 *Images served from [Wikimedia Commons](https://commons.wikimedia.org/) (free licenses — see
 each file page for author & license); they load online only. For per-country photo sets see
-the **GeoHints photo gallery at the bottom of this page** and the live
-[GeoHints catalogue](https://geohints.com/meta/bollards).*
+the **Photo gallery at the bottom of this page**.*
 
 ## High-confidence European bollards
 
@@ -26,14 +24,14 @@ the **GeoHints photo gallery at the bottom of this page** and the live
 | **Poland** | White post, **red vertical stripe that does *not* wrap around** | Flat face; the non-wrapping stripe separates it from France[^ril] |
 | **Italy** | **Red rectangle inside a black diagonal top band**; rear shows white rectangle | Black band extends to the very top[^ril] |
 | **Spain** | Wedge-shaped hollow post, **orange rectangular reflector** front, two white circular reflectors rear | "Hito de arista", unique wedge profile[^ril] |
-| **Germany** | White post, **black trapezoid band** with rectangular reflector (front) / twin dots (rear) | "Leitpfosten" per RAL/TL-Leitpfosten standard; flat trapezoid section[^geohints] |
-| **Austria** | White with black top band; red rectangular reflector front, white rear | Similar to Germany — check band shape against the catalogue[^geohints] |
-| **Czechia/Slovakia** | White post, orange reflective stripe near top (front) | Shared Czechoslovak heritage design[^geohints] |
-| **Netherlands** | White post with angled top, red reflective band | Top cut at a slant[^geohints] |
-| **UK / Ireland** | Rural delineator posts are rare; UK uses white posts with red (left) / white (right) reflectors mainly on dual carriageways | Absence of bollards + LHT is itself a clue[^geohints] |
+| **Germany** | White post, **black trapezoid band** with rectangular reflector (front) / twin dots (rear) | "Leitpfosten" per RAL/TL-Leitpfosten standard; flat trapezoid section |
+| **Austria** | White with black top band; red rectangular reflector front, white rear | Similar to Germany — check band shape against the catalogue |
+| **Czechia/Slovakia** | White post, orange reflective stripe near top (front) | Shared Czechoslovak heritage design |
+| **Netherlands** | White post with angled top, red reflective band | Top cut at a slant |
+| **UK / Ireland** | Rural delineator posts are rare; UK uses white posts with red (left) / white (right) reflectors mainly on dual carriageways | Absence of bollards + LHT is itself a clue |
 | **Norway** | Grey-white flexible post with **black angled top**, yellow-ish reflector | |
-| **Sweden / Finland** | Flexible white posts with reflective band; winter snow poles common | Finland's are often slimmer; verify visually[^geohints] |
-| **Russia / Ukraine / CIS** | White post with **vertical black stripe** section near top + reflector | GOST-standardized "сигнальный столбик"[^geohints] |
+| **Sweden / Finland** | Flexible white posts with reflective band; winter snow poles common | Finland's are often slimmer; verify visually |
+| **Russia / Ukraine / CIS** | White post with **vertical black stripe** section near top + reflector | GOST-standardized "сигнальный столбик" |
 
 ## Outside Europe
 
@@ -50,13 +48,11 @@ the **GeoHints photo gallery at the bottom of this page** and the live
 
 !!! warning "Verify before relying"
     Bollard designs get replaced (e.g. newer flexible plastic replacing concrete across the
-    EU). For casework, confirm the *current* national pattern on
-    [GeoHints](https://geohints.com/bollards), which is maintained by the GeoGuessr community
-    with per-country photos.
+    EU). For casework, confirm the *current* national pattern against a live,
+    community-maintained catalogue with per-country photos.
 
-[^geohints]: GeoHints, [Bollards category](https://geohints.com/bollards) — community-maintained photo catalogue of every country's delineators.
 [^geometas]: Geometas, [Bollards](https://geometas.com/metas/categories/bollards/) — sourced GeoGuessr meta wiki.
-[^ril]: ReverseImageLocation, [World bollards visual guide](https://reverseimagelocation.com/blog/world-bollards-guide) (compiled from PlonkIt/GeoHints data); PlonkIt country guides, [plonkit.net](https://www.plonkit.net/).
+[^ril]: ReverseImageLocation, [World bollards visual guide](https://reverseimagelocation.com/blog/world-bollards-guide) (compiled from PlonkIt data); PlonkIt country guides, [plonkit.net](https://www.plonkit.net/).
 [^austroads]: Austroads, *Guide to Road Design Part 6B* (guide posts & delineation); summarized in state standards e.g. [VicRoads supplement](https://www.vicroads.vic.gov.au/business-and-industry/technical-publications/road-design).
 [^nzta]: Waka Kotahi NZTA, [Traffic Control Devices Manual](https://www.nzta.govt.nz/resources/traffic-control-devices-manual/), delineation chapter.
 
@@ -69,9 +65,8 @@ the **GeoHints photo gallery at the bottom of this page** and the live
 .gh-gallery figcaption { font-size: .72rem; text-align: center; }
 </style>
 
-## GeoHints photo gallery — Bollards
+## Photo gallery — Bollards
 
-From your browser-saved copy of <https://geohints.com/meta/bollards>.
 
 
 ### Africa
@@ -1029,6 +1024,6 @@ From your browser-saved copy of <https://geohints.com/meta/bollards>.
 </div>
 
 
-*Images hotlinked from [GeoHints](https://geohints.com/) - they load directly from the site in your browser and are not stored in this wiki. Curation credit: the GeoHints community ([Ko-fi](https://ko-fi.com/mousewithbeer87045)). Street imagery (c) Google. Requires internet to display.*
+*Images load directly from their source in your browser and are not stored in this wiki. Street imagery (c) Google. Requires internet to display.*
 
 <!-- GEOHINTS:bollards END -->

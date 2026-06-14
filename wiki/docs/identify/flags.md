@@ -37,9 +37,8 @@ documented with images on the respective Wikipedia "Flag of …" article.
 .gh-gallery figcaption { font-size: .72rem; text-align: center; }
 </style>
 
-## GeoHints photo gallery — Flags
+## Photo gallery — Flags
 
-From your browser-saved copy of <https://geohints.com/meta/flags>.
 
 
 ### Africa
@@ -301,6 +300,6 @@ From your browser-saved copy of <https://geohints.com/meta/flags>.
 </div>
 
 
-*Images hotlinked from [GeoHints](https://geohints.com/) - they load directly from the site in your browser and are not stored in this wiki. Curation credit: the GeoHints community ([Ko-fi](https://ko-fi.com/mousewithbeer87045)). Street imagery (c) Google. Requires internet to display.*
+*Images load directly from their source in your browser and are not stored in this wiki. Street imagery (c) Google. Requires internet to display.*
 
 <!-- GEOHINTS:flags END -->

@@ -66,5 +66,5 @@ coverage map is itself a filter.[^coverage] Guides: [PlonkIt](https://www.plonki
 | **Eritrea / Djibouti / Somalia** | Ge'ez script (ER), French+Arabic (DJ); Somalia minimal coverage |
 
 [^coverage]: Wikipedia, [Coverage of Google Street View](https://en.wikipedia.org/wiki/Coverage_of_Google_Street_View); Google, [coverage explorer](https://www.google.com/streetview/explore/).
-[^cars]: GeoHints, [Google Cars](https://geohints.com/cars) — fleet photo documentation per country & era.
+[^cars]: Google Street View car-fleet photo differences per country & era.
 [^tifinagh]: IRCAM (Royal Institute of Amazigh Culture), Tifinagh standardization; Morocco's 2011 constitution Art. 5 making Amazigh official.

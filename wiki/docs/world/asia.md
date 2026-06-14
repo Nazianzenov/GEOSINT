@@ -82,6 +82,6 @@ Photo-documented per-country guides: [PlonkIt](https://www.plonkit.net/guide).[^
 | **Syria / Iraq / Yemen** | No/minimal SV; rely on satellite + social media imagery and the verification workflow |
 | **Laos vs Thailand** | Same family of scripts — Lao is rounder with fewer characters; Laos RHT vs Thailand LHT is decisive in one glance |
 
-[^plonkit]: PlonkIt country guides, [plonkit.net/guide](https://www.plonkit.net/guide) — every bullet above is photo-verified on the matching country page; see also GeoHints per-category pages.
+[^plonkit]: PlonkIt country guides, [plonkit.net/guide](https://www.plonkit.net/guide) — every bullet above is photo-verified on the matching country page.
 [^kr]: Reuters/Yonhap reporting on South Korea's map-data export restrictions (Land Survey Act); summarized in Wikipedia, [Restrictions on geographic data in South Korea](https://en.wikipedia.org/wiki/Restrictions_on_geographic_data_in_South_Korea).
 [^uz]: GM Uzbekistan market-share reporting (Reuters); visible empirically in any Tashkent street scene.

@@ -1,7 +1,7 @@
 # Road markings & lines
 
 Line **colour conventions are set nationally**, so the centre-line/edge-line colour pair is a
-fast continental filter. Visual per-country chart: [GeoHints — Road Lines](https://geohints.com/lines).[^geohints]
+fast continental filter.
 
 ## Centre-line colour
 
@@ -31,10 +31,9 @@ fast continental filter. Visual per-country chart: [GeoHints — Road Lines](htt
 
 - European "zebra" stripes are near-universal, but **colour variants** localize:
   red-and-white zebras are common in **Switzerland (yellow!), Austria, parts of CEE**;
-  Switzerland uniquely paints crossings **yellow**.[^geohints]
+  Switzerland uniquely paints crossings **yellow**.
 - US crosswalks: twin transverse lines or "continental" blocks vary by city (MUTCD options).[^mutcd]
 
-[^geohints]: GeoHints, [Road Lines](https://geohints.com/lines) — per-country line colour photo chart.
 [^mutcd]: FHWA, [Manual on Uniform Traffic Control Devices, Part 3 — Markings](https://mutcd.fhwa.dot.gov/) — yellow separates opposing traffic in the US system.
 [^vienna]: UNECE, [Convention on Road Signs and Signals, Vienna 1968](https://unece.org/transport/road-traffic/vienna-convention-road-signs-and-signals) and the accompanying European supplement agreements — white as the standard carriageway marking colour.
 [^finland]: Finnish Transport Infrastructure Agency (Väylävirasto), [Road Traffic Act 2020 reform — new road markings](https://vayla.fi/en/transport-network/roads/road-markings) — Finland's switch from yellow to white centre lines effective June 2020.

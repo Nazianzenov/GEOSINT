@@ -44,7 +44,7 @@ Plants of the World Online).[^gbif]
 | Saguaro = Sonoran only — [source](https://commons.wikimedia.org/wiki/File:Carnegiea_gigantea_in_Saguaro_National_Park_near_Tucson,_Arizona_during_November_(58).jpg) | Baobabs (Madagascar) — [source](https://commons.wikimedia.org/wiki/File:Adansonia_grandidieri_Pat_Hooper.jpg) | Eucalyptus — [source](https://commons.wikimedia.org/wiki/File:Eucalyptus_tereticornis_flowers,_capsules,_buds_and_foliage.jpeg) | Terraced paddies (PH) — [source](https://commons.wikimedia.org/wiki/File:Banaue-terrace.JPG) |
 
 !!! tip "Scenery gallery"
-    The **GeoHints sceneries gallery at the bottom of this page** has 375 landscape photos
+    The **Sceneries gallery at the bottom of this page** has 375 landscape photos
     grouped by continent — the fastest way to calibrate your eye for soil colour,
     vegetation and terrain per country.
 
@@ -77,9 +77,8 @@ trees bound the date to roughly Nov–Apr (N. hemisphere) — invert for the sou
 .gh-gallery figcaption { font-size: .72rem; text-align: center; }
 </style>
 
-## GeoHints photo gallery — Sceneries
+## Photo gallery — Sceneries
 
-From your browser-saved copy of <https://geohints.com/meta/sceneries>.
 
 
 ### Africa
@@ -493,6 +492,6 @@ From your browser-saved copy of <https://geohints.com/meta/sceneries>.
 </div>
 
 
-*Images hotlinked from [GeoHints](https://geohints.com/) - they load directly from the site in your browser and are not stored in this wiki. Curation credit: the GeoHints community ([Ko-fi](https://ko-fi.com/mousewithbeer87045)). Street imagery (c) Google. Requires internet to display.*
+*Images load directly from their source in your browser and are not stored in this wiki. Street imagery (c) Google. Requires internet to display.*
 
 <!-- GEOHINTS:sceneries END -->

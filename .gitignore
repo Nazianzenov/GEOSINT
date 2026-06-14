@@ -8,8 +8,11 @@ wiki/site/
 app/data/search-index.json
 app/data/graph.json
 
-# user-saved GeoHints pages (large, user-provided)
+# user-saved source pages (large, user-provided)
 import/
 
 # runtime caches that regenerate themselves
 cache/
+
+# local-only: gallery scraping/parsing stays off the repo
+tools/import_geohints.py

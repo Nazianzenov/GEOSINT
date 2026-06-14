@@ -1,9 +1,8 @@
 # License plates
 
 Even **blurred** plates (as in Street View) leak information: overall colour, shape, and
-band positions survive the blur. Full photo catalogue:
-[GeoHints — License Plates](https://geohints.com/plates) and the comprehensive
-[Wikipedia vehicle-registration-plate articles per country](https://en.wikipedia.org/wiki/Vehicle_registration_plate).[^geohints]
+band positions survive the blur. Full reference: the comprehensive
+[Wikipedia vehicle-registration-plate articles per country](https://en.wikipedia.org/wiki/Vehicle_registration_plate).
 
 ## Visual reference (Wikimedia Commons, free licenses)
 
@@ -53,7 +52,6 @@ band positions survive the blur. Full photo catalogue:
 - **UAE/Saudi**: dual Arabic/Latin; Saudi plates show both scripts.
 - **Israel**: **yellow** plates with black text (both ends).
 
-[^geohints]: GeoHints, [License Plates](https://geohints.com/plates) — blurred-state photo references per country.
 [^eu-reg]: EUR-Lex, [Council Regulation (EC) No 2411/98](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:31998R2411) — the EU registration-plate band.
 [^nl]: RDW (Netherlands vehicle authority), [Kentekenplaten regulations](https://www.rdw.nl/particulier/voertuigen/auto/de-kentekenplaat).
 [^uk]: UK Government, [Displaying number plates](https://www.gov.uk/displaying-number-plates) — BS AU 145e colour requirement.
