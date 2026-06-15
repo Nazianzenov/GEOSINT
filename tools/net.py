@@ -55,12 +55,10 @@ def get(url, timeout=40, accept=None, tries=6):
             ra = e.headers.get("Retry-After")
             wait = float(ra) if (ra and ra.isdigit()) else min(60, 5 * (attempt + 1) ** 2)
             time.sleep(wait)
-        except urllib.error.URLError:
-            last = None
+        except urllib.error.URLError as e:
+            last = e
             time.sleep(5 * (attempt + 1))
-    if last:
-        raise last
-    raise RuntimeError(f"request failed after retries: {url}")
+    raise last if last else RuntimeError(f"request failed after retries: {url}")
 
 
 def get_json(url, timeout=60, accept="application/json"):

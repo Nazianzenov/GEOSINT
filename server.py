@@ -11,6 +11,7 @@ Run:  python server.py [--port 8650] [--no-browser]
 import argparse
 import glob
 import hashlib
+import math
 import json
 import mimetypes
 import os
@@ -186,7 +187,6 @@ def cache_fresh(path: Path, ttl: int) -> bool:
 
 def _lonlat_to_tile(lon, lat, z):
     """Slippy-map tile x,y for a lon/lat at zoom z (Web Mercator)."""
-    import math
     n = 2 ** z
     x = int((lon + 180.0) / 360.0 * n)
     lat_r = math.radians(max(-85.0511, min(85.0511, lat)))
