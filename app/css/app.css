@@ -213,6 +213,17 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
   resize: vertical; min-height: 200px; padding: 10px; font: 12px var(--mono); outline: none; }
 #case-notes::placeholder { color: var(--txt-dim); }
 
+/* elevation profile panel */
+#elev-panel { position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 2500;
+  background: var(--bg-1); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 8px 28px #000a; padding: 8px 10px 10px; max-width: calc(100vw - 24px); }
+.elev-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.elev-head strong { font: 600 12px var(--sans); letter-spacing: .06em; color: var(--good); }
+.elev-head .muted { font: 10px var(--mono); }
+.elev-head .icon-btn { margin-left: auto; }
+#elev-chart { display: block; background: var(--bg); border-radius: 4px; cursor: crosshair; max-width: 100%; }
+#elev-readout { margin-top: 5px; font: 10px var(--mono); }
+
 /* annotations */
 .anno-dot { background: var(--bad); border: 2px solid #fff; border-radius: 50%; box-sizing: border-box; }
 .anno-pin { font-size: 18px; line-height: 1; text-shadow: 0 1px 2px #000a; }

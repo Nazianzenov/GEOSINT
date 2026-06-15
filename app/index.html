@@ -221,6 +221,15 @@
   <textarea id="case-notes" spellcheck="false" placeholder="Working notes, clues, eliminations, candidate locations…
 Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
 </div>
+<div id="elev-panel" hidden>
+  <div class="elev-head">
+    <strong>Elevation profile</strong>
+    <span id="elev-stats" class="muted"></span>
+    <button id="elev-close" class="icon-btn" title="Close [Esc]">✕</button>
+  </div>
+  <canvas id="elev-chart" width="540" height="170"></canvas>
+  <div id="elev-readout" class="muted"></div>
+</div>
 <div id="help-overlay" hidden>
   <div class="help-card">
     <h2>Keyboard</h2>
@@ -229,7 +238,7 @@ Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
       <tr><td><kbd>1–4</kbd></td><td>Sun · Weather · Image · Tools</td></tr>
       <tr><td><kbd>6</kbd> / <kbd>7</kbd></td><td>Data layers · Annotations</td></tr>
       <tr><td><kbd>5</kbd> / <kbd>F</kbd></td><td>smart wiki search (new tab)</td></tr>
-      <tr><td><kbd>M</kbd></td><td>measure: click to add points · right-drag a point to move · hold <kbd>Shift</kbd> for a range ring · Esc clears</td></tr>
+      <tr><td><kbd>M</kbd></td><td>measure: click to add points (each leg shows distance + bearing) · right-drag a point to move · hold <kbd>Shift</kbd> for a range ring · right-click for the line's elevation profile · Esc clears</td></tr>
       <tr><td><kbd>N</kbd></td><td>case notes</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>save case file</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>close panel / cancel</td></tr>

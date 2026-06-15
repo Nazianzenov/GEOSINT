@@ -213,6 +213,9 @@ function showCtx(e) {
       ["✎ Add label here…", () => addLabel(ll)],
       ["➶ Start arrow here", () => startArrow(ll)],
     );
+  } else if (state.measure.pts.length >= 2) {
+    // ruler armed with a drawn line → offer its elevation profile
+    items.push(["⛰ Elevation profile of this line", () => elevationProfile()]);
   }
   menu.innerHTML = `<div class="ctx-coords">${fmtDD(ll)}</div>` +
     items.map((it, i) => `<div class="ctx-item" data-i="${i}">${it[0]}</div>`).join("");
@@ -346,6 +349,124 @@ function clearRadius() {
   if (!m.radius) return;
   state.map.removeLayer(m.radius);
   m.radius = null;
+}
+
+/* ── elevation profile along the measured line ──
+   Samples N points evenly by cumulative distance, fetches their elevations in
+   one batched (cached) Open-Meteo request, and draws an interactive profile. */
+const ELEV_SAMPLES = 100;                   // Open-Meteo elevation accepts up to 100 coords/request
+let _elevProfile = null;                    // {dists[], elevs[], total}
+
+function lerpLatLng(a, b, t) {
+  return L.latLng(a.lat + (b.lat - a.lat) * t, a.lng + (b.lng - a.lng) * t);
+}
+
+/* return N points spaced evenly along the polyline by ground distance */
+function sampleAlong(pts, n) {
+  if (pts.length < 2) return [];
+  const segLen = [], cum = [0];
+  for (let i = 1; i < pts.length; i++) {
+    const d = haversine(pts[i - 1], pts[i]);
+    segLen.push(d); cum.push(cum[i - 1] + d);
+  }
+  const total = cum[cum.length - 1];
+  if (total === 0) return [];
+  const out = [];
+  for (let s = 0; s < n; s++) {
+    const target = (total * s) / (n - 1);
+    let i = 1;
+    while (i < cum.length - 1 && cum[i] < target) i++;
+    const t = segLen[i - 1] ? (target - cum[i - 1]) / segLen[i - 1] : 0;
+    out.push({ ll: lerpLatLng(pts[i - 1], pts[i], t), d: target });
+  }
+  return out;
+}
+
+async function elevationProfile() {
+  const pts = state.measure.pts;
+  if (pts.length < 2) return status("draw a line with the ruler first", true);
+  const samples = sampleAlong(pts, ELEV_SAMPLES);
+  if (!samples.length) return status("line has zero length", true);
+  $("#elev-panel").hidden = false;
+  $("#elev-stats").textContent = "fetching elevations…";
+  const lats = samples.map((s) => s.ll.lat.toFixed(5)).join(",");
+  const lngs = samples.map((s) => s.ll.lng.toFixed(5)).join(",");
+  try {
+    const r = await cachedFetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`);
+    const j = await r.json();
+    const elevs = j.elevation;
+    if (!Array.isArray(elevs) || elevs.length !== samples.length) throw new Error("bad elevation response");
+    _elevProfile = { dists: samples.map((s) => s.d), elevs, total: samples[samples.length - 1].d };
+    drawElevProfile();
+  } catch (e) {
+    $("#elev-stats").textContent = "";
+    $("#elev-readout").textContent = "✗ elevation service unreachable (offline?)";
+  }
+}
+
+function drawElevProfile(hoverX) {
+  const p = _elevProfile;
+  if (!p) return;
+  const cv = $("#elev-chart"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height, padL = 40, padB = 18, padT = 8, padR = 8;
+  ctx.clearRect(0, 0, W, H);
+  const min = Math.min(...p.elevs), max = Math.max(...p.elevs);
+  const span = Math.max(1, max - min);
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const x = (i) => padL + (plotW * p.dists[i]) / p.total;
+  const y = (e) => padT + plotH * (1 - (e - min) / span);
+
+  // gain/loss
+  let gain = 0, loss = 0;
+  for (let i = 1; i < p.elevs.length; i++) {
+    const d = p.elevs[i] - p.elevs[i - 1];
+    if (d > 0) gain += d; else loss -= d;
+  }
+  $("#elev-stats").textContent =
+    `${Math.round(min)}–${Math.round(max)} m · ↗${Math.round(gain)} ↘${Math.round(loss)} m · ${fmtDist(p.total)}`;
+
+  // grid + axis labels
+  ctx.strokeStyle = "#232a3b"; ctx.fillStyle = "#8a93a6"; ctx.font = "9px monospace";
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const yy = padT + (plotH * g) / 4, ev = max - (span * g) / 4;
+    ctx.beginPath(); ctx.moveTo(padL, yy); ctx.lineTo(W - padR, yy); ctx.stroke();
+    ctx.fillText(`${Math.round(ev)}`, 2, yy + 3);
+  }
+
+  // filled profile
+  ctx.beginPath();
+  ctx.moveTo(x(0), y(p.elevs[0]));
+  for (let i = 1; i < p.elevs.length; i++) ctx.lineTo(x(i), y(p.elevs[i]));
+  ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.lineTo(x(p.elevs.length - 1), padT + plotH); ctx.lineTo(x(0), padT + plotH); ctx.closePath();
+  ctx.fillStyle = "rgba(126,231,135,.10)"; ctx.fill();
+
+  // hover crosshair + readout
+  if (hoverX != null) {
+    const frac = Math.min(1, Math.max(0, (hoverX - padL) / plotW));
+    const idx = Math.round(frac * (p.elevs.length - 1));
+    if (p.elevs[idx] != null) {
+      const hx = x(idx), hy = y(p.elevs[idx]);
+      ctx.strokeStyle = "#4cc2ff"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(hx, padT); ctx.lineTo(hx, padT + plotH); ctx.stroke();
+      ctx.fillStyle = "#4cc2ff"; ctx.beginPath(); ctx.arc(hx, hy, 3, 0, 7); ctx.fill();
+      $("#elev-readout").textContent =
+        `${fmtDist(p.dists[idx])} along · ${Math.round(p.elevs[idx])} m`;
+    }
+  } else {
+    $("#elev-readout").textContent = "hover the profile to read distance + elevation";
+  }
+}
+
+function initElevPanel() {
+  $("#elev-close").addEventListener("click", () => { $("#elev-panel").hidden = true; });
+  const cv = $("#elev-chart");
+  cv.addEventListener("mousemove", (e) => {
+    const rect = cv.getBoundingClientRect();
+    drawElevProfile((e.clientX - rect.left) * (cv.width / rect.width));
+  });
+  cv.addEventListener("mouseleave", () => drawElevProfile());
 }
 
 /* ── administrative-area boundary highlight (Nominatim polygon_geojson) ── */
@@ -1461,6 +1582,7 @@ function initKeys() {
       if (cancelArrow()) return;
       if (state.measure.on) return toggleMeasure(false);
       if (!$("#notes-drawer").hidden) return toggleNotes(false);
+      if (!$("#elev-panel").hidden) { $("#elev-panel").hidden = true; return; }
       $("#help-overlay").hidden = true;
       if (!inField) closePanel();
       return;
@@ -1498,7 +1620,7 @@ async function initStatus() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  initMap(); initSearch(); initSun(); initWeather(); initImage(); initData(); annoInit(); initCase(); initKeys(); initStatus();
+  initMap(); initSearch(); initSun(); initWeather(); initImage(); initData(); annoInit(); initCase(); initElevPanel(); initKeys(); initStatus();
   // deep links: #ll=lat,lng (from search) and #species=gbifKey&name=... (from flora wiki)
   const ll = location.hash.match(/^#ll=(-?[\d.]+),(-?[\d.]+)/);
   if (ll) setPoint(L.latLng(+ll[1], +ll[2]), { fly: true, zoom: 13 });
