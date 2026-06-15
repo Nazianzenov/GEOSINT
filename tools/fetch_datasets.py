@@ -36,6 +36,12 @@ SPARQL_ENDPOINTS = [
     "https://qlever.cs.uni-freiburg.de/api/wikidata",
     "https://query.wikidata.org/sparql",
 ]
+# QLever requires explicit prefix declarations (WDQS provides them implicitly);
+# prepend these so the same query text works on both endpoints.
+PREFIXES = ("PREFIX wd: <http://www.wikidata.org/entity/> "
+            "PREFIX wdt: <http://www.wikidata.org/prop/direct/> "
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+            "PREFIX schema: <http://schema.org/> ")
 
 CANON = {
     "united states of america": "United States", "people's republic of china": "China",
@@ -84,9 +90,150 @@ QUERIES = {
                             FILTER(LANG(?countryLabel)="en") } }
                  LIMIT 6000""",
     },
+    "lighthouses": {
+        "label": "Lighthouses",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (P31 = Q39715)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31 wd:Q39715; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 9000""",
+    },
+    "stadiums": {
+        "label": "Stadiums & arenas",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (stadium subclasses, en-wiki article)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31/wdt:P279* wd:Q483110; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 ?article schema:about ?item;
+                          schema:isPartOf <https://en.wikipedia.org/>.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 12000""",
+    },
+    "dams": {
+        "label": "Dams & reservoirs",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (dam subclasses, en-wiki article)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31/wdt:P279* wd:Q12323; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 ?article schema:about ?item;
+                          schema:isPartOf <https://en.wikipedia.org/>.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 9000""",
+    },
+    "universities": {
+        "label": "Universities",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (university subclasses, en-wiki article)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31/wdt:P279* wd:Q3918; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 ?article schema:about ?item;
+                          schema:isPartOf <https://en.wikipedia.org/>.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 15000""",
+    },
+    # notable instances of the OSM Data-layer presets (the live Overpass presets
+    # stay for "what's in view"; these add searchable, named global coverage).
+    "power-plants": {
+        "label": "Power plants",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (power station subclasses, en-wiki article)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31/wdt:P279* wd:Q159719; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 ?article schema:about ?item;
+                          schema:isPartOf <https://en.wikipedia.org/>.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 8000""",
+    },
+    "mines": {
+        "label": "Mines & quarries",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (mine subclasses, en-wiki article)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31/wdt:P279* wd:Q820477; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 ?article schema:about ?item;
+                          schema:isPartOf <https://en.wikipedia.org/>.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 6000""",
+    },
+    "railway-stations": {
+        "label": "Railway stations",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (railway station subclasses, en-wiki article)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31/wdt:P279* wd:Q55488; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 ?article schema:about ?item;
+                          schema:isPartOf <https://en.wikipedia.org/>.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 18000""",
+    },
+    "hospitals": {
+        "label": "Hospitals",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (hospital subclasses, en-wiki article)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31/wdt:P279* wd:Q16917; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 ?article schema:about ?item;
+                          schema:isPartOf <https://en.wikipedia.org/>.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 10000""",
+    },
+    "worship": {
+        "label": "Places of worship",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (place-of-worship subclasses, en-wiki article)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31/wdt:P279* wd:Q1370598; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 ?article schema:about ?item;
+                          schema:isPartOf <https://en.wikipedia.org/>.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 18000""",
+    },
+    "military": {
+        "label": "Military bases",
+        "license": "Wikidata, CC0",
+        "source": "https://query.wikidata.org/ (military installation subclasses, en-wiki article)",
+        "q": """SELECT DISTINCT ?item ?itemLabel ?coord ?countryLabel WHERE {
+                 ?item wdt:P31/wdt:P279* wd:Q245016; wdt:P625 ?coord; rdfs:label ?itemLabel.
+                 ?article schema:about ?item;
+                          schema:isPartOf <https://en.wikipedia.org/>.
+                 FILTER(LANG(?itemLabel)="en")
+                 OPTIONAL { ?item wdt:P17 ?country.
+                            ?country rdfs:label ?countryLabel.
+                            FILTER(LANG(?countryLabel)="en") } }
+                 LIMIT 7000""",
+    },
 }
 
-POINT_RE = re.compile(r"Point\(([-\d.]+) ([-\d.]+)\)")
+# WDQS emits "Point(lng lat)", QLever emits "POINT(lng lat)" — match either.
+POINT_RE = re.compile(r"point\(([-\d.]+) ([-\d.]+)\)", re.IGNORECASE)
 
 
 def fresh(path):
@@ -120,7 +267,7 @@ def canon_country(label):
 def fetch_wikidata(key, spec):
     raw = None
     for ep in SPARQL_ENDPOINTS:
-        url = ep + "?format=json&query=" + urllib.parse.quote(spec["q"])
+        url = ep + "?format=json&query=" + urllib.parse.quote(PREFIXES + spec["q"])
         try:
             raw = json.loads(http_get(url, accept="application/sparql-results+json"))
             break

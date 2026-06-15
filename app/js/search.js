@@ -14,7 +14,9 @@ const state = { country: null, continent: null, cats: new Set(), photos: false }
 
 /* display order + which categories render as photo grids */
 const GROUP_ORDER = ["country-facts", "recognition", "landmarks", "unesco", "castles",
-  "national-parks", "airports", "flora", "bollards", "utility-poles",
+  "national-parks", "airports", "lighthouses", "stadiums", "dams", "universities",
+  "power-plants", "mines", "railway-stations", "hospitals", "worship", "military",
+  "flora", "bollards", "utility-poles",
   "traffic-lights", "license-plates", "flags", "sceneries", "architecture", "road-markings",
   "road-signs", "chevrons", "fire-hydrants", "manhole-covers", "bus-stops", "pylons",
   "driving-side", "language-scripts", "domains-phones", "streetview-meta",

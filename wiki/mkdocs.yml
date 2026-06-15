@@ -92,6 +92,16 @@ nav:
       - National parks: data/national-parks.md
       - Castles & palaces: data/castles.md
       - Airports: data/airports.md
+      - Lighthouses: data/lighthouses.md
+      - Stadiums & arenas: data/stadiums.md
+      - Dams & reservoirs: data/dams.md
+      - Universities: data/universities.md
+      - Power plants: data/power-plants.md
+      - Mines & quarries: data/mines.md
+      - Railway stations: data/railway-stations.md
+      - Hospitals: data/hospitals.md
+      - Places of worship: data/worship.md
+      - Military bases: data/military.md
   - Botanical reference:
       - Overview: flora/index.md
       - Boreal & northern: flora/boreal-northern.md
