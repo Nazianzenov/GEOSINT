@@ -32,274 +32,240 @@ documented with images on the respective Wikipedia "Flag of …" article.
 
 <style>
 .gh-gallery { display: flex; flex-wrap: wrap; gap: 14px; }
-.gh-gallery figure { margin: 0; width: 230px; }
-.gh-gallery img { width: 230px; border-radius: 4px; }
+.gh-gallery figure { margin: 0; width: 160px; }
+.gh-gallery img { width: 160px; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 3px; }
 .gh-gallery figcaption { font-size: .72rem; text-align: center; }
 </style>
 
-## Photo gallery — Flags
+## Flag gallery — current sovereign-state flags
 
-
+Flags from [Wikimedia Commons](https://commons.wikimedia.org/) (authoritative, sourced to national law), cached locally — the wiki works offline.
 
 ### Africa
 
 <div class="gh-gallery">
-<figure><img src="../assets/gh/flags/flags_186.svg" loading="lazy"><figcaption>Algeria</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_187.svg" loading="lazy"><figcaption>Angola</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_195.svg" loading="lazy"><figcaption>Benin</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_15.svg" loading="lazy"><figcaption>Botswana</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_198.svg" loading="lazy"><figcaption>Burkina Faso</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_199.svg" loading="lazy"><figcaption>Burundi</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_201.svg" loading="lazy"><figcaption>Cabo Verde</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_200.svg" loading="lazy"><figcaption>Cameroon</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_202.svg" loading="lazy"><figcaption>Central African Republic</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_203.svg" loading="lazy"><figcaption>Chad</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_204.svg" loading="lazy"><figcaption>Comoros</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_226.svg" loading="lazy"><figcaption>Côte d’Ivoire</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_205.svg" loading="lazy"><figcaption>Democratic Republic of the Congo</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_209.svg" loading="lazy"><figcaption>Djibouti</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_33.svg" loading="lazy"><figcaption>Egypt</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_212.svg" loading="lazy"><figcaption>Equatorial Guinea</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_213.svg" loading="lazy"><figcaption>Eritrea</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_35.svg" loading="lazy"><figcaption>Eswatini</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_214.svg" loading="lazy"><figcaption>Ethiopia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_216.svg" loading="lazy"><figcaption>Gabon</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_217.svg" loading="lazy"><figcaption>Gambia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_41.svg" loading="lazy"><figcaption>Ghana</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_220.svg" loading="lazy"><figcaption>Guinea</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_221.svg" loading="lazy"><figcaption>Guinea-Bissau</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_60.svg" loading="lazy"><figcaption>Kenya</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_65.svg" loading="lazy"><figcaption>Lesotho</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_231.svg" loading="lazy"><figcaption>Liberia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_232.svg" loading="lazy"><figcaption>Libya</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_69.svg" loading="lazy"><figcaption>Madagascar</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_234.svg" loading="lazy"><figcaption>Malawi</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_71.svg" loading="lazy"><figcaption>Mali</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_237.svg" loading="lazy"><figcaption>Mauritania</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_238.svg" loading="lazy"><figcaption>Mauritius</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_241.svg" loading="lazy"><figcaption>Morocco</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_242.svg" loading="lazy"><figcaption>Mozambique</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_244.svg" loading="lazy"><figcaption>Namibia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_247.svg" loading="lazy"><figcaption>Niger</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_80.svg" loading="lazy"><figcaption>Nigeria</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_206.svg" loading="lazy"><figcaption>Republic of the Congo</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_96.svg" loading="lazy"><figcaption>Rwanda</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_93.svg" loading="lazy"><figcaption>Réunion</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_99.svg" loading="lazy"><figcaption>Senegal</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_259.svg" loading="lazy"><figcaption>Seychelles</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_260.svg" loading="lazy"><figcaption>Sierra Leone</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_262.svg" loading="lazy"><figcaption>Somalia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_104.svg" loading="lazy"><figcaption>South Africa</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_263.svg" loading="lazy"><figcaption>South Sudan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_264.svg" loading="lazy"><figcaption>Sudan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_257.svg" loading="lazy"><figcaption>São Tomé and Príncipe</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_112.svg" loading="lazy"><figcaption>Tanzania</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_270.svg" loading="lazy"><figcaption>Togo</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_114.svg" loading="lazy"><figcaption>Tunisia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_116.svg" loading="lazy"><figcaption>Uganda</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_279.svg" loading="lazy"><figcaption>Zambia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_280.svg" loading="lazy"><figcaption>Zimbabwe</figcaption></figure>
+<figure><img src="../assets/flags/dz_algeria.svg" loading="lazy" alt="Flag of Algeria"><figcaption>Algeria</figcaption></figure>
+<figure><img src="../assets/flags/ao_angola.svg" loading="lazy" alt="Flag of Angola"><figcaption>Angola</figcaption></figure>
+<figure><img src="../assets/flags/bj_benin.svg" loading="lazy" alt="Flag of Benin"><figcaption>Benin</figcaption></figure>
+<figure><img src="../assets/flags/bw_botswana.svg" loading="lazy" alt="Flag of Botswana"><figcaption>Botswana</figcaption></figure>
+<figure><img src="../assets/flags/bf_burkina_faso.svg" loading="lazy" alt="Flag of Burkina Faso"><figcaption>Burkina Faso</figcaption></figure>
+<figure><img src="../assets/flags/bi_burundi.svg" loading="lazy" alt="Flag of Burundi"><figcaption>Burundi</figcaption></figure>
+<figure><img src="../assets/flags/cm_cameroon.svg" loading="lazy" alt="Flag of Cameroon"><figcaption>Cameroon</figcaption></figure>
+<figure><img src="../assets/flags/cv_cape_verde.svg" loading="lazy" alt="Flag of Cape Verde"><figcaption>Cape Verde</figcaption></figure>
+<figure><img src="../assets/flags/cf_central_african_republic.svg" loading="lazy" alt="Flag of Central African Republic"><figcaption>Central African Republic</figcaption></figure>
+<figure><img src="../assets/flags/td_chad.svg" loading="lazy" alt="Flag of Chad"><figcaption>Chad</figcaption></figure>
+<figure><img src="../assets/flags/km_comoros.svg" loading="lazy" alt="Flag of Comoros"><figcaption>Comoros</figcaption></figure>
+<figure><img src="../assets/flags/ci_cote_divoire.svg" loading="lazy" alt="Flag of Côte d'Ivoire"><figcaption>Côte d'Ivoire</figcaption></figure>
+<figure><img src="../assets/flags/dj_djibouti.svg" loading="lazy" alt="Flag of Djibouti"><figcaption>Djibouti</figcaption></figure>
+<figure><img src="../assets/flags/cd_dr_congo.svg" loading="lazy" alt="Flag of DR Congo"><figcaption>DR Congo</figcaption></figure>
+<figure><img src="../assets/flags/eg_egypt.svg" loading="lazy" alt="Flag of Egypt"><figcaption>Egypt</figcaption></figure>
+<figure><img src="../assets/flags/gq_equatorial_guinea.svg" loading="lazy" alt="Flag of Equatorial Guinea"><figcaption>Equatorial Guinea</figcaption></figure>
+<figure><img src="../assets/flags/er_eritrea.svg" loading="lazy" alt="Flag of Eritrea"><figcaption>Eritrea</figcaption></figure>
+<figure><img src="../assets/flags/sz_eswatini.svg" loading="lazy" alt="Flag of Eswatini"><figcaption>Eswatini</figcaption></figure>
+<figure><img src="../assets/flags/et_ethiopia.svg" loading="lazy" alt="Flag of Ethiopia"><figcaption>Ethiopia</figcaption></figure>
+<figure><img src="../assets/flags/ga_gabon.svg" loading="lazy" alt="Flag of Gabon"><figcaption>Gabon</figcaption></figure>
+<figure><img src="../assets/flags/gm_gambia.svg" loading="lazy" alt="Flag of Gambia"><figcaption>Gambia</figcaption></figure>
+<figure><img src="../assets/flags/gh_ghana.svg" loading="lazy" alt="Flag of Ghana"><figcaption>Ghana</figcaption></figure>
+<figure><img src="../assets/flags/gn_guinea.svg" loading="lazy" alt="Flag of Guinea"><figcaption>Guinea</figcaption></figure>
+<figure><img src="../assets/flags/gw_guinea_bissau.svg" loading="lazy" alt="Flag of Guinea-Bissau"><figcaption>Guinea-Bissau</figcaption></figure>
+<figure><img src="../assets/flags/ke_kenya.svg" loading="lazy" alt="Flag of Kenya"><figcaption>Kenya</figcaption></figure>
+<figure><img src="../assets/flags/ls_lesotho.svg" loading="lazy" alt="Flag of Lesotho"><figcaption>Lesotho</figcaption></figure>
+<figure><img src="../assets/flags/lr_liberia.svg" loading="lazy" alt="Flag of Liberia"><figcaption>Liberia</figcaption></figure>
+<figure><img src="../assets/flags/ly_libya.svg" loading="lazy" alt="Flag of Libya"><figcaption>Libya</figcaption></figure>
+<figure><img src="../assets/flags/mg_madagascar.svg" loading="lazy" alt="Flag of Madagascar"><figcaption>Madagascar</figcaption></figure>
+<figure><img src="../assets/flags/mw_malawi.svg" loading="lazy" alt="Flag of Malawi"><figcaption>Malawi</figcaption></figure>
+<figure><img src="../assets/flags/ml_mali.svg" loading="lazy" alt="Flag of Mali"><figcaption>Mali</figcaption></figure>
+<figure><img src="../assets/flags/mr_mauritania.svg" loading="lazy" alt="Flag of Mauritania"><figcaption>Mauritania</figcaption></figure>
+<figure><img src="../assets/flags/mu_mauritius.svg" loading="lazy" alt="Flag of Mauritius"><figcaption>Mauritius</figcaption></figure>
+<figure><img src="../assets/flags/ma_morocco.svg" loading="lazy" alt="Flag of Morocco"><figcaption>Morocco</figcaption></figure>
+<figure><img src="../assets/flags/mz_mozambique.svg" loading="lazy" alt="Flag of Mozambique"><figcaption>Mozambique</figcaption></figure>
+<figure><img src="../assets/flags/na_namibia.svg" loading="lazy" alt="Flag of Namibia"><figcaption>Namibia</figcaption></figure>
+<figure><img src="../assets/flags/ne_niger.svg" loading="lazy" alt="Flag of Niger"><figcaption>Niger</figcaption></figure>
+<figure><img src="../assets/flags/ng_nigeria.svg" loading="lazy" alt="Flag of Nigeria"><figcaption>Nigeria</figcaption></figure>
+<figure><img src="../assets/flags/cg_republic_of_the_congo.svg" loading="lazy" alt="Flag of Republic of the Congo"><figcaption>Republic of the Congo</figcaption></figure>
+<figure><img src="../assets/flags/rw_rwanda.svg" loading="lazy" alt="Flag of Rwanda"><figcaption>Rwanda</figcaption></figure>
+<figure><img src="../assets/flags/sn_senegal.svg" loading="lazy" alt="Flag of Senegal"><figcaption>Senegal</figcaption></figure>
+<figure><img src="../assets/flags/sc_seychelles.svg" loading="lazy" alt="Flag of Seychelles"><figcaption>Seychelles</figcaption></figure>
+<figure><img src="../assets/flags/sl_sierra_leone.svg" loading="lazy" alt="Flag of Sierra Leone"><figcaption>Sierra Leone</figcaption></figure>
+<figure><img src="../assets/flags/so_somalia.svg" loading="lazy" alt="Flag of Somalia"><figcaption>Somalia</figcaption></figure>
+<figure><img src="../assets/flags/za_south_africa.svg" loading="lazy" alt="Flag of South Africa"><figcaption>South Africa</figcaption></figure>
+<figure><img src="../assets/flags/ss_south_sudan.svg" loading="lazy" alt="Flag of South Sudan"><figcaption>South Sudan</figcaption></figure>
+<figure><img src="../assets/flags/sd_sudan.svg" loading="lazy" alt="Flag of Sudan"><figcaption>Sudan</figcaption></figure>
+<figure><img src="../assets/flags/st_sao_tome_and_principe.svg" loading="lazy" alt="Flag of São Tomé and Príncipe"><figcaption>São Tomé and Príncipe</figcaption></figure>
+<figure><img src="../assets/flags/tz_tanzania.svg" loading="lazy" alt="Flag of Tanzania"><figcaption>Tanzania</figcaption></figure>
+<figure><img src="../assets/flags/tg_togo.svg" loading="lazy" alt="Flag of Togo"><figcaption>Togo</figcaption></figure>
+<figure><img src="../assets/flags/tn_tunisia.svg" loading="lazy" alt="Flag of Tunisia"><figcaption>Tunisia</figcaption></figure>
+<figure><img src="../assets/flags/ug_uganda.svg" loading="lazy" alt="Flag of Uganda"><figcaption>Uganda</figcaption></figure>
+<figure><img src="../assets/flags/zm_zambia.svg" loading="lazy" alt="Flag of Zambia"><figcaption>Zambia</figcaption></figure>
+<figure><img src="../assets/flags/zw_zimbabwe.svg" loading="lazy" alt="Flag of Zimbabwe"><figcaption>Zimbabwe</figcaption></figure>
 </div>
-
 
 ### Asia
 
 <div class="gh-gallery">
-<figure><img src="../assets/gh/flags/flags_184.svg" loading="lazy"><figcaption>Afghanistan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_185.svg" loading="lazy"><figcaption>Afghanistan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_192.svg" loading="lazy"><figcaption>Bahrain</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_9.svg" loading="lazy"><figcaption>Bangladesh</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_13.svg" loading="lazy"><figcaption>Bhutan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_17.svg" loading="lazy"><figcaption>British Indian Ocean Territory</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_197.svg" loading="lazy"><figcaption>Brunei</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_19.svg" loading="lazy"><figcaption>Cambodia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_22.svg" loading="lazy"><figcaption>China</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_23.svg" loading="lazy"><figcaption>Christmas Island</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_24.svg" loading="lazy"><figcaption>Cocos (Keeling) Islands</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_47.svg" loading="lazy"><figcaption>Hong Kong</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_50.svg" loading="lazy"><figcaption>India</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_51.svg" loading="lazy"><figcaption>Indonesia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_225.svg" loading="lazy"><figcaption>Iran</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_52.svg" loading="lazy"><figcaption>Iraq</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_55.svg" loading="lazy"><figcaption>Israel</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_57.svg" loading="lazy"><figcaption>Japan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_59.svg" loading="lazy"><figcaption>Jordan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_228.svg" loading="lazy"><figcaption>Kazakhstan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_230.svg" loading="lazy"><figcaption>Kuwait</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_61.svg" loading="lazy"><figcaption>Kyrgyzstan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_62.svg" loading="lazy"><figcaption>Laos</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_64.svg" loading="lazy"><figcaption>Lebanon</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_68.svg" loading="lazy"><figcaption>Macao</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_70.svg" loading="lazy"><figcaption>Malaysia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_235.svg" loading="lazy"><figcaption>Maldives</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_75.svg" loading="lazy"><figcaption>Mongolia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_243.svg" loading="lazy"><figcaption>Myanmar</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_77.svg" loading="lazy"><figcaption>Nepal</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_248.svg" loading="lazy"><figcaption>North Korea</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_249.svg" loading="lazy"><figcaption>Oman</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_84.svg" loading="lazy"><figcaption>Pakistan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_85.svg" loading="lazy"><figcaption>Palestine</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_87.svg" loading="lazy"><figcaption>Philippines</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_92.svg" loading="lazy"><figcaption>Qatar</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_95.svg" loading="lazy"><figcaption>Russia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_258.svg" loading="lazy"><figcaption>Saudi Arabia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_101.svg" loading="lazy"><figcaption>Singapore</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_106.svg" loading="lazy"><figcaption>South Korea</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_108.svg" loading="lazy"><figcaption>Sri Lanka</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_266.svg" loading="lazy"><figcaption>Syria</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_267.svg" loading="lazy"><figcaption>Syria</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_111.svg" loading="lazy"><figcaption>Taiwan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_268.svg" loading="lazy"><figcaption>Tajikistan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_113.svg" loading="lazy"><figcaption>Thailand</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_269.svg" loading="lazy"><figcaption>Timor-Leste</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_273.svg" loading="lazy"><figcaption>Turkmenistan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_118.svg" loading="lazy"><figcaption>United Arab Emirates</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_275.svg" loading="lazy"><figcaption>Uzbekistan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_182.svg" loading="lazy"><figcaption>Vietnam</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_278.svg" loading="lazy"><figcaption>Yemen</figcaption></figure>
+<figure><img src="../assets/flags/af_afghanistan.svg" loading="lazy" alt="Flag of Afghanistan"><figcaption>Afghanistan</figcaption></figure>
+<figure><img src="../assets/flags/am_armenia.svg" loading="lazy" alt="Flag of Armenia"><figcaption>Armenia</figcaption></figure>
+<figure><img src="../assets/flags/az_azerbaijan.svg" loading="lazy" alt="Flag of Azerbaijan"><figcaption>Azerbaijan</figcaption></figure>
+<figure><img src="../assets/flags/bh_bahrain.svg" loading="lazy" alt="Flag of Bahrain"><figcaption>Bahrain</figcaption></figure>
+<figure><img src="../assets/flags/bd_bangladesh.svg" loading="lazy" alt="Flag of Bangladesh"><figcaption>Bangladesh</figcaption></figure>
+<figure><img src="../assets/flags/bt_bhutan.svg" loading="lazy" alt="Flag of Bhutan"><figcaption>Bhutan</figcaption></figure>
+<figure><img src="../assets/flags/bn_brunei.svg" loading="lazy" alt="Flag of Brunei"><figcaption>Brunei</figcaption></figure>
+<figure><img src="../assets/flags/kh_cambodia.svg" loading="lazy" alt="Flag of Cambodia"><figcaption>Cambodia</figcaption></figure>
+<figure><img src="../assets/flags/cn_china.svg" loading="lazy" alt="Flag of China"><figcaption>China</figcaption></figure>
+<figure><img src="../assets/flags/cy_cyprus.svg" loading="lazy" alt="Flag of Cyprus"><figcaption>Cyprus</figcaption></figure>
+<figure><img src="../assets/flags/ge_georgia.svg" loading="lazy" alt="Flag of Georgia"><figcaption>Georgia</figcaption></figure>
+<figure><img src="../assets/flags/in_india.svg" loading="lazy" alt="Flag of India"><figcaption>India</figcaption></figure>
+<figure><img src="../assets/flags/id_indonesia.svg" loading="lazy" alt="Flag of Indonesia"><figcaption>Indonesia</figcaption></figure>
+<figure><img src="../assets/flags/ir_iran.svg" loading="lazy" alt="Flag of Iran"><figcaption>Iran</figcaption></figure>
+<figure><img src="../assets/flags/iq_iraq.svg" loading="lazy" alt="Flag of Iraq"><figcaption>Iraq</figcaption></figure>
+<figure><img src="../assets/flags/il_israel.svg" loading="lazy" alt="Flag of Israel"><figcaption>Israel</figcaption></figure>
+<figure><img src="../assets/flags/jp_japan.svg" loading="lazy" alt="Flag of Japan"><figcaption>Japan</figcaption></figure>
+<figure><img src="../assets/flags/jo_jordan.svg" loading="lazy" alt="Flag of Jordan"><figcaption>Jordan</figcaption></figure>
+<figure><img src="../assets/flags/kz_kazakhstan.svg" loading="lazy" alt="Flag of Kazakhstan"><figcaption>Kazakhstan</figcaption></figure>
+<figure><img src="../assets/flags/kw_kuwait.svg" loading="lazy" alt="Flag of Kuwait"><figcaption>Kuwait</figcaption></figure>
+<figure><img src="../assets/flags/kg_kyrgyzstan.svg" loading="lazy" alt="Flag of Kyrgyzstan"><figcaption>Kyrgyzstan</figcaption></figure>
+<figure><img src="../assets/flags/la_laos.svg" loading="lazy" alt="Flag of Laos"><figcaption>Laos</figcaption></figure>
+<figure><img src="../assets/flags/lb_lebanon.svg" loading="lazy" alt="Flag of Lebanon"><figcaption>Lebanon</figcaption></figure>
+<figure><img src="../assets/flags/my_malaysia.svg" loading="lazy" alt="Flag of Malaysia"><figcaption>Malaysia</figcaption></figure>
+<figure><img src="../assets/flags/mv_maldives.svg" loading="lazy" alt="Flag of Maldives"><figcaption>Maldives</figcaption></figure>
+<figure><img src="../assets/flags/mn_mongolia.svg" loading="lazy" alt="Flag of Mongolia"><figcaption>Mongolia</figcaption></figure>
+<figure><img src="../assets/flags/mm_myanmar.svg" loading="lazy" alt="Flag of Myanmar"><figcaption>Myanmar</figcaption></figure>
+<figure><img src="../assets/flags/np_nepal.svg" loading="lazy" alt="Flag of Nepal"><figcaption>Nepal</figcaption></figure>
+<figure><img src="../assets/flags/kp_north_korea.svg" loading="lazy" alt="Flag of North Korea"><figcaption>North Korea</figcaption></figure>
+<figure><img src="../assets/flags/om_oman.svg" loading="lazy" alt="Flag of Oman"><figcaption>Oman</figcaption></figure>
+<figure><img src="../assets/flags/pk_pakistan.svg" loading="lazy" alt="Flag of Pakistan"><figcaption>Pakistan</figcaption></figure>
+<figure><img src="../assets/flags/ps_palestine.svg" loading="lazy" alt="Flag of Palestine"><figcaption>Palestine</figcaption></figure>
+<figure><img src="../assets/flags/ph_philippines.svg" loading="lazy" alt="Flag of Philippines"><figcaption>Philippines</figcaption></figure>
+<figure><img src="../assets/flags/qa_qatar.svg" loading="lazy" alt="Flag of Qatar"><figcaption>Qatar</figcaption></figure>
+<figure><img src="../assets/flags/sa_saudi_arabia.svg" loading="lazy" alt="Flag of Saudi Arabia"><figcaption>Saudi Arabia</figcaption></figure>
+<figure><img src="../assets/flags/sg_singapore.svg" loading="lazy" alt="Flag of Singapore"><figcaption>Singapore</figcaption></figure>
+<figure><img src="../assets/flags/kr_south_korea.svg" loading="lazy" alt="Flag of South Korea"><figcaption>South Korea</figcaption></figure>
+<figure><img src="../assets/flags/lk_sri_lanka.svg" loading="lazy" alt="Flag of Sri Lanka"><figcaption>Sri Lanka</figcaption></figure>
+<figure><img src="../assets/flags/sy_syria.svg" loading="lazy" alt="Flag of Syria"><figcaption>Syria</figcaption></figure>
+<figure><img src="../assets/flags/tw_taiwan.svg" loading="lazy" alt="Flag of Taiwan"><figcaption>Taiwan</figcaption></figure>
+<figure><img src="../assets/flags/tj_tajikistan.svg" loading="lazy" alt="Flag of Tajikistan"><figcaption>Tajikistan</figcaption></figure>
+<figure><img src="../assets/flags/th_thailand.svg" loading="lazy" alt="Flag of Thailand"><figcaption>Thailand</figcaption></figure>
+<figure><img src="../assets/flags/tl_timor_leste.svg" loading="lazy" alt="Flag of Timor-Leste"><figcaption>Timor-Leste</figcaption></figure>
+<figure><img src="../assets/flags/tr_turkey.svg" loading="lazy" alt="Flag of Turkey"><figcaption>Turkey</figcaption></figure>
+<figure><img src="../assets/flags/tm_turkmenistan.svg" loading="lazy" alt="Flag of Turkmenistan"><figcaption>Turkmenistan</figcaption></figure>
+<figure><img src="../assets/flags/ae_united_arab_emirates.svg" loading="lazy" alt="Flag of United Arab Emirates"><figcaption>United Arab Emirates</figcaption></figure>
+<figure><img src="../assets/flags/uz_uzbekistan.svg" loading="lazy" alt="Flag of Uzbekistan"><figcaption>Uzbekistan</figcaption></figure>
+<figure><img src="../assets/flags/vn_vietnam.svg" loading="lazy" alt="Flag of Vietnam"><figcaption>Vietnam</figcaption></figure>
+<figure><img src="../assets/flags/ye_yemen.svg" loading="lazy" alt="Flag of Yemen"><figcaption>Yemen</figcaption></figure>
 </div>
-
 
 ### Europe
 
 <div class="gh-gallery">
-<figure><img src="../assets/gh/flags/flags_3.svg" loading="lazy"><figcaption>Albania</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_5.svg" loading="lazy"><figcaption>Andorra</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_189.svg" loading="lazy"><figcaption>Armenia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_8.svg" loading="lazy"><figcaption>Austria</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_190.svg" loading="lazy"><figcaption>Azerbaijan</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_10.svg" loading="lazy"><figcaption>Belarus</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_11.svg" loading="lazy"><figcaption>Belgium</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_196.svg" loading="lazy"><figcaption>Bosnia and Herzegovina</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_18.svg" loading="lazy"><figcaption>Bulgaria</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_27.svg" loading="lazy"><figcaption>Croatia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_208.svg" loading="lazy"><figcaption>Cyprus</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_29.svg" loading="lazy"><figcaption>Czech Republic</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_30.svg" loading="lazy"><figcaption>Denmark</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_34.svg" loading="lazy"><figcaption>Estonia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_37.svg" loading="lazy"><figcaption>Faroe Islands</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_38.svg" loading="lazy"><figcaption>Finland</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_39.svg" loading="lazy"><figcaption>France</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_218.svg" loading="lazy"><figcaption>Georgia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_40.svg" loading="lazy"><figcaption>Germany</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_42.svg" loading="lazy"><figcaption>Gibraltar</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_43.svg" loading="lazy"><figcaption>Greece</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_48.svg" loading="lazy"><figcaption>Hungary</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_49.svg" loading="lazy"><figcaption>Iceland</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_53.svg" loading="lazy"><figcaption>Ireland</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_54.svg" loading="lazy"><figcaption>Isle of Man</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_56.svg" loading="lazy"><figcaption>Italy</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_58.svg" loading="lazy"><figcaption>Jersey</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_63.svg" loading="lazy"><figcaption>Latvia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_233.svg" loading="lazy"><figcaption>Liechtenstein</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_66.svg" loading="lazy"><figcaption>Lithuania</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_67.svg" loading="lazy"><figcaption>Luxembourg</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_72.svg" loading="lazy"><figcaption>Malta</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_240.svg" loading="lazy"><figcaption>Moldova</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_74.svg" loading="lazy"><figcaption>Monaco</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_76.svg" loading="lazy"><figcaption>Montenegro</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_78.svg" loading="lazy"><figcaption>Netherlands</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_81.svg" loading="lazy"><figcaption>North Macedonia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_83.svg" loading="lazy"><figcaption>Norway</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_89.svg" loading="lazy"><figcaption>Poland</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_90.svg" loading="lazy"><figcaption>Portugal</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_94.svg" loading="lazy"><figcaption>Romania</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_98.svg" loading="lazy"><figcaption>San Marino</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_100.svg" loading="lazy"><figcaption>Serbia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_102.svg" loading="lazy"><figcaption>Slovakia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_103.svg" loading="lazy"><figcaption>Slovenia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_107.svg" loading="lazy"><figcaption>Spain</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_109.svg" loading="lazy"><figcaption>Sweden</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_110.svg" loading="lazy"><figcaption>Switzerland</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_115.svg" loading="lazy"><figcaption>Turkey</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_117.svg" loading="lazy"><figcaption>Ukraine</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_119.svg" loading="lazy"><figcaption>United Kingdom</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_276.svg" loading="lazy"><figcaption>Vatican City</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_1.svg" loading="lazy"><figcaption>Åland</figcaption></figure>
+<figure><img src="../assets/flags/al_albania.svg" loading="lazy" alt="Flag of Albania"><figcaption>Albania</figcaption></figure>
+<figure><img src="../assets/flags/ad_andorra.svg" loading="lazy" alt="Flag of Andorra"><figcaption>Andorra</figcaption></figure>
+<figure><img src="../assets/flags/at_austria.svg" loading="lazy" alt="Flag of Austria"><figcaption>Austria</figcaption></figure>
+<figure><img src="../assets/flags/by_belarus.svg" loading="lazy" alt="Flag of Belarus"><figcaption>Belarus</figcaption></figure>
+<figure><img src="../assets/flags/be_belgium.svg" loading="lazy" alt="Flag of Belgium"><figcaption>Belgium</figcaption></figure>
+<figure><img src="../assets/flags/ba_bosnia_and_herzegovina.svg" loading="lazy" alt="Flag of Bosnia and Herzegovina"><figcaption>Bosnia and Herzegovina</figcaption></figure>
+<figure><img src="../assets/flags/bg_bulgaria.svg" loading="lazy" alt="Flag of Bulgaria"><figcaption>Bulgaria</figcaption></figure>
+<figure><img src="../assets/flags/hr_croatia.svg" loading="lazy" alt="Flag of Croatia"><figcaption>Croatia</figcaption></figure>
+<figure><img src="../assets/flags/cz_czechia.svg" loading="lazy" alt="Flag of Czechia"><figcaption>Czechia</figcaption></figure>
+<figure><img src="../assets/flags/dk_denmark.svg" loading="lazy" alt="Flag of Denmark"><figcaption>Denmark</figcaption></figure>
+<figure><img src="../assets/flags/ee_estonia.svg" loading="lazy" alt="Flag of Estonia"><figcaption>Estonia</figcaption></figure>
+<figure><img src="../assets/flags/fi_finland.svg" loading="lazy" alt="Flag of Finland"><figcaption>Finland</figcaption></figure>
+<figure><img src="../assets/flags/fr_france.svg" loading="lazy" alt="Flag of France"><figcaption>France</figcaption></figure>
+<figure><img src="../assets/flags/de_germany.svg" loading="lazy" alt="Flag of Germany"><figcaption>Germany</figcaption></figure>
+<figure><img src="../assets/flags/gr_greece.svg" loading="lazy" alt="Flag of Greece"><figcaption>Greece</figcaption></figure>
+<figure><img src="../assets/flags/hu_hungary.svg" loading="lazy" alt="Flag of Hungary"><figcaption>Hungary</figcaption></figure>
+<figure><img src="../assets/flags/is_iceland.svg" loading="lazy" alt="Flag of Iceland"><figcaption>Iceland</figcaption></figure>
+<figure><img src="../assets/flags/ie_ireland.svg" loading="lazy" alt="Flag of Ireland"><figcaption>Ireland</figcaption></figure>
+<figure><img src="../assets/flags/it_italy.svg" loading="lazy" alt="Flag of Italy"><figcaption>Italy</figcaption></figure>
+<figure><img src="../assets/flags/xk_kosovo.svg" loading="lazy" alt="Flag of Kosovo"><figcaption>Kosovo</figcaption></figure>
+<figure><img src="../assets/flags/lv_latvia.svg" loading="lazy" alt="Flag of Latvia"><figcaption>Latvia</figcaption></figure>
+<figure><img src="../assets/flags/li_liechtenstein.svg" loading="lazy" alt="Flag of Liechtenstein"><figcaption>Liechtenstein</figcaption></figure>
+<figure><img src="../assets/flags/lt_lithuania.svg" loading="lazy" alt="Flag of Lithuania"><figcaption>Lithuania</figcaption></figure>
+<figure><img src="../assets/flags/lu_luxembourg.svg" loading="lazy" alt="Flag of Luxembourg"><figcaption>Luxembourg</figcaption></figure>
+<figure><img src="../assets/flags/mt_malta.svg" loading="lazy" alt="Flag of Malta"><figcaption>Malta</figcaption></figure>
+<figure><img src="../assets/flags/md_moldova.svg" loading="lazy" alt="Flag of Moldova"><figcaption>Moldova</figcaption></figure>
+<figure><img src="../assets/flags/mc_monaco.svg" loading="lazy" alt="Flag of Monaco"><figcaption>Monaco</figcaption></figure>
+<figure><img src="../assets/flags/me_montenegro.svg" loading="lazy" alt="Flag of Montenegro"><figcaption>Montenegro</figcaption></figure>
+<figure><img src="../assets/flags/nl_netherlands.svg" loading="lazy" alt="Flag of Netherlands"><figcaption>Netherlands</figcaption></figure>
+<figure><img src="../assets/flags/mk_north_macedonia.svg" loading="lazy" alt="Flag of North Macedonia"><figcaption>North Macedonia</figcaption></figure>
+<figure><img src="../assets/flags/no_norway.svg" loading="lazy" alt="Flag of Norway"><figcaption>Norway</figcaption></figure>
+<figure><img src="../assets/flags/pl_poland.svg" loading="lazy" alt="Flag of Poland"><figcaption>Poland</figcaption></figure>
+<figure><img src="../assets/flags/pt_portugal.svg" loading="lazy" alt="Flag of Portugal"><figcaption>Portugal</figcaption></figure>
+<figure><img src="../assets/flags/ro_romania.svg" loading="lazy" alt="Flag of Romania"><figcaption>Romania</figcaption></figure>
+<figure><img src="../assets/flags/ru_russia.svg" loading="lazy" alt="Flag of Russia"><figcaption>Russia</figcaption></figure>
+<figure><img src="../assets/flags/sm_san_marino.svg" loading="lazy" alt="Flag of San Marino"><figcaption>San Marino</figcaption></figure>
+<figure><img src="../assets/flags/rs_serbia.svg" loading="lazy" alt="Flag of Serbia"><figcaption>Serbia</figcaption></figure>
+<figure><img src="../assets/flags/sk_slovakia.svg" loading="lazy" alt="Flag of Slovakia"><figcaption>Slovakia</figcaption></figure>
+<figure><img src="../assets/flags/si_slovenia.svg" loading="lazy" alt="Flag of Slovenia"><figcaption>Slovenia</figcaption></figure>
+<figure><img src="../assets/flags/es_spain.svg" loading="lazy" alt="Flag of Spain"><figcaption>Spain</figcaption></figure>
+<figure><img src="../assets/flags/se_sweden.svg" loading="lazy" alt="Flag of Sweden"><figcaption>Sweden</figcaption></figure>
+<figure><img src="../assets/flags/ch_switzerland.svg" loading="lazy" alt="Flag of Switzerland"><figcaption>Switzerland</figcaption></figure>
+<figure><img src="../assets/flags/ua_ukraine.svg" loading="lazy" alt="Flag of Ukraine"><figcaption>Ukraine</figcaption></figure>
+<figure><img src="../assets/flags/gb_united_kingdom.svg" loading="lazy" alt="Flag of United Kingdom"><figcaption>United Kingdom</figcaption></figure>
+<figure><img src="../assets/flags/va_vatican_city.svg" loading="lazy" alt="Flag of Vatican City"><figcaption>Vatican City</figcaption></figure>
 </div>
-
 
 ### North America
 
 <div class="gh-gallery">
-<figure><img src="../assets/gh/flags/flags_188.svg" loading="lazy"><figcaption>Antigua and Barbuda</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_191.svg" loading="lazy"><figcaption>Bahamas</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_193.svg" loading="lazy"><figcaption>Barbados</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_194.svg" loading="lazy"><figcaption>Belize</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_12.svg" loading="lazy"><figcaption>Bermuda</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_20.svg" loading="lazy"><figcaption>Canada</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_26.svg" loading="lazy"><figcaption>Costa Rica</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_207.svg" loading="lazy"><figcaption>Cuba</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_28.svg" loading="lazy"><figcaption>Curaçao</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_210.svg" loading="lazy"><figcaption>Dominica</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_31.svg" loading="lazy"><figcaption>Dominican Republic</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_211.svg" loading="lazy"><figcaption>El Salvador</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_44.svg" loading="lazy"><figcaption>Greenland</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_219.svg" loading="lazy"><figcaption>Grenada</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_46.svg" loading="lazy"><figcaption>Guatemala</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_223.svg" loading="lazy"><figcaption>Haiti</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_224.svg" loading="lazy"><figcaption>Honduras</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_227.svg" loading="lazy"><figcaption>Jamaica</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_281.svg" loading="lazy"><figcaption>Martinique</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_282.svg" loading="lazy"><figcaption>Martinique</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_73.svg" loading="lazy"><figcaption>Mexico</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_246.svg" loading="lazy"><figcaption>Nicaragua</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_183.svg" loading="lazy"><figcaption>Panama</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_91.svg" loading="lazy"><figcaption>Puerto Rico</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_253.svg" loading="lazy"><figcaption>Saint Kitts and Nevis</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_254.svg" loading="lazy"><figcaption>Saint Lucia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_97.svg" loading="lazy"><figcaption>Saint Pierre and Miquelon</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_255.svg" loading="lazy"><figcaption>Saint Vincent and the Grenadines</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_272.svg" loading="lazy"><figcaption>Trinidad and Tobago</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_120.svg" loading="lazy"><figcaption>United States</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_121.svg" loading="lazy"><figcaption>United States Virgin Islands</figcaption></figure>
+<figure><img src="../assets/flags/ag_antigua_and_barbuda.svg" loading="lazy" alt="Flag of Antigua and Barbuda"><figcaption>Antigua and Barbuda</figcaption></figure>
+<figure><img src="../assets/flags/bs_bahamas.svg" loading="lazy" alt="Flag of Bahamas"><figcaption>Bahamas</figcaption></figure>
+<figure><img src="../assets/flags/bb_barbados.svg" loading="lazy" alt="Flag of Barbados"><figcaption>Barbados</figcaption></figure>
+<figure><img src="../assets/flags/bz_belize.svg" loading="lazy" alt="Flag of Belize"><figcaption>Belize</figcaption></figure>
+<figure><img src="../assets/flags/ca_canada.svg" loading="lazy" alt="Flag of Canada"><figcaption>Canada</figcaption></figure>
+<figure><img src="../assets/flags/cr_costa_rica.svg" loading="lazy" alt="Flag of Costa Rica"><figcaption>Costa Rica</figcaption></figure>
+<figure><img src="../assets/flags/cu_cuba.svg" loading="lazy" alt="Flag of Cuba"><figcaption>Cuba</figcaption></figure>
+<figure><img src="../assets/flags/dm_dominica.svg" loading="lazy" alt="Flag of Dominica"><figcaption>Dominica</figcaption></figure>
+<figure><img src="../assets/flags/do_dominican_republic.svg" loading="lazy" alt="Flag of Dominican Republic"><figcaption>Dominican Republic</figcaption></figure>
+<figure><img src="../assets/flags/sv_el_salvador.svg" loading="lazy" alt="Flag of El Salvador"><figcaption>El Salvador</figcaption></figure>
+<figure><img src="../assets/flags/gd_grenada.svg" loading="lazy" alt="Flag of Grenada"><figcaption>Grenada</figcaption></figure>
+<figure><img src="../assets/flags/gt_guatemala.svg" loading="lazy" alt="Flag of Guatemala"><figcaption>Guatemala</figcaption></figure>
+<figure><img src="../assets/flags/ht_haiti.svg" loading="lazy" alt="Flag of Haiti"><figcaption>Haiti</figcaption></figure>
+<figure><img src="../assets/flags/hn_honduras.svg" loading="lazy" alt="Flag of Honduras"><figcaption>Honduras</figcaption></figure>
+<figure><img src="../assets/flags/jm_jamaica.svg" loading="lazy" alt="Flag of Jamaica"><figcaption>Jamaica</figcaption></figure>
+<figure><img src="../assets/flags/mx_mexico.svg" loading="lazy" alt="Flag of Mexico"><figcaption>Mexico</figcaption></figure>
+<figure><img src="../assets/flags/ni_nicaragua.svg" loading="lazy" alt="Flag of Nicaragua"><figcaption>Nicaragua</figcaption></figure>
+<figure><img src="../assets/flags/pa_panama.svg" loading="lazy" alt="Flag of Panama"><figcaption>Panama</figcaption></figure>
+<figure><img src="../assets/flags/kn_saint_kitts_and_nevis.svg" loading="lazy" alt="Flag of Saint Kitts and Nevis"><figcaption>Saint Kitts and Nevis</figcaption></figure>
+<figure><img src="../assets/flags/lc_saint_lucia.svg" loading="lazy" alt="Flag of Saint Lucia"><figcaption>Saint Lucia</figcaption></figure>
+<figure><img src="../assets/flags/vc_saint_vincent_and_the_grenadines.svg" loading="lazy" alt="Flag of Saint Vincent and the Grenadines"><figcaption>Saint Vincent and the Grenadines</figcaption></figure>
+<figure><img src="../assets/flags/tt_trinidad_and_tobago.svg" loading="lazy" alt="Flag of Trinidad and Tobago"><figcaption>Trinidad and Tobago</figcaption></figure>
+<figure><img src="../assets/flags/us_united_states.svg" loading="lazy" alt="Flag of United States"><figcaption>United States</figcaption></figure>
 </div>
-
 
 ### Oceania
 
 <div class="gh-gallery">
-<figure><img src="../assets/gh/flags/flags_4.svg" loading="lazy"><figcaption>American Samoa</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_7.svg" loading="lazy"><figcaption>Australia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_215.svg" loading="lazy"><figcaption>Fiji</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_45.svg" loading="lazy"><figcaption>Guam</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_229.svg" loading="lazy"><figcaption>Kiribati</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_236.svg" loading="lazy"><figcaption>Marshall Islands</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_239.svg" loading="lazy"><figcaption>Micronesia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_245.svg" loading="lazy"><figcaption>Nauru</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_79.svg" loading="lazy"><figcaption>New Zealand</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_82.svg" loading="lazy"><figcaption>Northern Mariana Islands</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_250.svg" loading="lazy"><figcaption>Palau</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_251.svg" loading="lazy"><figcaption>Papua New Guinea</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_88.svg" loading="lazy"><figcaption>Pitcairn Islands</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_256.svg" loading="lazy"><figcaption>Samoa</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_261.svg" loading="lazy"><figcaption>Solomon Islands</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_271.svg" loading="lazy"><figcaption>Tonga</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_274.svg" loading="lazy"><figcaption>Tuvalu</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_123.svg" loading="lazy"><figcaption>Vanuatu</figcaption></figure>
+<figure><img src="../assets/flags/au_australia.svg" loading="lazy" alt="Flag of Australia"><figcaption>Australia</figcaption></figure>
+<figure><img src="../assets/flags/fj_fiji.svg" loading="lazy" alt="Flag of Fiji"><figcaption>Fiji</figcaption></figure>
+<figure><img src="../assets/flags/ki_kiribati.svg" loading="lazy" alt="Flag of Kiribati"><figcaption>Kiribati</figcaption></figure>
+<figure><img src="../assets/flags/mh_marshall_islands.svg" loading="lazy" alt="Flag of Marshall Islands"><figcaption>Marshall Islands</figcaption></figure>
+<figure><img src="../assets/flags/fm_micronesia.svg" loading="lazy" alt="Flag of Micronesia"><figcaption>Micronesia</figcaption></figure>
+<figure><img src="../assets/flags/nr_nauru.svg" loading="lazy" alt="Flag of Nauru"><figcaption>Nauru</figcaption></figure>
+<figure><img src="../assets/flags/nz_new_zealand.svg" loading="lazy" alt="Flag of New Zealand"><figcaption>New Zealand</figcaption></figure>
+<figure><img src="../assets/flags/pw_palau.svg" loading="lazy" alt="Flag of Palau"><figcaption>Palau</figcaption></figure>
+<figure><img src="../assets/flags/pg_papua_new_guinea.svg" loading="lazy" alt="Flag of Papua New Guinea"><figcaption>Papua New Guinea</figcaption></figure>
+<figure><img src="../assets/flags/ws_samoa.svg" loading="lazy" alt="Flag of Samoa"><figcaption>Samoa</figcaption></figure>
+<figure><img src="../assets/flags/sb_solomon_islands.svg" loading="lazy" alt="Flag of Solomon Islands"><figcaption>Solomon Islands</figcaption></figure>
+<figure><img src="../assets/flags/to_tonga.svg" loading="lazy" alt="Flag of Tonga"><figcaption>Tonga</figcaption></figure>
+<figure><img src="../assets/flags/tv_tuvalu.svg" loading="lazy" alt="Flag of Tuvalu"><figcaption>Tuvalu</figcaption></figure>
+<figure><img src="../assets/flags/vu_vanuatu.svg" loading="lazy" alt="Flag of Vanuatu"><figcaption>Vanuatu</figcaption></figure>
 </div>
-
 
 ### South America
 
 <div class="gh-gallery">
-<figure><img src="../assets/gh/flags/flags_6.svg" loading="lazy"><figcaption>Argentina</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_14.svg" loading="lazy"><figcaption>Bolivia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_16.svg" loading="lazy"><figcaption>Brazil</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_21.svg" loading="lazy"><figcaption>Chile</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_25.svg" loading="lazy"><figcaption>Colombia</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_32.svg" loading="lazy"><figcaption>Ecuador</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_36.svg" loading="lazy"><figcaption>Falkland Islands</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_222.svg" loading="lazy"><figcaption>Guyana</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_252.svg" loading="lazy"><figcaption>Paraguay</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_86.svg" loading="lazy"><figcaption>Peru</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_105.svg" loading="lazy"><figcaption>South Georgia and the South Sandwich Islands</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_265.svg" loading="lazy"><figcaption>Suriname</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_122.svg" loading="lazy"><figcaption>Uruguay</figcaption></figure>
-<figure><img src="../assets/gh/flags/flags_277.svg" loading="lazy"><figcaption>Venezuela</figcaption></figure>
+<figure><img src="../assets/flags/ar_argentina.svg" loading="lazy" alt="Flag of Argentina"><figcaption>Argentina</figcaption></figure>
+<figure><img src="../assets/flags/bo_bolivia.svg" loading="lazy" alt="Flag of Bolivia"><figcaption>Bolivia</figcaption></figure>
+<figure><img src="../assets/flags/br_brazil.svg" loading="lazy" alt="Flag of Brazil"><figcaption>Brazil</figcaption></figure>
+<figure><img src="../assets/flags/cl_chile.svg" loading="lazy" alt="Flag of Chile"><figcaption>Chile</figcaption></figure>
+<figure><img src="../assets/flags/co_colombia.svg" loading="lazy" alt="Flag of Colombia"><figcaption>Colombia</figcaption></figure>
+<figure><img src="../assets/flags/ec_ecuador.svg" loading="lazy" alt="Flag of Ecuador"><figcaption>Ecuador</figcaption></figure>
+<figure><img src="../assets/flags/gy_guyana.svg" loading="lazy" alt="Flag of Guyana"><figcaption>Guyana</figcaption></figure>
+<figure><img src="../assets/flags/py_paraguay.svg" loading="lazy" alt="Flag of Paraguay"><figcaption>Paraguay</figcaption></figure>
+<figure><img src="../assets/flags/pe_peru.svg" loading="lazy" alt="Flag of Peru"><figcaption>Peru</figcaption></figure>
+<figure><img src="../assets/flags/sr_suriname.svg" loading="lazy" alt="Flag of Suriname"><figcaption>Suriname</figcaption></figure>
+<figure><img src="../assets/flags/uy_uruguay.svg" loading="lazy" alt="Flag of Uruguay"><figcaption>Uruguay</figcaption></figure>
+<figure><img src="../assets/flags/ve_venezuela.svg" loading="lazy" alt="Flag of Venezuela"><figcaption>Venezuela</figcaption></figure>
 </div>
-
-
-*Images load directly from their source in your browser and are not stored in this wiki. Street imagery (c) Google. Requires internet to display.*
 
 <!-- GEOHINTS:flags END -->
