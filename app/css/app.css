@@ -154,6 +154,17 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
   text-align: center; cursor: pointer; color: var(--txt-dim); margin-bottom: 10px;
 }
 #dropzone:hover, #dropzone.over { border-color: var(--accent); color: var(--txt); }
+#batch-zone {
+  border: 2px dashed var(--line); border-radius: 6px; padding: 18px 12px;
+  text-align: center; cursor: pointer; color: var(--txt-dim); margin: 6px 0 8px;
+  font-size: 12px;
+}
+#batch-zone:hover, #batch-zone.over { border-color: var(--accent); color: var(--txt); }
+table.batch { width: 100%; font-size: 11.5px; }
+table.batch .batch-th { cursor: pointer; white-space: nowrap; user-select: none; }
+table.batch .batch-th:hover { color: var(--accent); }
+table.batch td .muted { color: var(--txt-dim); }
+table.batch .batch-go { text-decoration: none; font-size: 14px; }
 #img-preview { max-width: 100%; max-height: 220px; border-radius: 4px; border: 1px solid var(--line); margin-bottom: 8px; }
 #exif-out .gps-actions { margin: 8px 0; display: flex; gap: 6px; }
 

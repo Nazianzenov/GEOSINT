@@ -127,6 +127,17 @@
         <img id="img-preview" hidden alt="preview">
         <div id="exif-out"></div>
 
+        <h3>Batch EXIF <span class="muted">— triage many images</span></h3>
+        <p class="hint">Drop a <b>folder or many images</b> to extract GPS, timestamp and camera
+           from each into a sortable table — all parsed locally, nothing uploaded.</p>
+        <div id="batch-zone">
+          <strong>Drop images / a folder here</strong> or click to choose<br>
+          <span class="muted">Click a column header to sort · ⌖ jumps to a photo's GPS</span>
+          <input type="file" id="batch-input" accept="image/*" multiple hidden>
+        </div>
+        <div id="batch-status" class="muted"></div>
+        <div id="batch-out" class="table-scroll"></div>
+
         <h3>Reverse image search</h3>
         <p class="hint">Engines cannot read local files from a link — the buttons below open each engine,
            then <b>drag your image into the page</b> (or paste with Ctrl+V on Lens/Yandex/Bing).</p>

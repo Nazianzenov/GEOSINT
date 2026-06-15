@@ -864,6 +864,83 @@ function initImage() {
     engineUrls(u).forEach((e) => window.open(e.url, "_blank"));
   });
   renderUrlButtons();
+  initBatch();
+}
+
+/* ── batch EXIF: parse many images locally into a sortable table ── */
+const _batch = { rows: [], sort: { key: "name", dir: 1 } };
+
+function initBatch() {
+  const bz = $("#batch-zone"), bi = $("#batch-input");
+  bz.addEventListener("click", () => bi.click());
+  bi.addEventListener("change", () => batchProcess([...bi.files]));
+  ["dragover", "dragenter"].forEach((ev) => bz.addEventListener(ev, (e) => { e.preventDefault(); bz.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((ev) => bz.addEventListener(ev, (e) => { e.preventDefault(); bz.classList.remove("over"); }));
+  bz.addEventListener("drop", (e) => {
+    // drops can be files or a dropped folder (webkit entries) — collect images
+    const fs = [...(e.dataTransfer.files || [])].filter((f) => f.type.startsWith("image/"));
+    if (fs.length) batchProcess(fs);
+  });
+}
+
+async function batchProcess(files) {
+  const imgs = files.filter((f) => f.type.startsWith("image/"));
+  if (!imgs.length) return status("no images in that drop", true);
+  _batch.rows = [];
+  $("#batch-status").textContent = `parsing ${imgs.length} image(s) locally…`;
+  let done = 0;
+  for (const f of imgs) {
+    let ex = null;
+    try { ex = await exifr.parse(f, { gps: true, exif: true, ifd0: true }); } catch { /* none */ }
+    _batch.rows.push({
+      name: f.name,
+      lat: ex && ex.latitude != null ? ex.latitude : null,
+      lng: ex && ex.longitude != null ? ex.longitude : null,
+      taken: ex && ex.DateTimeOriginal ? new Date(ex.DateTimeOriginal) : null,
+      camera: ex ? [ex.Make, ex.Model].filter(Boolean).join(" ") : "",
+      dir: ex && ex.GPSImgDirection != null ? Math.round(ex.GPSImgDirection) : null,
+      size: f.size,
+    });
+    if (++done % 10 === 0) $("#batch-status").textContent = `parsed ${done}/${imgs.length}…`;
+  }
+  const withGps = _batch.rows.filter((r) => r.lat != null).length;
+  $("#batch-status").textContent =
+    `${imgs.length} images · ${withGps} with GPS · ${_batch.rows.filter((r) => r.taken).length} with timestamp`;
+  renderBatch();
+}
+
+function renderBatch() {
+  const out = $("#batch-out");
+  if (!_batch.rows.length) { out.innerHTML = ""; return; }
+  const { key, dir } = _batch.sort;
+  const val = (r) => key === "taken" ? (r.taken ? r.taken.getTime() : -Infinity)
+    : key === "gps" ? (r.lat != null ? r.lat : -Infinity)
+    : (r[key] ?? (typeof r[key] === "number" ? -Infinity : ""));
+  const rows = [..._batch.rows].sort((a, b) => {
+    const x = val(a), y = val(b);
+    return (x < y ? -1 : x > y ? 1 : 0) * dir;
+  });
+  const hdr = (k, label) => `<th data-k="${k}" class="batch-th">${label}${key === k ? (dir > 0 ? " ▲" : " ▼") : ""}</th>`;
+  out.innerHTML = `<table class="data batch">
+    <tr>${hdr("name", "File")}${hdr("gps", "GPS")}${hdr("taken", "Taken")}${hdr("camera", "Camera")}<th>dir</th><th></th></tr>
+    ${rows.map((r) => `<tr>
+      <td title="${esc(r.name)}">${esc(r.name.length > 28 ? r.name.slice(0, 26) + "…" : r.name)}</td>
+      <td>${r.lat != null ? `${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}` : "<span class='muted'>—</span>"}</td>
+      <td>${r.taken ? esc(r.taken.toLocaleString()) : "<span class='muted'>—</span>"}</td>
+      <td>${esc(r.camera) || "<span class='muted'>—</span>"}</td>
+      <td>${r.dir != null ? `${r.dir}°` : ""}</td>
+      <td>${r.lat != null ? `<a href="#" class="batch-go" data-lat="${r.lat}" data-lng="${r.lng}">⌖</a>` : ""}</td>
+    </tr>`).join("")}
+  </table>`;
+  out.querySelectorAll(".batch-th").forEach((th) => th.onclick = () => {
+    const k = th.dataset.k;
+    _batch.sort = { key: k, dir: _batch.sort.key === k ? -_batch.sort.dir : 1 };
+    renderBatch();
+  });
+  out.querySelectorAll(".batch-go").forEach((a) => a.onclick = (e) => {
+    e.preventDefault();
+    setPoint(L.latLng(+a.dataset.lat, +a.dataset.lng), { fly: true, zoom: 15 });
+  });
 }
 
 const engineUrls = (u) => {
