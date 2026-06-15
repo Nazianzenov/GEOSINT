@@ -357,10 +357,13 @@ class Indexer:
         """Country × category data for the matrix + ego-explorer views.
         A global force graph of this (dense, near-bipartite) data is a
         hairball by construction — so we ship the matrix instead."""
+        # categories not worth a matrix column: "page" (not country-tagged) and
+        # "driving-side" (only two values — uninformative as a density column).
+        GRAPH_SKIP = {"page", "driving-side"}
         cat_count, country_count, cc = {}, {}, {}
         for card in self.cards:
             g = card["g"]
-            if g == "page":
+            if g in GRAPH_SKIP:
                 continue
             cat_count[g] = cat_count.get(g, 0) + 1
             for ctry in card.get("c", []):
