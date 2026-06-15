@@ -33,6 +33,7 @@
     <button class="rail-btn" data-module="image"   title="Image intelligence — EXIF + reverse search [3]"><span>▣</span><label>IMG</label></button>
     <button class="rail-btn" data-module="tools"   title="External tool launcher [4]"><span>⌬</span><label>TOOLS</label></button>
     <button class="rail-btn" data-module="data"    title="Data layers — OSM features &amp; species distributions on the map [6]"><span>⛏</span><label>DATA</label></button>
+    <button class="rail-btn" data-module="anno"    title="Annotations — pins, labels &amp; arrows; export GeoJSON/KML [7]"><span>✎</span><label>NOTE</label></button>
     <a class="rail-btn" href="search.html" target="_blank" title="Smart wiki search — countries, bollards, anything [5]" style="text-decoration:none"><span>⌕</span><label>FIND</label></a>
     <div class="rail-spacer"></div>
     <button class="rail-btn" id="btn-measure" title="Measure distance [M] — click to add points; right-drag a point to move; hold Shift for a range ring; Esc clears"><span>⤢</span><label>RULER</label></button>
@@ -183,6 +184,23 @@
            species tiles: <a href="https://www.gbif.org/" target="_blank">GBIF</a> occurrence density (CC0/CC-BY).</p>
       </section>
 
+      <!-- ════════ ANNOTATIONS ════════ -->
+      <section id="module-anno" hidden>
+        <p class="hint"><b>Right-click the map</b> to add a pin, label or arrow at that spot.
+           Drag any marker to move it; click it to rename or delete. Everything here is saved
+           in the case file and exports to GeoJSON / KML.</p>
+        <div class="field-row">
+          <button class="btn" id="anno-export-geojson" title="Download all annotations as a GeoJSON FeatureCollection">⭳ GeoJSON</button>
+          <button class="btn" id="anno-export-kml" title="Download all annotations as KML (Google Earth)">⭳ KML</button>
+          <button class="btn" id="anno-qgis" title="Open the annotations in QGIS as a layer">▦ QGIS</button>
+          <button class="btn" id="anno-clear" title="Remove all annotations">CLEAR</button>
+        </div>
+        <div id="anno-status" class="muted"></div>
+        <div id="anno-list"></div>
+        <p class="srcnote">Annotations are your own overlay — not map data. Stored locally in the
+           case file; nothing is uploaded. Arrow direction is purely illustrative.</p>
+      </section>
+
     </div>
   </aside>
 </div>
@@ -209,6 +227,7 @@ Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
     <table class="kv">
       <tr><td><kbd>/</kbd></td><td>focus search</td></tr>
       <tr><td><kbd>1–4</kbd></td><td>Sun · Weather · Image · Tools</td></tr>
+      <tr><td><kbd>6</kbd> / <kbd>7</kbd></td><td>Data layers · Annotations</td></tr>
       <tr><td><kbd>5</kbd> / <kbd>F</kbd></td><td>smart wiki search (new tab)</td></tr>
       <tr><td><kbd>M</kbd></td><td>measure: click to add points · right-drag a point to move · hold <kbd>Shift</kbd> for a range ring · Esc clears</td></tr>
       <tr><td><kbd>N</kbd></td><td>case notes</td></tr>

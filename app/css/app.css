@@ -213,6 +213,27 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
   resize: vertical; min-height: 200px; padding: 10px; font: 12px var(--mono); outline: none; }
 #case-notes::placeholder { color: var(--txt-dim); }
 
+/* annotations */
+.anno-dot { background: var(--bad); border: 2px solid #fff; border-radius: 50%; box-sizing: border-box; }
+.anno-pin { font-size: 18px; line-height: 1; text-shadow: 0 1px 2px #000a; }
+.anno-label { background: var(--bad); color: #fff; font: 600 11px var(--sans);
+  padding: 2px 6px; border-radius: 3px; white-space: nowrap; box-shadow: 0 1px 3px #000a;
+  transform: translate(-50%, -50%); }
+.anno-pop { min-width: 170px; }
+.anno-pop .anno-text { width: 100%; box-sizing: border-box; background: var(--bg-2);
+  color: var(--txt); border: 1px solid var(--line); border-radius: 3px; padding: 4px 6px;
+  font: 12px var(--sans); }
+.anno-pop-row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+.anno-del { padding: 3px 8px; font-size: 11px; }
+#anno-list { margin-top: 8px; }
+.anno-row { display: flex; align-items: center; gap: 8px; padding: 5px 6px;
+  border-bottom: 1px solid var(--line); font: 12px var(--sans); }
+.anno-sym { width: 16px; text-align: center; }
+.anno-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.anno-ll { font: 10px var(--mono); color: var(--txt-dim); }
+.anno-row button { background: none; border: 0; color: var(--txt-dim); cursor: pointer; font-size: 13px; }
+.anno-row button:hover { color: var(--accent); }
+
 /* leaflet dark-ification */
 .leaflet-container { background: #0a0c10; font: 12px var(--sans); }
 .leaflet-control-layers, .leaflet-bar a {
