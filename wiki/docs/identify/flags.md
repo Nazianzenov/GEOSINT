@@ -22,9 +22,10 @@ and the [Wikipedia gallery of sovereign-state flags](https://en.wikipedia.org/wi
 
 ## Sub-national flags localize further
 
-Regional flags pin a photo inside a country: German Länder, Spanish autonomías
-(Catalan senyera!), US state flags, Canadian provinces, Japanese prefectures — each is
-documented with images on the respective Wikipedia "Flag of …" article.
+Regional flags pin a photo *inside* a country: Swiss cantons, German Länder, Spanish autonomías
+(Catalan senyera!), US state flags, Canadian provinces — plus dependencies (Greenland, Faroes,
+Gibraltar…). See the locally-cached galleries:
+**[Subnational & dependency flags](flags-subnational/index.md)**.
 
 [^refs]: CIA World Factbook, [Flag descriptions](https://www.cia.gov/the-world-factbook/field/flag-description/); Wikipedia, [Gallery of sovereign state flags](https://en.wikipedia.org/wiki/Gallery_of_sovereign_state_flags); Smith, W., *Flags Through the Ages and Across the World* (McGraw-Hill) — the standard vexillology reference.
 

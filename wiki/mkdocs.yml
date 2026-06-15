@@ -48,7 +48,19 @@ nav:
       - Road signs & chevrons: identify/road-signs.md
       - Traffic lights: identify/traffic-lights.md
       - License plates: identify/license-plates.md
-      - Flags: identify/flags.md
+      - Flags:
+          - National flags: identify/flags.md
+          - Subnational & dependency flags: identify/flags-subnational/index.md
+          - Cantons of Switzerland: identify/flags-subnational/switzerland.md
+          - States of Germany: identify/flags-subnational/germany.md
+          - States of the United States: identify/flags-subnational/united-states.md
+          - Provinces & territories of Canada: identify/flags-subnational/canada.md
+          - Regions of France: identify/flags-subnational/france-regions.md
+          - Autonomous communities of Spain: identify/flags-subnational/spain.md
+          - Provinces of Spain: identify/flags-subnational/spain-provinces.md
+          - Nations of the United Kingdom: identify/flags-subnational/united-kingdom.md
+          - States & territories of Australia: identify/flags-subnational/australia.md
+          - Dependencies & territories: identify/flags-subnational/dependencies.md
       - Architecture by region: identify/architecture.md
       - Vegetation & climate: identify/vegetation-climate.md
       - Languages & scripts: identify/language-scripts.md
