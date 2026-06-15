@@ -16,7 +16,8 @@ const state = { country: null, continent: null, cats: new Set(), photos: false }
 const GROUP_ORDER = ["country-facts", "recognition", "landmarks", "unesco", "castles",
   "national-parks", "airports", "flora", "bollards", "utility-poles",
   "traffic-lights", "license-plates", "flags", "sceneries", "architecture", "road-markings",
-  "road-signs", "driving-side", "language-scripts", "domains-phones", "streetview-meta",
+  "road-signs", "chevrons", "fire-hydrants", "manhole-covers", "bus-stops", "pylons",
+  "driving-side", "language-scripts", "domains-phones", "streetview-meta",
   "vegetation-climate", "methodology", "page"];
 
 async function init() {

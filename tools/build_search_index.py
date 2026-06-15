@@ -72,6 +72,17 @@ CATEGORY_LABEL = {
     "methodology": "Methodology", "page": "Wiki pages",
     "unesco": "UNESCO sites", "national-parks": "National parks",
     "castles": "Castles & palaces", "airports": "Airports", "flora": "Botanical",
+    "fire-hydrants": "Fire hydrants", "manhole-covers": "Manhole covers",
+    "bus-stops": "Bus stops", "pylons": "Electricity pylons", "chevrons": "Chevrons & guardrails",
+}
+
+# Commons photo-gallery pages (identify/commons/<stem>.md) -> category key.
+# Their figures are raw <figure><img> blocks grouped by ### continent — indexed
+# by commons_gallery() using the same parser as the GeoHints galleries.
+COMMONS_PAGE_CAT = {
+    "license-plates": "license-plates", "road-signs": "road-signs",
+    "fire-hydrants": "fire-hydrants", "manhole-covers": "manhole-covers",
+    "bus-stops": "bus-stops", "pylons": "pylons", "chevrons": "chevrons",
 }
 
 # canonicalization of multi-name cells; extended by the flags gallery at runtime
@@ -137,8 +148,8 @@ CATEGORY_ALIAS = {
     "registration": "license-plates", "numberplate": "license-plates",
     "road line": "road-markings", "road lines": "road-markings", "lines": "road-markings",
     "marking": "road-markings", "markings": "road-markings", "centerline": "road-markings",
-    "sign": "road-signs", "signs": "road-signs", "chevron": "road-signs",
-    "chevrons": "road-signs", "stop sign": "road-signs",
+    "sign": "road-signs", "signs": "road-signs", "stop sign": "road-signs",
+    "road sign": "road-signs", "road signs": "road-signs",
     "driving side": "driving-side", "driving": "driving-side", "lht": "driving-side",
     "rht": "driving-side", "left hand": "driving-side", "right hand": "driving-side",
     "language": "language-scripts", "languages": "language-scripts", "script": "language-scripts",
@@ -160,6 +171,13 @@ CATEGORY_ALIAS = {
     "airport": "airports", "airports": "airports", "airfield": "airports",
     "flora": "flora", "tree": "flora", "trees": "flora", "plant": "flora",
     "plants": "flora", "species": "flora", "botanical": "flora",
+    "hydrant": "fire-hydrants", "hydrants": "fire-hydrants", "fire hydrant": "fire-hydrants",
+    "manhole": "manhole-covers", "manholes": "manhole-covers", "manhole cover": "manhole-covers",
+    "drain cover": "manhole-covers", "utility cover": "manhole-covers",
+    "bus stop": "bus-stops", "bus stops": "bus-stops", "bus shelter": "bus-stops",
+    "pylon": "pylons", "pylons": "pylons", "transmission tower": "pylons", "power line": "pylons",
+    "guardrail": "chevrons", "guardrails": "chevrons", "crash barrier": "chevrons",
+    "chevron": "chevrons", "chevrons": "chevrons",
 }
 
 FIG_RE = re.compile(
@@ -242,6 +260,27 @@ class Indexer:
                              c=[country], k=continent if continent in CONTINENTS else None,
                              g=cat, img=img_url(img), map=cm.group(2),
                              page=page_url(md))
+
+    def commons_gallery(self, md, text):
+        """Index the raw <figure><img> galleries on identify/commons/<stem>.md
+        (license plates, road signs, hydrants, …). Same figure/continent format
+        as galleries() but without GEOHINTS markers; category from the stem."""
+        cat = COMMONS_PAGE_CAT.get(md.stem)
+        if not cat:
+            return
+        label = CATEGORY_LABEL.get(cat, cat)
+        pos = [(h.start(), h.group(1).strip()) for h in H3_RE.finditer(text)]
+        for i, (start, continent) in enumerate(pos):
+            chunk = text[start:pos[i + 1][0] if i + 1 < len(pos) else len(text)]
+            for img, cap in FIG_RE.findall(chunk):
+                cm = CAP_RE.match(cap.strip())
+                country = self.canon(cm.group(1)) if cm else ""
+                self.add(t=f"{country} — {label}" if country else label,
+                         x=f"{country} {label} photo",
+                         c=[country] if country else [],
+                         k=continent if continent in CONTINENTS else None,
+                         g=cat, img=img_url(img), map=cm.group(2) if cm else None,
+                         page=page_url(md))
 
     def md_images(self, md, text):
         cat = PAGE_CATEGORY.get(md.stem) or ("landmarks" if md.parent.name == "landmarks" else None)
@@ -401,6 +440,9 @@ class Indexer:
             elif rel.startswith("landmarks/"):
                 self.landmarks(md, text)
                 self.md_images(md, text)
+            elif rel.startswith("identify/commons/"):
+                # raw <figure> photo galleries (license plates, road signs, …)
+                self.commons_gallery(md, text)
             elif rel.startswith("identify/"):
                 # bold-leading table/bullet rows on identify pages are prose
                 # recognition tips (e.g. the flags "look-alike groups" table),
