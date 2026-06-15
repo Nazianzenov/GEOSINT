@@ -16,3 +16,6 @@ cache/
 
 # local-only: gallery scraping/parsing stays off the repo
 tools/import_geohints.py
+
+# local-only planning doc
+ROADMAP.md
