@@ -39,6 +39,7 @@ nav:
       - Chronolocation cookbook (dating images): methodology/chronolocation-cookbook.md
       - Image verification & EXIF: methodology/verification.md
       - Verification & debunking checklist: methodology/debunking-checklist.md
+      - Satellite imagery sourcing: methodology/satellite-sourcing.md
   - Identification features:
       - Driving side: identify/driving-side.md
       - Bollards: identify/bollards.md
