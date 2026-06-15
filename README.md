@@ -78,7 +78,7 @@ Detection re-runs on every page load — install a tool and refresh; no config n
 | National parks | ~2,400 | Wikidata (CC0) |
 | Castles & palaces (heritage-listed) | ~5,600 | Wikidata (CC0) |
 | Airports (large+medium) | ~5,300 | OurAirports (public domain) |
-| Botanical reference | 54 species | GBIF (CC0) + Wikipedia (CC BY-SA), `tools/build_flora.py` |
+| Botanical reference | 55 species | GBIF (CC0) + Wikipedia (CC BY-SA), `tools/build_flora.py`; each biome group cross-linked to its Köppen zone |
 
 All rows are searchable cards with coordinates ("⌖ open on map"). The wiki's
 **Datasets → Databases catalogue** page lists ~20 more geo-OSINT databases (USGS MRDS,

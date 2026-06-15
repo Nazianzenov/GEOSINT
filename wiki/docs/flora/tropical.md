@@ -1,8 +1,10 @@
 # Tropical — indicator species
 
+**Climate signal:** these species indicate **Köppen Af · Am · Aw** — tropical rainforest, monsoon & savanna. See the [Köppen-Geiger map & quick read](/wiki/identify/vegetation-climate/) to place the zone.
+
 ## Coconut palm (*Cocos nucifera*)
 
-![Coconut palm](../assets/wm/Corong-Corong-Beach-Coconut-palm-trees-El-Nido-Palawan-Island-Philippines_w640_03d9596a.jpg)
+![Coconut palm](https://commons.wikimedia.org/wiki/Special:FilePath/Corong%20Corong%20Beach%2C%20Coconut%20palm%20trees%2C%20El%20Nido%2C%20Palawan%20Island%2C%20Philippines.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Leaning over beaches throughout the humid tropics
@@ -13,7 +15,7 @@ The coconut is a member of the palm family (Arecaceae) and the only living speci
 
 ## Oil palm (*Elaeis guineensis*)
 
-![Oil palm](../assets/wm/Oil-palm-plantation-in-Paloh-Hinai-Pahang_w640_7e23cd66.jpg)
+![Oil palm](https://commons.wikimedia.org/wiki/Special:FilePath/Oil%20palm%20plantation%20in%20Paloh%20Hinai%2C%20Pahang.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Plantation grids = Malaysia/Indonesia/W. Africa; NOT a wild beach palm
@@ -35,7 +37,7 @@ A banana is an elongated, edible fruit that is botanically a berry produced by s
 
 ## Mango (*Mangifera indica*)
 
-![Mango](../assets/wm/Close-up-View-Under-Mango-Tree-Canopy-Nazra-Village-Bihar_w640_e723721d.jpg)
+![Mango](https://commons.wikimedia.org/wiki/Special:FilePath/Close-up%20View%20Under%20Mango%20Tree%20Canopy%20%E2%80%93%20Nazra%20Village%2C%20Bihar.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Huge dark-domed village shade tree: S/SE Asia, Africa, LatAm
@@ -46,7 +48,7 @@ Mangifera indica, commonly known as the mango after its fruit, is an evergreen s
 
 ## Banyan (*Ficus benghalensis*)
 
-![Banyan](../assets/wm/Great_banyan_tree_kol_w640_5909e77c.jpg)
+![Banyan](https://commons.wikimedia.org/wiki/Special:FilePath/Great_banyan_tree_kol.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Aerial-root curtains; S/SE Asia temple and roadside tree
@@ -57,7 +59,7 @@ Ficus benghalensis, Ficus indica, or Ficus audrey commonly known as banyan, bany
 
 ## Royal poinciana (*Delonix regia*)
 
-![Royal poinciana](../assets/wm/Royal_Poinciana_w640_89447404.jpg)
+![Royal poinciana](https://commons.wikimedia.org/wiki/Special:FilePath/Royal_Poinciana.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Scarlet flowering canopy; planted throughout the tropics
@@ -68,7 +70,7 @@ Delonix regia is a species of flowering plant in the bean family Fabaceae, subfa
 
 ## Kapok (*Ceiba pentandra*)
 
-![Kapok](../assets/wm/Panguana-Lupuna-2008-2_w640_55737fa9.jpg)
+![Kapok](https://commons.wikimedia.org/wiki/Special:FilePath/Panguana-Lupuna-2008-2.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Massive buttressed emergent of neotropical/W. African forests
@@ -79,7 +81,7 @@ Ceiba pentandra is a tropical tree of the order Malvales and the family Malvacea
 
 ## African baobab (*Adansonia digitata*)
 
-![African baobab](../assets/wm/Baobab_and_elephant-_Tanzania_w640_7e9040af.jpg)
+![African baobab](https://commons.wikimedia.org/wiki/Special:FilePath/Baobab_and_elephant%2C_Tanzania.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Sub-Saharan savanna icon; bottle trunk
@@ -90,7 +92,7 @@ Adansonia digitata, the African baobab, is the most widespread tree species of t
 
 ## Grandidier's baobab (*Adansonia grandidieri*)
 
-![Grandidier's baobab](../assets/wm/Adansonia_grandidieri04_w640_6c5b2c7b.jpg)
+![Grandidier's baobab](https://commons.wikimedia.org/wiki/Special:FilePath/Adansonia_grandidieri04.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Madagascar only — Avenue of the Baobabs
@@ -101,7 +103,7 @@ Adansonia grandidieri is the biggest and most famous of Madagascar's six species
 
 ## Traveller's palm (*Ravenala madagascariensis*)
 
-![Traveller's palm](../assets/wm/Ravenala-_travellers_palms-_on_Maui_w640_82637fcd.jpg)
+![Traveller's palm](https://commons.wikimedia.org/wiki/Special:FilePath/Ravenala%2C_travellers_palms%2C_on_Maui.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Fan-plane of leaves; Madagascar native, tropical hotel landmark

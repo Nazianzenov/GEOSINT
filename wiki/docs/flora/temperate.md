@@ -1,8 +1,10 @@
 # Temperate — indicator species
 
+**Climate signal:** these species indicate **Köppen Cfb · Cfa · Dfb** — temperate oceanic & humid-continental. See the [Köppen-Geiger map & quick read](/wiki/identify/vegetation-climate/) to place the zone.
+
 ## English oak (*Quercus robur*)
 
-![English oak](../assets/wm/Quercus_robur_w640_f963bd92.jpg)
+![English oak](https://commons.wikimedia.org/wiki/Special:FilePath/Quercus_robur.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Broad solitary field trees in W/C Europe hedgerow landscapes
@@ -13,7 +15,7 @@ Quercus robur, pedunculate oak, or English oak, is a species of flowering plant 
 
 ## European beech (*Fagus sylvatica*)
 
-![European beech](../assets/wm/Fagus-sylvatica-cansiglio-forest-italy_w640_6e6e4f16.jpg)
+![European beech](https://commons.wikimedia.org/wiki/Special:FilePath/Fagus-sylvatica-cansiglio-forest-italy.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Smooth grey bark, dense dark forests (C. Europe)
@@ -24,7 +26,7 @@ Fagus sylvatica, the European beech or common beech, is a large deciduous tree i
 
 ## London plane (*Platanus × acerifolia*)
 
-![London plane](../assets/wm/Berkeley_Square_-_geograph.org.uk_-_911963_w640_c58c5c65.jpg)
+![London plane](https://commons.wikimedia.org/wiki/Special:FilePath/Berkeley_Square_-_geograph.org.uk_-_911963.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Camouflage-flaking bark; THE avenue tree of Paris/London/Madrid
@@ -35,7 +37,7 @@ The London plane, or sometimes hybrid plane, Platanus × hispanica, is a tree 
 
 ## Horse chestnut (*Aesculus hippocastanum*)
 
-![Horse chestnut](../assets/wm/Horse-chestnut-Aesculus-hippocastanum---geograph.org.uk---755747_w640_e0d1a638.jpg)
+![Horse chestnut](https://commons.wikimedia.org/wiki/Special:FilePath/Horse%20chestnut%20%28Aesculus%20hippocastanum%29%20-%20geograph.org.uk%20-%20755747.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Hand-shaped leaves, conkers; C. European parks and beer gardens
@@ -46,7 +48,7 @@ Aesculus hippocastanum, the horse chestnut, is a species of flowering plant in t
 
 ## Small-leaved lime (*Tilia cordata*)
 
-![Small-leaved lime](../assets/wm/Tilia-cordata2_w640_a8613ca6.jpg)
+![Small-leaved lime](https://commons.wikimedia.org/wiki/Special:FilePath/Tilia-cordata2.JPG?width=640)
 { width=340 }
 
 **Geolocation tell:** Pollarded street rows in Germany/CEE (Unter den Linden)
@@ -57,7 +59,7 @@ Tilia cordata, the small-leaved lime or small-leaved linden, is a species of tre
 
 ## Lombardy poplar (*Populus nigra 'Italica'*)
 
-![Lombardy poplar](../assets/wm/Populus_nigra_kz1_w640_df7f43bc.jpg)
+![Lombardy poplar](https://commons.wikimedia.org/wiki/Special:FilePath/Populus_nigra_kz1.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Pencil-thin windbreak rows: Po valley, France, Argentina's pampa

@@ -27,6 +27,23 @@ WIKI = ROOT / "wiki" / "docs" / "flora"
 TTL = timedelta(days=30)
 UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 
+# Köppen ↔ flora cross-link: each biome group -> (Köppen codes, short label).
+# Used to print "indicates climate X" on each flora group page and to build the
+# reverse "what grows here, by Köppen zone" table on the vegetation-climate page.
+GROUP_KOPPEN = {
+    "Boreal & northern":  ("Dfc · Dfb · ET", "subarctic / cold-continental & tundra edge"),
+    "Temperate":          ("Cfb · Cfa · Dfb", "temperate oceanic & humid-continental"),
+    "Mediterranean":      ("Csa · Csb", "Mediterranean (dry-summer)"),
+    "Arid & desert":      ("BWh · BWk · BSh", "hot & cold deserts and semi-arid steppe"),
+    "Tropical":           ("Af · Am · Aw", "tropical rainforest, monsoon & savanna"),
+    "East Asia":          ("Cfa · Cwa · Dwa", "humid subtropical & monsoon East Asia"),
+    "Oceania & Americas": ("Cfb · Csb · Aw", "varied — oceanic, subtropical & tropical"),
+    "Crops & landscape":  ("—", "cultivated; climate depends on the crop"),
+    "Coastal":            ("—", "coastal strips across many zones"),
+}
+# wiki path of the Köppen reference + a per-letter anchor target
+KOPPEN_PAGE = "/wiki/identify/vegetation-climate/"
+
 # (group, common name, scientific name, wikipedia title, geolocation hint)
 SPECIES = [
     ("Boreal & northern", "Silver birch", "Betula pendula", "Betula_pendula",
@@ -243,8 +260,13 @@ def write_wiki(d):
              f"[Wikipedia/Commons](https://en.wikipedia.org/) (text CC BY-SA, images per file). ",
              f"Fetched {d['fetched'][:10]}, auto-refreshed monthly.\n"]
     for g, specs in groups.items():
-        index.append(f"- [{g}]({slug(g)}.md) — {len(specs)} species")
+        kz, klabel = GROUP_KOPPEN.get(g, ("—", ""))
+        zone_note = f" — Köppen **{kz}** ({klabel})" if kz != "—" else ""
+        index.append(f"- [{g}]({slug(g)}.md) — {len(specs)} species{zone_note}")
         md = [f"# {g} — indicator species\n"]
+        if kz != "—":
+            md.append(f"**Climate signal:** these species indicate **Köppen {kz}** — {klabel}. "
+                      f"See the [Köppen-Geiger map & quick read]({KOPPEN_PAGE}) to place the zone.\n")
         for s in specs:
             md.append(f"## {s['common']} (*{s['sci']}*)\n")
             if s.get("img"):

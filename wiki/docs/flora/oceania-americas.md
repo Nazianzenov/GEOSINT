@@ -1,8 +1,10 @@
 # Oceania & Americas — indicator species
 
+**Climate signal:** these species indicate **Köppen Cfb · Csb · Aw** — varied — oceanic, subtropical & tropical. See the [Köppen-Geiger map & quick read](/wiki/identify/vegetation-climate/) to place the zone.
+
 ## Tasmanian blue gum (*Eucalyptus globulus*)
 
-![Tasmanian blue gum](../assets/wm/Eucalyptus_globulus_subsp._maidenii_w640_9083cfa5.jpg)
+![Tasmanian blue gum](https://commons.wikimedia.org/wiki/Special:FilePath/Eucalyptus_globulus_subsp._maidenii.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Australia native; the eucalyptus planted across Iberia/California/E. Africa
@@ -13,7 +15,7 @@ Eucalyptus globulus, commonly known as southern blue gum or blue gum, is a speci
 
 ## Grass tree (*Xanthorrhoea*)
 
-![Grass tree](../assets/wm/Xanthorrhoea_semiplana_-_Anstey_Hill_w640_a45153c1.jpg)
+![Grass tree](https://commons.wikimedia.org/wiki/Special:FilePath/Xanthorrhoea_semiplana_-_Anstey_Hill.JPG?width=640)
 { width=340 }
 
 **Geolocation tell:** Black trunk + grass skirt = Australia only
@@ -24,7 +26,7 @@ Xanthorrhoea is a genus of about 30 species of succulent flowering plants in the
 
 ## Norfolk Island pine (*Araucaria heterophylla*)
 
-![Norfolk Island pine](../assets/wm/Norfolk-Island-Pines_w640_5bab7d49.jpg)
+![Norfolk Island pine](https://commons.wikimedia.org/wiki/Special:FilePath/Norfolk-Island-Pines.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Symmetrical tiers; seafront promenades worldwide, Pacific origin
@@ -35,7 +37,7 @@ Araucaria heterophylla is a species of conifer. As its vernacular name Norfolk I
 
 ## Monkey puzzle (*Araucaria araucana*)
 
-![Monkey puzzle](../assets/wm/Araucaria_en_Parque_Nacional_Conguillio_w640_8d7facb2.jpg)
+![Monkey puzzle](https://commons.wikimedia.org/wiki/Special:FilePath/Araucaria_en_Parque_Nacional_Conguillio.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Chile/Argentina Andes — reptilian branches
@@ -46,7 +48,7 @@ Araucaria araucana, commonly called the pewen, monkey-puzzle, pehuen or piñoner
 
 ## Coast redwood (*Sequoia sempervirens*)
 
-![Coast redwood](../assets/wm/US_199_Redwood_Highway_w640_c959d614.jpg)
+![Coast redwood](https://commons.wikimedia.org/wiki/Special:FilePath/US_199_Redwood_Highway.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** N. California fog belt only (wild)
@@ -57,7 +59,7 @@ Sequoia sempervirens is the sole living species of the genus Sequoia in the cypr
 
 ## Douglas fir (*Pseudotsuga menziesii*)
 
-![Douglas fir](../assets/wm/Pseudotsuga_menziesii_4584_w640_8b151337.jpg)
+![Douglas fir](https://commons.wikimedia.org/wiki/Special:FilePath/Pseudotsuga_menziesii_4584.JPG?width=640)
 { width=340 }
 
 **Geolocation tell:** Pacific NW giant; plantations in W. Europe/NZ
@@ -68,7 +70,7 @@ The Douglas fir is an evergreen conifer species in the pine family, Pinaceae. It
 
 ## Tree fern (*Cyathea*)
 
-![Tree fern](../assets/wm/Cyathea_w640_7adee640.jpg)
+![Tree fern](https://commons.wikimedia.org/wiki/Special:FilePath/Cyathea.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** NZ/SE Australia/tropical highlands understory
@@ -79,7 +81,7 @@ Cyathea is a genus of tree ferns, the type genus of the fern order Cyatheales. *
 
 ## Pōhutukawa (*Metrosideros excelsa*)
 
-![Pōhutukawa](../assets/wm/PohutukawaCornwallis_w640_73bdbbaa.jpg)
+![Pōhutukawa](https://commons.wikimedia.org/wiki/Special:FilePath/PohutukawaCornwallis.jpg?width=640)
 { width=340 }
 
 **Geolocation tell:** Red December bloom on N. New Zealand coasts

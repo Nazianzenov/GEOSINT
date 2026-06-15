@@ -18,6 +18,24 @@ map is **Beck et al. (2018)** — 1-km resolution, freely downloadable.[^beck]
 | **D** continental | Birch/conifer mix, long snow season | Russia, Canada, Scandinavia, N. Japan |
 | **E** polar/alpine | Tundra, no trees | Arctic, high mountains |
 
+## What grows here — by Köppen zone
+
+Once you've read the climate band off the map, jump to the indicator species that
+characterise it (each links to its [botanical reference](../flora/index.md) page with photos +
+live GBIF range maps):
+
+| Köppen | Biome | Indicator species page |
+|---|---|---|
+| **Af · Am · Aw** | Tropical rainforest / monsoon / savanna | [Tropical](../flora/tropical.md) |
+| **BWh · BWk · BSh** | Hot & cold deserts, semi-arid steppe | [Arid & desert](../flora/arid-desert.md) |
+| **Csa · Csb** | Mediterranean (dry-summer) | [Mediterranean](../flora/mediterranean.md) |
+| **Cfb · Cfa** | Temperate oceanic & humid subtropical | [Temperate](../flora/temperate.md) · [Oceania & Americas](../flora/oceania-americas.md) |
+| **Cfa · Cwa · Dwa** | Humid subtropical & monsoon East Asia | [East Asia](../flora/east-asia.md) |
+| **Dfb · Dfc · ET** | Cold-continental, subarctic, tundra edge | [Boreal & northern](../flora/boreal-northern.md) |
+
+This is the reverse of each flora page's **Climate signal** line — read the climate to predict
+the plants, or read the plants to confirm the climate.
+
 ## Indicator species (with range databases)
 
 Verify any species range on **GBIF** (occurrence database, citable) and **POWO** (Kew's
