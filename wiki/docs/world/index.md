@@ -82,4 +82,4 @@ Continent pages: [Europe](europe.md) · [Asia](asia.md) · [Africa](africa.md) �
 [Oceania](oceania.md)
 
 Flags (on buildings, plates, ads) are often readable when text isn't — see the
-**[Flags page](../identify/flags.md)** (look-alike groups + 223-image gallery).
+**[Flags page](../identify/flags.md)** (look-alike groups + full sovereign-flag gallery).

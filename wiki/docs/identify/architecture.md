@@ -181,6 +181,6 @@ at the bottom of this page** (67 photos by continent) and the cited literature.
 </div>
 
 
-*Images load directly from their source in your browser and are not stored in this wiki. Street imagery (c) Google. Requires internet to display.*
+*Photo collections courtesy of [GeoHints](https://geohints.com/); images are mirrored locally so the wiki works offline. Street imagery (c) Google.*
 
 <!-- GEOHINTS:architecture END -->

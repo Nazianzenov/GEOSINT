@@ -7,3 +7,7 @@ wiki/docs/assets/** binary
 *.gif binary
 *.webp binary
 *.svg -text
+
+# Cached upstream data — keep LF, don't normalize.
+data/*.json -text
+data/*.txt -text
