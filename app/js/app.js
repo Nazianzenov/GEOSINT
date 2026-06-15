@@ -36,6 +36,10 @@ function toDMS(deg, isLat) {
   return `${d}°${String(m).padStart(2, "0")}'${s}"${dir}`;
 }
 const fmtDMS = (ll) => `${toDMS(ll.lat, true)} ${toDMS(ll.lng, false)}`;
+/* alternative grid formats (offline, via vendor/geocoords.js) */
+const fmtUTM   = (ll) => GeoCoords.toUTM(ll.lat, ll.lng).str;
+const fmtMGRS  = (ll) => GeoCoords.toMGRS(ll.lat, ll.lng, 5);
+const fmtPlus  = (ll) => GeoCoords.toPlusCode(ll.lat, ll.lng, 11);
 
 /* Parse "48.85, 2.35", "48.85 2.35", DMS like 48°51'30"N 2°17'40"E, or N48.85 E2.35 */
 function parseCoords(txt) {
@@ -63,6 +67,16 @@ function parseCoords(txt) {
     let lat = +m[1] * (/^s/i.test(txt) ? -1 : 1);
     let lng = +m[2] * (/[w]\s*[\d.]+$/i.test(txt) ? -1 : 1);
     if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return L.latLng(lat, lng);
+  }
+  // MGRS, e.g. "31U DQ 48251 11932" / "31UDQ4825111932"
+  if (window.GeoCoords && /^\d{1,2}[C-HJ-NP-X]/i.test(txt)) {
+    const g = GeoCoords.fromMGRS(txt);
+    if (g) return L.latLng(g.lat, g.lng);
+  }
+  // Plus Code (Open Location Code), e.g. "8FW4V75V+8Q"
+  if (window.GeoCoords && /\+[23456789CFGHJMPQRVWX]{2,}$/i.test(txt)) {
+    const g = GeoCoords.fromPlusCode(txt);
+    if (g) return L.latLng(g.lat, g.lng);
   }
   return null;
 }
@@ -183,6 +197,9 @@ function showCtx(e) {
     ["Set active point here", () => setPoint(ll)],
     [`Copy  ${fmtDD(ll)}`, () => copyText(fmtDD(ll))],
     [`Copy  ${fmtDMS(ll)}`, () => copyText(fmtDMS(ll))],
+    [`Copy MGRS  ${fmtMGRS(ll)}`, () => copyText(fmtMGRS(ll))],
+    [`Copy UTM  ${fmtUTM(ll)}`, () => copyText(fmtUTM(ll))],
+    [`Copy Plus  ${fmtPlus(ll)}`, () => copyText(fmtPlus(ll))],
     ["Open Street View here ⇗", () => window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${ll.lat},${ll.lng}`)],
     ["Open Google Maps here ⇗", () => window.open(`https://www.google.com/maps/@${ll.lat},${ll.lng},16z`)],
     ["Open Google Earth here ⇗", () => window.open(`https://earth.google.com/web/@${ll.lat},${ll.lng},0a,2000d,35y,0h,0t,0r`)],
@@ -201,8 +218,8 @@ function showCtx(e) {
     items.map((it, i) => `<div class="ctx-item" data-i="${i}">${it[0]}</div>`).join("");
   menu.querySelectorAll(".ctx-item").forEach((el) =>
     el.addEventListener("click", () => { hideCtx(); items[+el.dataset.i][1](); }));
-  menu.style.left = Math.min(e.originalEvent.clientX, innerWidth - 240) + "px";
-  menu.style.top  = Math.min(e.originalEvent.clientY, innerHeight - 230) + "px";
+  menu.style.left = Math.min(e.originalEvent.clientX, innerWidth - 260) + "px";
+  menu.style.top  = Math.min(e.originalEvent.clientY, innerHeight - 320) + "px";
   menu.hidden = false;
 }
 const hideCtx = () => { $("#ctx-menu").hidden = true; };
