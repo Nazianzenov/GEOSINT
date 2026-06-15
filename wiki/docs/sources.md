@@ -30,7 +30,7 @@ Everything cited across this wiki plus the tools wired into the Workbench, in on
 
 | Source | Notes |
 |---|---|
-| [GeoHints](https://geohints.com/) | Photo catalogues: bollards, poles, plates, chevrons, Google cars, camera gens |
+| [GeoHints](https://geohints.com/) | Photo catalogues: bollards, poles, plates, chevrons, Google cars, camera gens. The identification galleries in this wiki (architecture, bollards, flags, traffic lights, utility poles, sceneries) reproduce GeoHints photos, **mirrored locally** in `wiki/docs/assets/gh/` so the wiki works offline and does not hotlink GeoHints. Caption map links are unchanged. All credit for the photo collections is GeoHints'. |
 | [PlonkIt](https://www.plonkit.net/guide) | Per-country recognition guides, maintained |
 | [Geometas](https://geometas.com/) | Structured meta wiki |
 | [Bellingcat Toolkit](https://bellingcat.gitbook.io/toolkit) | Curated, reviewed tool directory |

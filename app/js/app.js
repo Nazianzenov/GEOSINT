@@ -688,7 +688,7 @@ async function exiftoolDump() {
   try {
     const r = await fetch("/api/exif", {
       method: "POST",
-      headers: { "Content-Type": "application/octet-stream",
+      headers: { "Content-Type": "application/octet-stream", "X-GeOSINT": "1",
                  "X-Filename": encodeURIComponent(state.lastFile.name) },
       body: state.lastFile,
     });
@@ -900,7 +900,7 @@ function renderTools() {
 async function launchLocal(key) {
   try {
     const r = await fetch("/api/launch", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
       body: JSON.stringify({ tool: key }),
     });
     const j = await r.json();
@@ -914,7 +914,7 @@ async function launchTool(t) {
     if (!p) return;
     try {
       const r = await fetch("/api/flyto", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
         body: JSON.stringify({ lat: p.lat, lng: p.lng, name: fmtDD(p) }),
       });
       const j = await r.json();
@@ -1008,7 +1008,7 @@ async function openInQgis() {
   const label = (state.lastData && state.lastData.label) || "active-point";
   try {
     const r = await fetch("/api/qgis", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
       body: JSON.stringify({ geojson: { type: "FeatureCollection", features }, name: label }),
     });
     const j = await r.json();
@@ -1032,7 +1032,7 @@ async function runOverpass(selectors, label, minZoom = 10) {
   $("#data-status").textContent = `querying OSM for ${label}…`;
   try {
     const r = await fetch("/api/overpass", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
       body: JSON.stringify({ q }),
     });
     clearInterval(tick);

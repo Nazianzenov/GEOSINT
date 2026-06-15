@@ -336,6 +336,14 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length") or 0)
         raw = self.rfile.read(length) if length else b""
 
+        # CSRF guard: every POST launches a local app or runs a local binary.
+        # Require a custom header the SPA always sends. A custom header forces a
+        # CORS preflight cross-origin, which this server never answers — so a
+        # drive-by page in the browser cannot reach these endpoints, while
+        # same-origin fetches from /app/ are unaffected.
+        if self.headers.get("X-GeOSINT") != "1":
+            return self.send_json({"error": "missing X-GeOSINT header"}, 403)
+
         if path == "/api/exif":
             return self.api_exif(raw)
 
@@ -388,15 +396,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"error": "invalid query"}, 400)
         OVERPASS_CACHE.mkdir(parents=True, exist_ok=True)
         cached = OVERPASS_CACHE / (hashlib.sha1(q.encode()).hexdigest() + ".json")
-        if cached.is_file() and time.time() - cached.stat().st_mtime < OVERPASS_TTL:
-            body = cached.read_bytes()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("X-Cache", "hit")
-            self.end_headers()
-            self.wfile.write(body)
-            return
+        if cache_fresh(cached, OVERPASS_TTL):
+            return self.send_cached_body(cached.read_bytes(),
+                                         "application/json; charset=utf-8", "hit")
         data = ("data=" + urllib.parse.quote(q)).encode()
         last_err = "no mirror reachable"
         mirrors = OVERPASS_MIRRORS[:]
@@ -447,8 +449,7 @@ class Handler(BaseHTTPRequestHandler):
             data = json.loads(proc.stdout.decode("utf-8", "replace"))
             tags = data[0] if data else {}
             tags.pop("SourceFile", None)
-            tags.get("System:FileName") and tags.pop("System:FileName", None)
-            # System group leaks temp paths — drop it
+            # System group leaks the temp file's path/name — drop it entirely
             tags = {k: v for k, v in tags.items() if not k.startswith("System:")}
             return self.send_json({"ok": True, "exiftool": str(exiftool), "tags": tags})
         except subprocess.TimeoutExpired:

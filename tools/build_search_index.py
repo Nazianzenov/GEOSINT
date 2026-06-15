@@ -188,6 +188,17 @@ def page_url(md: Path, anchor=""):
     return url + (f"#{anchor}" if anchor else "")
 
 
+def img_url(src):
+    """Normalize an image reference from the markdown into a path the client
+    pages can load. A remote URL (http...) is left as-is; a doc-relative path
+    (e.g. '../assets/gh/bollards/1.jpg' after local caching) is rebased onto
+    the wiki web root '/wiki/assets/...'."""
+    if not src or src.startswith(("http://", "https://", "/")):
+        return src
+    tail = src[src.index("assets/"):] if "assets/" in src else src.lstrip("./")
+    return "/wiki/" + tail
+
+
 class Indexer:
     def __init__(self):
         self.cards = []
@@ -229,7 +240,7 @@ class Indexer:
                     self.add(t=f"{country} — {CATEGORY_LABEL.get(cat, cat)}",
                              x=f"{country} {CATEGORY_LABEL.get(cat, cat)} photo",
                              c=[country], k=continent if continent in CONTINENTS else None,
-                             g=cat, img=img, map=cm.group(2),
+                             g=cat, img=img_url(img), map=cm.group(2),
                              page=page_url(md))
 
     def md_images(self, md, text):
@@ -250,8 +261,7 @@ class Indexer:
             self.add(t=words or md.stem, x=f"{words} photo",
                      c=countries,
                      k=self.country_continent.get(countries[0]) if countries else None,
-                     g=cat, img=src.replace("../", "/wiki/").replace("assets/", "assets/")
-                     if src.startswith("../") else "/wiki/" + src,
+                     g=cat, img=img_url(src),
                      page=page_url(md))
 
     def world_index_table(self, md, text):
