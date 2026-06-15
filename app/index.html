@@ -19,6 +19,10 @@
   <div id="active-coords" class="coord-readout" title="Active point (click map to set)">no active point</div>
   <button id="btn-copy-dd" class="icon-btn" title="Copy decimal coordinates">⧉ DD</button>
   <button id="btn-copy-dms" class="icon-btn" title="Copy DMS coordinates">⧉ DMS</button>
+  <button id="btn-notes" class="icon-btn" title="Case notes [N]">✎ NOTES</button>
+  <button id="btn-case-save" class="icon-btn" title="Save the whole workspace (point, view, measure, layers, module inputs, notes) to a local .geosint.json file — nothing leaves your machine">⭳ SAVE</button>
+  <button id="btn-case-load" class="icon-btn" title="Load a previously saved .geosint.json case file">⭱ LOAD</button>
+  <input type="file" id="case-file" accept=".json,application/json" hidden>
   <a class="wiki-btn" href="search.html" target="_blank" title="Wiki via smart search (browse pages from there, or the graph view)">⌘ WIKI</a>
 </header>
 
@@ -190,6 +194,15 @@
 </footer>
 
 <div id="ctx-menu" hidden></div>
+<div id="notes-drawer" hidden>
+  <div class="notes-head">
+    <strong>Case notes</strong>
+    <span class="muted">saved inside the case file</span>
+    <button id="notes-close" class="icon-btn" title="Close [N / Esc]">✕</button>
+  </div>
+  <textarea id="case-notes" spellcheck="false" placeholder="Working notes, clues, eliminations, candidate locations…
+Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
+</div>
 <div id="help-overlay" hidden>
   <div class="help-card">
     <h2>Keyboard</h2>
@@ -198,6 +211,8 @@
       <tr><td><kbd>1–4</kbd></td><td>Sun · Weather · Image · Tools</td></tr>
       <tr><td><kbd>5</kbd> / <kbd>F</kbd></td><td>smart wiki search (new tab)</td></tr>
       <tr><td><kbd>M</kbd></td><td>measure: click to add points · right-drag a point to move · hold <kbd>Shift</kbd> for a range ring · Esc clears</td></tr>
+      <tr><td><kbd>N</kbd></td><td>case notes</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>save case file</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>close panel / cancel</td></tr>
       <tr><td>right-click map</td><td>copy coords &amp; quick-open menu</td></tr>
     </table>

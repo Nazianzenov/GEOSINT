@@ -1079,6 +1079,7 @@ async function gbifOverlay(name, knownKey) {
     const tl = L.tileLayer(
       `https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${key}&style=purpleYellow.point`,
       { opacity: 0.85, attribution: "Occurrences © GBIF" }).addTo(state.map);
+    tl._caseName = shown;                       // remembered for case-file save/restore
     state.gbifLayers[key] = tl;
     const chip = document.createElement("span");
     chip.className = "tag desktop";
@@ -1097,18 +1098,123 @@ function loadWindEmbed() {
       src="https://embed.windy.com/embed2.html?lat=${p.lat.toFixed(3)}&lon=${p.lng.toFixed(3)}&detailLat=${p.lat.toFixed(3)}&detailLon=${p.lng.toFixed(3)}&zoom=6&level=surface&overlay=wind&menu=&message=true&marker=true&calendar=now&type=map&location=coordinates&metricWind=km%2Fh&metricTemp=%C2%B0C"></iframe>`;
 }
 
+/* ═══════════════════════════ CASE FILE ═════════════════════════ */
+/* Save/restore the whole workspace to a local .geosint.json — point, map view,
+   measure shapes, active data/GBIF layers, every module's inputs, and notes.
+   Pure client-side: the file never leaves the machine. */
+const CASE_VERSION = 1;
+const val = (sel) => { const el = $(sel); return el ? el.value : undefined; };
+const setVal = (sel, v) => { const el = $(sel); if (el && v != null) el.value = v; };
+
+function serializeCase() {
+  const c = state.map.getCenter();
+  return {
+    app: "geosint-workbench", version: CASE_VERSION,
+    saved: new Date().toISOString(),
+    point: state.point ? { lat: state.point.lat, lng: state.point.lng } : null,
+    view: { lat: c.lat, lng: c.lng, zoom: state.map.getZoom() },
+    module: state.module || null,
+    measure: state.measure.pts.map((p) => [p.lat, p.lng]),
+    gbif: Object.entries(state.gbifLayers).map(([key, tl]) => ({ key: +key, name: tl._caseName || "" })),
+    data: state.lastData ? { label: state.lastData.label } : null,
+    notes: val("#case-notes") || "",
+    inputs: {
+      sunDt: val("#sun-dt"), sunOffset: val("#sun-offset"),
+      solverAz: val("#solver-az"), solverRatio: val("#solver-ratio"), solverTol: val("#solver-tol"),
+      wxDate: val("#wx-date"), imgUrl: val("#img-url"),
+      dataPreset: val("#data-preset"), dataCustom: val("#data-custom"), gbifName: val("#gbif-name"),
+    },
+  };
+}
+
+function saveCase() {
+  const data = JSON.stringify(serializeCase(), null, 1);
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([data], { type: "application/json" }));
+  a.download = `case-${stamp}.geosint.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  status("case saved to your Downloads folder");
+}
+
+function applyCase(c) {
+  if (!c || c.app !== "geosint-workbench") return status("not a GeOSINT case file", true);
+  // notes + every field first (so module renders pick them up)
+  setVal("#case-notes", c.notes || "");
+  const f = c.inputs || {};
+  setVal("#sun-dt", f.sunDt); setVal("#sun-offset", f.sunOffset);
+  setVal("#solver-az", f.solverAz); setVal("#solver-ratio", f.solverRatio); setVal("#solver-tol", f.solverTol);
+  setVal("#wx-date", f.wxDate); setVal("#img-url", f.imgUrl);
+  setVal("#data-preset", f.dataPreset); setVal("#data-custom", f.dataCustom); setVal("#gbif-name", f.gbifName);
+  renderUrlButtons();
+
+  // map view + active point
+  if (c.view) state.map.setView([c.view.lat, c.view.lng], c.view.zoom);
+  if (c.point) setPoint(L.latLng(c.point.lat, c.point.lng));
+
+  // measure shapes
+  clearMeasure();
+  if (Array.isArray(c.measure) && c.measure.length) {
+    toggleMeasure(true);
+    state.measure.pts = c.measure.map(([lat, lng]) => L.latLng(lat, lng));
+    renderMeasure();
+  }
+
+  // GBIF overlays (re-add by stored taxon key + name)
+  Object.values(state.gbifLayers).forEach((tl) => state.map.removeLayer(tl));
+  state.gbifLayers = {};
+  $("#gbif-active").innerHTML = "";
+  (c.gbif || []).forEach((g) => gbifOverlay(g.name, g.key));
+
+  if (c.module) openModule(c.module);
+  status(`case loaded${c.saved ? " (saved " + c.saved.slice(0, 16).replace("T", " ") + ")" : ""}`);
+}
+
+function loadCase(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try { applyCase(JSON.parse(reader.result)); }
+    catch { status("could not parse case file", true); }
+  };
+  reader.readAsText(file);
+}
+
+function toggleNotes(force) {
+  const d = $("#notes-drawer");
+  d.hidden = force !== undefined ? !force : !d.hidden;
+  if (!d.hidden) $("#case-notes").focus();
+}
+
+function initCase() {
+  $("#btn-case-save").addEventListener("click", saveCase);
+  $("#btn-case-load").addEventListener("click", () => $("#case-file").click());
+  $("#case-file").addEventListener("change", (e) => {
+    if (e.target.files[0]) loadCase(e.target.files[0]);
+    e.target.value = "";                       // allow re-loading the same file
+  });
+  $("#btn-notes").addEventListener("click", () => toggleNotes());
+  $("#notes-close").addEventListener("click", () => toggleNotes(false));
+}
+
 /* ═══════════════════════ wiring / keyboard ═════════════════════ */
 function initKeys() {
   document.addEventListener("keydown", (e) => {
     const inField = /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName);
+    // Ctrl/Cmd+S saves the case from anywhere (including while typing notes)
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+      e.preventDefault(); return saveCase();
+    }
     if (e.key === "Escape") {
       if (state.measure.on) return toggleMeasure(false);
+      if (!$("#notes-drawer").hidden) return toggleNotes(false);
       $("#help-overlay").hidden = true;
       if (!inField) closePanel();
       return;
     }
     if (inField) return;
     if (e.key === "/") { e.preventDefault(); $("#search").focus(); }
+    if (e.key.toLowerCase() === "n") return toggleNotes();
     const mods = { 1: "sun", 2: "weather", 3: "image", 4: "tools", 6: "data",
       s: "sun", w: "weather", i: "image", t: "tools", d: "data" };
     if (mods[e.key.toLowerCase()]) openModule(mods[e.key.toLowerCase()]);
@@ -1139,7 +1245,7 @@ async function initStatus() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  initMap(); initSearch(); initSun(); initWeather(); initImage(); initData(); initKeys(); initStatus();
+  initMap(); initSearch(); initSun(); initWeather(); initImage(); initData(); initCase(); initKeys(); initStatus();
   // deep links: #ll=lat,lng (from search) and #species=gbifKey&name=... (from flora wiki)
   const ll = location.hash.match(/^#ll=(-?[\d.]+),(-?[\d.]+)/);
   if (ll) setPoint(L.latLng(+ll[1], +ll[2]), { fly: true, zoom: 13 });

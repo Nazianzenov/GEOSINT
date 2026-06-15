@@ -199,6 +199,20 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
 .help-card h2 { margin-top: 0; font-size: 14px; letter-spacing: .15em; color: var(--accent); }
 .help-card .btn { margin-top: 14px; width: 100%; }
 
+/* case notes drawer */
+#notes-drawer { position: fixed; right: 14px; bottom: 38px; z-index: 2500;
+  width: 360px; max-width: calc(100vw - 28px); background: var(--bg-1);
+  border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 28px #000a;
+  display: flex; flex-direction: column; }
+.notes-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border-bottom: 1px solid var(--line); }
+.notes-head strong { font: 600 12px var(--sans); letter-spacing: .08em; color: var(--accent); }
+.notes-head .muted { font-size: 10px; }
+.notes-head .icon-btn { margin-left: auto; }
+#case-notes { background: var(--bg); color: var(--txt); border: 0; border-radius: 0 0 8px 8px;
+  resize: vertical; min-height: 200px; padding: 10px; font: 12px var(--mono); outline: none; }
+#case-notes::placeholder { color: var(--txt-dim); }
+
 /* leaflet dark-ification */
 .leaflet-container { background: #0a0c10; font: 12px var(--sans); }
 .leaflet-control-layers, .leaflet-bar a {
