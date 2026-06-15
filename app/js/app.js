@@ -680,6 +680,29 @@ function drawSunChart(sd, lat, lng) {
   ctx.fill();
 }
 
+/* shadow azimuth + length ratio of the sun at minute-of-day m (local to the
+   chosen UTC offset) for the active point; null when the sun is at/below horizon */
+function shadowAt(m, sd, lat, lng) {
+  const d = new Date(Date.UTC(sd.Y, sd.M - 1, sd.D, 0, m) - sd.off * 3600e3);
+  const pos = SunCalc.getPosition(d, lat, lng);
+  if (pos.altitude <= 0.02) return null;
+  return { shAz: (compassAz(pos.azimuth) + 180) % 360, ratio: 1 / Math.tan(pos.altitude) };
+}
+
+/* how well a shadow (shAz, ratio) fits target az/ratio; returns {ok, err} */
+function shadowFit(s, azT, ratioT, tol) {
+  let ok = true, err = 0;
+  if (!isNaN(azT)) {
+    const dAz = Math.min(Math.abs(s.shAz - azT), 360 - Math.abs(s.shAz - azT));
+    if (dAz > tol) ok = false; else err += dAz;
+  }
+  if (ok && !isNaN(ratioT)) {
+    const dR = Math.abs(s.ratio - ratioT) / ratioT;
+    if (dR > 0.18) ok = false; else err += dR * 20;
+  }
+  return { ok, err };
+}
+
 function runSolver() {
   const out = $("#solver-out");
   if (!state.point) { out.innerHTML = `<p class="nomatch">Set the active point first.</p>`; return; }
@@ -687,25 +710,30 @@ function runSolver() {
   const ratioT = parseFloat($("#solver-ratio").value);
   const tol = parseFloat($("#solver-tol").value) || 8;
   if (isNaN(azT) && isNaN(ratioT)) { out.innerHTML = `<p class="nomatch">Enter a shadow azimuth and/or a length ratio.</p>`; return; }
+  // optional second reading taken Δ minutes after the first
+  const az2 = parseFloat($("#solver-az2").value);
+  const ratio2 = parseFloat($("#solver-ratio2").value);
+  const dt2 = parseFloat($("#solver-dt2").value);
+  const twoShadow = !isNaN(dt2) && (!isNaN(az2) || !isNaN(ratio2));
   const sd = sunDate();
   const { lat, lng } = state.point;
   const matches = [];
   for (let m = 0; m < 1440; m += 2) {
-    const d = new Date(Date.UTC(sd.Y, sd.M - 1, sd.D, 0, m) - sd.off * 3600e3);
-    const pos = SunCalc.getPosition(d, lat, lng);
-    if (pos.altitude <= 0.02) continue;
-    const shAz = (compassAz(pos.azimuth) + 180) % 360;
-    const ratio = 1 / Math.tan(pos.altitude);
-    let ok = true, err = 0;
-    if (!isNaN(azT)) {
-      const dAz = Math.min(Math.abs(shAz - azT), 360 - Math.abs(shAz - azT));
-      if (dAz > tol) ok = false; else err += dAz;
+    const s = shadowAt(m, sd, lat, lng);
+    if (!s) continue;
+    const f = shadowFit(s, azT, ratioT, tol);
+    if (!f.ok) continue;
+    let err = f.err;
+    const shAz = s.shAz, ratio = s.ratio;
+    if (twoShadow) {
+      // the second reading must also fit, Δ minutes later, at the same place/date
+      const s2 = shadowAt(m + dt2, sd, lat, lng);
+      if (!s2) continue;
+      const f2 = shadowFit(s2, az2, ratio2, tol);
+      if (!f2.ok) continue;
+      err += f2.err;
     }
-    if (ok && !isNaN(ratioT)) {
-      const dR = Math.abs(ratio - ratioT) / ratioT;
-      if (dR > 0.18) ok = false; else err += dR * 20;
-    }
-    if (ok) matches.push({ m, shAz, ratio, err });
+    matches.push({ m, shAz, ratio, err });
   }
   if (!matches.length) {
     out.innerHTML = `<p class="nomatch">✗ No time on this date matches at this location — the claimed
@@ -720,8 +748,11 @@ function runSolver() {
     else { groups.push(g); g = [matches[i]]; }
   }
   groups.push(g);
-  const hm = (mins) => `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
-  out.innerHTML = groups.map((gr) => {
+  const hm = (mins) => `${String(Math.floor(((mins % 1440) + 1440) % 1440 / 60)).padStart(2, "0")}:${String(((mins % 1440) + 1440) % 1440 % 60).padStart(2, "0")}`;
+  const header = twoShadow
+    ? `<p class="hint">Two-shadow mode: times where both readings fit (1st reading's time shown; 2nd is ${dt2 > 0 ? "+" : ""}${dt2} min later).</p>`
+    : "";
+  out.innerHTML = header + groups.map((gr) => {
     const best = gr.reduce((a, b) => (a.err < b.err ? a : b));
     return `<div class="match">✓ ${hm(gr[0].m)}–${hm(gr[gr.length - 1].m)} local
       (best ${hm(best.m)} · shadow→${best.shAz.toFixed(0)}° · ${best.ratio.toFixed(2)}×)</div>`;
@@ -1490,6 +1521,7 @@ function serializeCase() {
     inputs: {
       sunDt: val("#sun-dt"), sunOffset: val("#sun-offset"),
       solverAz: val("#solver-az"), solverRatio: val("#solver-ratio"), solverTol: val("#solver-tol"),
+      solverAz2: val("#solver-az2"), solverRatio2: val("#solver-ratio2"), solverDt2: val("#solver-dt2"),
       wxDate: val("#wx-date"), imgUrl: val("#img-url"),
       dataPreset: val("#data-preset"), dataCustom: val("#data-custom"), gbifName: val("#gbif-name"),
     },
@@ -1514,6 +1546,7 @@ function applyCase(c) {
   const f = c.inputs || {};
   setVal("#sun-dt", f.sunDt); setVal("#sun-offset", f.sunOffset);
   setVal("#solver-az", f.solverAz); setVal("#solver-ratio", f.solverRatio); setVal("#solver-tol", f.solverTol);
+  setVal("#solver-az2", f.solverAz2); setVal("#solver-ratio2", f.solverRatio2); setVal("#solver-dt2", f.solverDt2);
   setVal("#wx-date", f.wxDate); setVal("#img-url", f.imgUrl);
   setVal("#data-preset", f.dataPreset); setVal("#data-custom", f.dataCustom); setVal("#gbif-name", f.gbifName);
   renderUrlButtons();

@@ -261,6 +261,14 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
                line-height: 1.35; }
 .measure-tip .measure-tot { display: block; color: var(--txt-dim); font-size: 10px; }
 
+/* two-shadow solver disclosure */
+#solver-two { margin: 6px 0 2px; }
+#solver-two > summary { cursor: pointer; font: 11px var(--sans); color: var(--accent);
+  list-style: none; padding: 4px 0; }
+#solver-two > summary::-webkit-details-marker { display: none; }
+#solver-two > summary::before { content: "▸ "; }
+#solver-two[open] > summary::before { content: "▾ "; }
+
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
