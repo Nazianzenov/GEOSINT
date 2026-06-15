@@ -32,6 +32,8 @@ if ($RebuildWiki -or -not (Test-Path "wiki\site\index.html")) {
     & $py tools\cache_geohints.py
     Write-Host "[geosint] Refreshing national flags from Wikimedia (skips already-cached)..." -ForegroundColor Cyan
     & $py tools\build_flags.py
+    Write-Host "[geosint] Refreshing subnational & dependency flags (skips already-cached)..." -ForegroundColor Cyan
+    & $py tools\build_subnational_flags.py
     Write-Host "[geosint] Regenerating ccTLD + calling-code reference tables..." -ForegroundColor Cyan
     & $py tools\build_refdata.py
     Write-Host "[geosint] Building wiki..." -ForegroundColor Cyan
