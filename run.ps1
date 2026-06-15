@@ -28,6 +28,8 @@ if ($RebuildWiki -or -not (Test-Path "wiki\site\index.html")) {
     & $py tools\build_flora.py
     Write-Host "[geosint] Refreshing Wikimedia image cache (re-fetches only entries >30 days old)..." -ForegroundColor Cyan
     & $py tools\cache_wikimedia.py
+    Write-Host "[geosint] Localizing GeoHints gallery images (one-off; skips already-cached, no auto-refresh)..." -ForegroundColor Cyan
+    & $py tools\cache_geohints.py
     Write-Host "[geosint] Building wiki..." -ForegroundColor Cyan
     & ".venv\Scripts\mkdocs.exe" build -f wiki\mkdocs.yml
     Write-Host "[geosint] Rebuilding search index + knowledge graph..." -ForegroundColor Cyan

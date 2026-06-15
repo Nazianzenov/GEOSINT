@@ -1,0 +1,9 @@
+# Treat cached image assets as binary — never normalize line endings.
+# (SVGs are XML/text but are vendored verbatim; keep them byte-stable.)
+wiki/docs/assets/** binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.webp binary
+*.svg -text

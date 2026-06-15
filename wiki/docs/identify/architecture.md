@@ -81,103 +81,103 @@ at the bottom of this page** (67 photos by continent) and the cited literature.
 ### Africa
 
 <div class="gh-gallery">
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/lesotho_1.jpg" loading="lazy"><figcaption>Lesotho · <a href="https://goo.gl/maps/NVZAjf73ckrVQa3B9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/lesotho_2.jpg" loading="lazy"><figcaption>Lesotho · <a href="https://goo.gl/maps/Szqh8mfdbDtaEzCN8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/tunisia_1.jpg" loading="lazy"><figcaption>Tunisia · <a href="https://goo.gl/maps/VGwNBbgCPKwvba4P9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/tunisia_2.jpg" loading="lazy"><figcaption>Tunisia · <a href="https://goo.gl/maps/ANLV7bx5DoEV1p5BA" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/lesotho_1.jpg" loading="lazy"><figcaption>Lesotho · <a href="https://goo.gl/maps/NVZAjf73ckrVQa3B9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/lesotho_2.jpg" loading="lazy"><figcaption>Lesotho · <a href="https://goo.gl/maps/Szqh8mfdbDtaEzCN8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/tunisia_1.jpg" loading="lazy"><figcaption>Tunisia · <a href="https://goo.gl/maps/VGwNBbgCPKwvba4P9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/tunisia_2.jpg" loading="lazy"><figcaption>Tunisia · <a href="https://goo.gl/maps/ANLV7bx5DoEV1p5BA" target="_blank">map</a></figcaption></figure>
 </div>
 
 
 ### Asia
 
 <div class="gh-gallery">
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/bhutan_1.jpg" loading="lazy"><figcaption>Bhutan · <a href="https://goo.gl/maps/T1NCDa2mNYZDEVtg6" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/cambodia_1.jpg" loading="lazy"><figcaption>Cambodia · <a href="https://goo.gl/maps/KJCRUSxKypvVwv9w9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/japan_1.jpg" loading="lazy"><figcaption>Japan · <a href="https://goo.gl/maps/MPtHxNzUor7WTcU47" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/kyrgyzstan_1.jpg" loading="lazy"><figcaption>Kyrgyzstan · <a href="https://goo.gl/maps/XRaXSs8nHQCBpq7f8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/lebanon_1.jpg" loading="lazy"><figcaption>Lebanon · <a href="https://maps.app.goo.gl/7Eqe5vrxeCdnumz99" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/malaysia_1.jpg" loading="lazy"><figcaption>Malaysia · <a href="https://goo.gl/maps/XeByjMVQ2XpZp6JW7" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/mongolia_1.jpg" loading="lazy"><figcaption>Mongolia · <a href="https://goo.gl/maps/CMtuzxPWQaRyj24g9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/mongolia_2.jpg" loading="lazy"><figcaption>Mongolia · <a href="https://goo.gl/maps/vruke52YTbAGTUqR7" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/singapore_1.jpg" loading="lazy"><figcaption>Singapore · <a href="https://goo.gl/maps/DPscfY5LHTJ5ziqu9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/south_korea_1.jpg" loading="lazy"><figcaption>South Korea · <a href="https://goo.gl/maps/6YgHuVoimrT3453Q8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/taiwan_1.jpg" loading="lazy"><figcaption>Taiwan · <a href="https://goo.gl/maps/PYTnA9gZHfzY9Tic9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/bhutan_1.jpg" loading="lazy"><figcaption>Bhutan · <a href="https://goo.gl/maps/T1NCDa2mNYZDEVtg6" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/cambodia_1.jpg" loading="lazy"><figcaption>Cambodia · <a href="https://goo.gl/maps/KJCRUSxKypvVwv9w9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/japan_1.jpg" loading="lazy"><figcaption>Japan · <a href="https://goo.gl/maps/MPtHxNzUor7WTcU47" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/kyrgyzstan_1.jpg" loading="lazy"><figcaption>Kyrgyzstan · <a href="https://goo.gl/maps/XRaXSs8nHQCBpq7f8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/lebanon_1.jpg" loading="lazy"><figcaption>Lebanon · <a href="https://maps.app.goo.gl/7Eqe5vrxeCdnumz99" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/malaysia_1.jpg" loading="lazy"><figcaption>Malaysia · <a href="https://goo.gl/maps/XeByjMVQ2XpZp6JW7" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/mongolia_1.jpg" loading="lazy"><figcaption>Mongolia · <a href="https://goo.gl/maps/CMtuzxPWQaRyj24g9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/mongolia_2.jpg" loading="lazy"><figcaption>Mongolia · <a href="https://goo.gl/maps/vruke52YTbAGTUqR7" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/singapore_1.jpg" loading="lazy"><figcaption>Singapore · <a href="https://goo.gl/maps/DPscfY5LHTJ5ziqu9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/south_korea_1.jpg" loading="lazy"><figcaption>South Korea · <a href="https://goo.gl/maps/6YgHuVoimrT3453Q8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/taiwan_1.jpg" loading="lazy"><figcaption>Taiwan · <a href="https://goo.gl/maps/PYTnA9gZHfzY9Tic9" target="_blank">map</a></figcaption></figure>
 </div>
 
 
 ### Europe
 
 <div class="gh-gallery">
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/andorra_1.jpg" loading="lazy"><figcaption>Andorra · <a href="https://goo.gl/maps/cL6wfAEyf5fZoGkd9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/andorra_2.jpg" loading="lazy"><figcaption>Andorra · <a href="https://goo.gl/maps/TwYrVRd5bdiKGq3v7" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/austria_1.jpg" loading="lazy"><figcaption>Austria · <a href="https://goo.gl/maps/xs7Ccmaa3jYxTqdYA" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/austria_2.jpg" loading="lazy"><figcaption>Austria · <a href="https://goo.gl/maps/ezGSJHYHryyL4hwo6" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/austria_3.jpg" loading="lazy"><figcaption>Austria · <a href="https://goo.gl/maps/GvMw5Vs8zfXPEhxN9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/austria_4.jpg" loading="lazy"><figcaption>Austria · <a href="https://maps.app.goo.gl/JXZpsEzQ6gdqTHHy5" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/austria_5.jpg" loading="lazy"><figcaption>Austria · <a href="https://maps.app.goo.gl/smzYTcNfnNrfQVx76" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/belgium_1.jpg" loading="lazy"><figcaption>Belgium · <a href="https://goo.gl/maps/tWsbUvHJcNFDv86H8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/bulgaria_1.jpg" loading="lazy"><figcaption>Bulgaria · <a href="https://goo.gl/maps/koGNDWfPgdskhZkWA" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/denmark_1.jpg" loading="lazy"><figcaption>Denmark · <a href="https://goo.gl/maps/NSLRScjAQj6eY31H9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/faroe_islands_1.jpg" loading="lazy"><figcaption>Faroe Islands · <a href="https://goo.gl/maps/9JwsNRc1vjpmbxkG6" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/faroe_islands_2.jpg" loading="lazy"><figcaption>Faroe Islands · <a href="https://goo.gl/maps/SUchVyW946WH4JMH8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/finland_1.jpg" loading="lazy"><figcaption>Finland · <a href="https://goo.gl/maps/RTujVbqzLKDAaLKN7" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/france_1.jpg" loading="lazy"><figcaption>France · <a href="https://goo.gl/maps/W3QiBQpacd8U5SsVA" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/france_2.jpg" loading="lazy"><figcaption>France · <a href="https://goo.gl/maps/kDmWnytL8MHY9WLv9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/france_3.jpg" loading="lazy"><figcaption>France · <a href="https://goo.gl/maps/1f9ncUjq1NsvjLFz9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/france_4.jpg" loading="lazy"><figcaption>France · <a href="https://maps.app.goo.gl/8PiCgshwvDA23bXw9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/hungary_1.jpg" loading="lazy"><figcaption>Hungary · <a href="https://goo.gl/maps/QAjN8oYGKbewz6s36" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/malta_1.jpg" loading="lazy"><figcaption>Malta · <a href="https://goo.gl/maps/irJpBwDx81aAbAp58" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/monaco_1.jpg" loading="lazy"><figcaption>Monaco · <a href="https://maps.app.goo.gl/pCvd6JdyGhft662R6" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/netherlands_1.jpg" loading="lazy"><figcaption>Netherlands · <a href="https://goo.gl/maps/VAo52gDRwKoV2FEC8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/netherlands_2.jpg" loading="lazy"><figcaption>Netherlands · <a href="https://goo.gl/maps/3upnFjLANRwhaSMY6" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/poland_1.jpg" loading="lazy"><figcaption>Poland · <a href="https://goo.gl/maps/mq4nN29R4otMqCig8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/poland_2.jpg" loading="lazy"><figcaption>Poland · <a href="https://goo.gl/maps/f8L7Bc3rkYWJKKKE9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/poland_3.jpg" loading="lazy"><figcaption>Poland · <a href="https://goo.gl/maps/n4Ky4juzR78aPkky9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/romania_1.jpg" loading="lazy"><figcaption>Romania · <a href="https://maps.app.goo.gl/x5Xhbwb2QjZUSDxQ8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/slovakia_1.jpg" loading="lazy"><figcaption>Slovakia · <a href="https://goo.gl/maps/HxDr5PGaRbt3fppA8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/slovenia_1.jpg" loading="lazy"><figcaption>Slovenia · <a href="https://goo.gl/maps/o57YzMxianptmSfv8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/slovenia_2.jpg" loading="lazy"><figcaption>Slovenia · <a href="https://goo.gl/maps/ELjch6wNYmtLFocC8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/slovenia_3.jpg" loading="lazy"><figcaption>Slovenia · <a href="https://maps.app.goo.gl/DMWELsDefQkDWbMB8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/slovenia_4.jpg" loading="lazy"><figcaption>Slovenia · <a href="https://goo.gl/maps/uwSAQ3c9q1gHRxKfA" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/sweden_1.jpg" loading="lazy"><figcaption>Sweden · <a href="https://goo.gl/maps/tHS5r78weQjj9FMZA" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/switzerland_1.jpg" loading="lazy"><figcaption>Switzerland · <a href="https://goo.gl/maps/8qhJeoiJ5bAcm97SA" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/switzerland_2.jpg" loading="lazy"><figcaption>Switzerland · <a href="https://goo.gl/maps/ScwqsLLMhwswdqSNA" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/uk_1.jpg" loading="lazy"><figcaption>United Kingdom · <a href="https://goo.gl/maps/i3coGT4YeQf1NE1v7" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/uk_2.jpg" loading="lazy"><figcaption>United Kingdom · <a href="https://goo.gl/maps/eKc16EJq41959CG77" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/uk_3.jpg" loading="lazy"><figcaption>United Kingdom · <a href="https://goo.gl/maps/VG5RUcD3uKry4V4DA" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/andorra_1.jpg" loading="lazy"><figcaption>Andorra · <a href="https://goo.gl/maps/cL6wfAEyf5fZoGkd9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/andorra_2.jpg" loading="lazy"><figcaption>Andorra · <a href="https://goo.gl/maps/TwYrVRd5bdiKGq3v7" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/austria_1.jpg" loading="lazy"><figcaption>Austria · <a href="https://goo.gl/maps/xs7Ccmaa3jYxTqdYA" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/austria_2.jpg" loading="lazy"><figcaption>Austria · <a href="https://goo.gl/maps/ezGSJHYHryyL4hwo6" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/austria_3.jpg" loading="lazy"><figcaption>Austria · <a href="https://goo.gl/maps/GvMw5Vs8zfXPEhxN9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/austria_4.jpg" loading="lazy"><figcaption>Austria · <a href="https://maps.app.goo.gl/JXZpsEzQ6gdqTHHy5" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/austria_5.jpg" loading="lazy"><figcaption>Austria · <a href="https://maps.app.goo.gl/smzYTcNfnNrfQVx76" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/belgium_1.jpg" loading="lazy"><figcaption>Belgium · <a href="https://goo.gl/maps/tWsbUvHJcNFDv86H8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/bulgaria_1.jpg" loading="lazy"><figcaption>Bulgaria · <a href="https://goo.gl/maps/koGNDWfPgdskhZkWA" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/denmark_1.jpg" loading="lazy"><figcaption>Denmark · <a href="https://goo.gl/maps/NSLRScjAQj6eY31H9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/faroe_islands_1.jpg" loading="lazy"><figcaption>Faroe Islands · <a href="https://goo.gl/maps/9JwsNRc1vjpmbxkG6" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/faroe_islands_2.jpg" loading="lazy"><figcaption>Faroe Islands · <a href="https://goo.gl/maps/SUchVyW946WH4JMH8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/finland_1.jpg" loading="lazy"><figcaption>Finland · <a href="https://goo.gl/maps/RTujVbqzLKDAaLKN7" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/france_1.jpg" loading="lazy"><figcaption>France · <a href="https://goo.gl/maps/W3QiBQpacd8U5SsVA" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/france_2.jpg" loading="lazy"><figcaption>France · <a href="https://goo.gl/maps/kDmWnytL8MHY9WLv9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/france_3.jpg" loading="lazy"><figcaption>France · <a href="https://goo.gl/maps/1f9ncUjq1NsvjLFz9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/france_4.jpg" loading="lazy"><figcaption>France · <a href="https://maps.app.goo.gl/8PiCgshwvDA23bXw9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/hungary_1.jpg" loading="lazy"><figcaption>Hungary · <a href="https://goo.gl/maps/QAjN8oYGKbewz6s36" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/malta_1.jpg" loading="lazy"><figcaption>Malta · <a href="https://goo.gl/maps/irJpBwDx81aAbAp58" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/monaco_1.jpg" loading="lazy"><figcaption>Monaco · <a href="https://maps.app.goo.gl/pCvd6JdyGhft662R6" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/netherlands_1.jpg" loading="lazy"><figcaption>Netherlands · <a href="https://goo.gl/maps/VAo52gDRwKoV2FEC8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/netherlands_2.jpg" loading="lazy"><figcaption>Netherlands · <a href="https://goo.gl/maps/3upnFjLANRwhaSMY6" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/poland_1.jpg" loading="lazy"><figcaption>Poland · <a href="https://goo.gl/maps/mq4nN29R4otMqCig8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/poland_2.jpg" loading="lazy"><figcaption>Poland · <a href="https://goo.gl/maps/f8L7Bc3rkYWJKKKE9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/poland_3.jpg" loading="lazy"><figcaption>Poland · <a href="https://goo.gl/maps/n4Ky4juzR78aPkky9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/romania_1.jpg" loading="lazy"><figcaption>Romania · <a href="https://maps.app.goo.gl/x5Xhbwb2QjZUSDxQ8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/slovakia_1.jpg" loading="lazy"><figcaption>Slovakia · <a href="https://goo.gl/maps/HxDr5PGaRbt3fppA8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/slovenia_1.jpg" loading="lazy"><figcaption>Slovenia · <a href="https://goo.gl/maps/o57YzMxianptmSfv8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/slovenia_2.jpg" loading="lazy"><figcaption>Slovenia · <a href="https://goo.gl/maps/ELjch6wNYmtLFocC8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/slovenia_3.jpg" loading="lazy"><figcaption>Slovenia · <a href="https://maps.app.goo.gl/DMWELsDefQkDWbMB8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/slovenia_4.jpg" loading="lazy"><figcaption>Slovenia · <a href="https://goo.gl/maps/uwSAQ3c9q1gHRxKfA" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/sweden_1.jpg" loading="lazy"><figcaption>Sweden · <a href="https://goo.gl/maps/tHS5r78weQjj9FMZA" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/switzerland_1.jpg" loading="lazy"><figcaption>Switzerland · <a href="https://goo.gl/maps/8qhJeoiJ5bAcm97SA" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/switzerland_2.jpg" loading="lazy"><figcaption>Switzerland · <a href="https://goo.gl/maps/ScwqsLLMhwswdqSNA" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/uk_1.jpg" loading="lazy"><figcaption>United Kingdom · <a href="https://goo.gl/maps/i3coGT4YeQf1NE1v7" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/uk_2.jpg" loading="lazy"><figcaption>United Kingdom · <a href="https://goo.gl/maps/eKc16EJq41959CG77" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/uk_3.jpg" loading="lazy"><figcaption>United Kingdom · <a href="https://goo.gl/maps/VG5RUcD3uKry4V4DA" target="_blank">map</a></figcaption></figure>
 </div>
 
 
 ### North America
 
 <div class="gh-gallery">
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/canada_1.jpg" loading="lazy"><figcaption>Canada · <a href="https://maps.app.goo.gl/s3PfwrKVfhcrYwbk8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/canada_2.jpg" loading="lazy"><figcaption>Canada · <a href="https://goo.gl/maps/AZTavwafUN71s1KY8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/greenland_1.jpg" loading="lazy"><figcaption>Greenland · <a href="https://goo.gl/maps/rro7VgNC68T5Couu8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/guatemala_1.jpg" loading="lazy"><figcaption>Guatemala · <a href="https://maps.app.goo.gl/b7sXmLSVnbEdYMVD7" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/us_1.jpg" loading="lazy"><figcaption>United States · <a href="https://goo.gl/maps/9DxPxNXAmv7nbACu9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/us_2.jpg" loading="lazy"><figcaption>United States · <a href="https://goo.gl/maps/UwzQHkpndP7eoDvy7" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/us_3.jpg" loading="lazy"><figcaption>United States · <a href="https://maps.app.goo.gl/SZm48uacBoDTsrnv6" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/canada_1.jpg" loading="lazy"><figcaption>Canada · <a href="https://maps.app.goo.gl/s3PfwrKVfhcrYwbk8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/canada_2.jpg" loading="lazy"><figcaption>Canada · <a href="https://goo.gl/maps/AZTavwafUN71s1KY8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/greenland_1.jpg" loading="lazy"><figcaption>Greenland · <a href="https://goo.gl/maps/rro7VgNC68T5Couu8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/guatemala_1.jpg" loading="lazy"><figcaption>Guatemala · <a href="https://maps.app.goo.gl/b7sXmLSVnbEdYMVD7" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/us_1.jpg" loading="lazy"><figcaption>United States · <a href="https://goo.gl/maps/9DxPxNXAmv7nbACu9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/us_2.jpg" loading="lazy"><figcaption>United States · <a href="https://goo.gl/maps/UwzQHkpndP7eoDvy7" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/us_3.jpg" loading="lazy"><figcaption>United States · <a href="https://maps.app.goo.gl/SZm48uacBoDTsrnv6" target="_blank">map</a></figcaption></figure>
 </div>
 
 
 ### Oceania
 
 <div class="gh-gallery">
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/american_samoa_1.jpg" loading="lazy"><figcaption>American Samoa · <a href="https://goo.gl/maps/hz6ibto1d8sLojnE7" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/american_samoa_2.jpg" loading="lazy"><figcaption>American Samoa · <a href="https://goo.gl/maps/EJfFsjrd6RUMfcTm8" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/australia_1.jpg" loading="lazy"><figcaption>Australia · <a href="https://goo.gl/maps/d3gBNbLBnHaRaPpY9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/australia_2.jpg" loading="lazy"><figcaption>Australia · <a href="https://goo.gl/maps/5zpuBYKdHnPdnMH18" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/australia_3.jpg" loading="lazy"><figcaption>Australia · <a href="https://goo.gl/maps/Pc9SLke2AJX6Mxmy6" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/australia_4.jpg" loading="lazy"><figcaption>Australia · <a href="https://maps.app.goo.gl/96C9VQz2imXLHMpK9" target="_blank">map</a></figcaption></figure>
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/australia_5.jpg" loading="lazy"><figcaption>Australia · <a href="https://goo.gl/maps/3SygP59LqZoBVTik8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/american_samoa_1.jpg" loading="lazy"><figcaption>American Samoa · <a href="https://goo.gl/maps/hz6ibto1d8sLojnE7" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/american_samoa_2.jpg" loading="lazy"><figcaption>American Samoa · <a href="https://goo.gl/maps/EJfFsjrd6RUMfcTm8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/australia_1.jpg" loading="lazy"><figcaption>Australia · <a href="https://goo.gl/maps/d3gBNbLBnHaRaPpY9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/australia_2.jpg" loading="lazy"><figcaption>Australia · <a href="https://goo.gl/maps/5zpuBYKdHnPdnMH18" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/australia_3.jpg" loading="lazy"><figcaption>Australia · <a href="https://goo.gl/maps/Pc9SLke2AJX6Mxmy6" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/australia_4.jpg" loading="lazy"><figcaption>Australia · <a href="https://maps.app.goo.gl/96C9VQz2imXLHMpK9" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/australia_5.jpg" loading="lazy"><figcaption>Australia · <a href="https://goo.gl/maps/3SygP59LqZoBVTik8" target="_blank">map</a></figcaption></figure>
 </div>
 
 
 ### South America
 
 <div class="gh-gallery">
-<figure><img src="https://ocsc00skc0wokcs8kw8g8k84.geohints.com/storage/architecture/bolivia_1.jpg" loading="lazy"><figcaption>Bolivia · <a href="https://goo.gl/maps/YNig7xKaWvsxfoWq8" target="_blank">map</a></figcaption></figure>
+<figure><img src="../assets/gh/architecture/bolivia_1.jpg" loading="lazy"><figcaption>Bolivia · <a href="https://goo.gl/maps/YNig7xKaWvsxfoWq8" target="_blank">map</a></figcaption></figure>
 </div>
 
 
