@@ -215,7 +215,9 @@ def main():
                     continue
             else:
                 skipped += 1
-            rel = "../assets/flags/" + local.name
+            # use_directory_urls: the page lives at /wiki/identify/flags/, so the
+            # gallery needs two levels up to reach /wiki/assets/.
+            rel = "../../assets/flags/" + local.name
             figs.append(f'<figure><img src="{rel}" loading="lazy" alt="Flag of {disp}">'
                         f"<figcaption>{disp}</figcaption></figure>")
         sections.append(f'### {continent}\n\n<div class="gh-gallery">\n'

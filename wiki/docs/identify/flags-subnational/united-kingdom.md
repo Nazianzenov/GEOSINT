@@ -10,8 +10,8 @@ Subnational flags pin a photo *inside* United Kingdom. **Flag-only reference** f
 </style>
 
 <div class="gh-gallery">
-<figure><img src="../../assets/flags/gb/england.svg" loading="lazy" alt="Flag of England"><figcaption>England</figcaption></figure>
-<figure><img src="../../assets/flags/gb/scotland.svg" loading="lazy" alt="Flag of Scotland"><figcaption>Scotland</figcaption></figure>
-<figure><img src="../../assets/flags/gb/wales.svg" loading="lazy" alt="Flag of Wales"><figcaption>Wales</figcaption></figure>
-<figure><img src="../../assets/flags/gb/northern_ireland.svg" loading="lazy" alt="Flag of Northern Ireland"><figcaption>Northern Ireland</figcaption></figure>
+<figure><img src="../../../assets/flags/gb/england.svg" loading="lazy" alt="Flag of England"><figcaption>England</figcaption></figure>
+<figure><img src="../../../assets/flags/gb/scotland.svg" loading="lazy" alt="Flag of Scotland"><figcaption>Scotland</figcaption></figure>
+<figure><img src="../../../assets/flags/gb/wales.svg" loading="lazy" alt="Flag of Wales"><figcaption>Wales</figcaption></figure>
+<figure><img src="../../../assets/flags/gb/northern_ireland.svg" loading="lazy" alt="Flag of Northern Ireland"><figcaption>Northern Ireland</figcaption></figure>
 </div>

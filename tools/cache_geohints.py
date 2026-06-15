@@ -116,8 +116,11 @@ def main():
                     failed += 1
                     print(f"  FAIL {url} ({e})")
                     continue
-            # rewrite to a path relative to THIS markdown file's location
-            depth = len(md.relative_to(DOCS).parts) - 1
+            # rewrite to a path relative to THIS markdown file's BUILT location.
+            # With mkdocs use_directory_urls, page foo/bar.md is served at
+            # /wiki/foo/bar/, i.e. one directory deeper than the source — so add
+            # one extra ".." on top of the source-relative depth.
+            depth = len(md.relative_to(DOCS).parts) - 1 + 1
             ref = Path(*([".."] * depth)) / rel
             text = text.replace(url, ref.as_posix())
             changed = True

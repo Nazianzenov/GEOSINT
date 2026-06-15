@@ -220,7 +220,9 @@ def main():
                     failed += 1
                     print(f"  FAIL {c['name']} / {name}: {e}")
                     continue
-            rel = f"../../assets/flags/{iso2}/{local.name}"
+            # page at /wiki/identify/flags-subnational/<x>/ (use_directory_urls)
+            # → three levels up to reach /wiki/assets/
+            rel = f"../../../assets/flags/{iso2}/{local.name}"
             figs.append(f'<figure><img src="{rel}" loading="lazy" alt="Flag of {name}">'
                         f"<figcaption>{name}</figcaption></figure>")
         title = f"{c['kind']} of {c['name']}" if iso2 != "dep" else c["name"]
