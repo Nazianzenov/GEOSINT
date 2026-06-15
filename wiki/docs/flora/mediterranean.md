@@ -4,7 +4,7 @@
 
 ## Olive (*Olea europaea*)
 
-![Olive](https://commons.wikimedia.org/wiki/Special:FilePath/Olive%20groves%20in%20Andalucia.jpg?width=640)
+![Olive](../assets/wm/Olive-groves-in-Andalucia_w640_f4399075.jpg)
 { width=340 }
 
 **Geolocation tell:** Silvery groves = Mediterranean climate worldwide
@@ -15,7 +15,7 @@ The olive is a species of subtropical evergreen tree in the family Oleaceae. Ori
 
 ## Mediterranean cypress (*Cupressus sempervirens*)
 
-![Mediterranean cypress](https://commons.wikimedia.org/wiki/Special:FilePath/%CE%95%CE%B8%CE%BD%CE%B9%CE%BA%CF%8C%CF%82_%CE%94%CF%81%CF%85%CE%BC%CF%8C%CF%82_%CE%A3%CE%B1%CE%BC%CE%B1%CF%81%CE%B9%CE%AC%CF%82.jpg?width=640)
+![Mediterranean cypress](../assets/wm/_-_-_w640_1801c095.jpg)
 { width=340 }
 
 **Geolocation tell:** Black-green exclamation marks of Tuscany/Greece; cemetery tree
@@ -26,7 +26,7 @@ Cupressus sempervirens, is a species of cypress native to the eastern Mediterran
 
 ## Stone pine (*Pinus pinea*)
 
-![Stone pine](https://commons.wikimedia.org/wiki/Special:FilePath/Pinus_pinea_Wellington_Botanic_Gardens.jpg?width=640)
+![Stone pine](../assets/wm/Pinus_pinea_Wellington_Botanic_Gardens_w640_1628e844.jpg)
 { width=340 }
 
 **Geolocation tell:** Umbrella-shaped crowns over Rome/Iberian coasts
@@ -37,7 +37,7 @@ Pinus pinea, the Italian stone pine or Mediterranean stone pine, is a tree from 
 
 ## Cork oak (*Quercus suber*)
 
-![Cork oak](https://commons.wikimedia.org/wiki/Special:FilePath/Cork_oak_%2828864190188%29.jpg?width=640)
+![Cork oak](../assets/wm/Cork_oak_-28864190188-_w640_2ff0c200.jpg)
 { width=340 }
 
 **Geolocation tell:** Stripped red-brown trunks = Portugal/SW Spain dehesa, Sardinia, Maghreb
@@ -48,7 +48,7 @@ Quercus suber, commonly called the cork oak, is a medium-sized, evergreen oak tr
 
 ## Oleander (*Nerium oleander*)
 
-![Oleander](https://commons.wikimedia.org/wiki/Special:FilePath/Nerium_oleander_flowers_leaves.jpg?width=640)
+![Oleander](../assets/wm/Nerium_oleander_flowers_leaves_w640_40790d09.jpg)
 { width=340 }
 
 **Geolocation tell:** Pink/white highway median shrub in every Mediterranean climate
@@ -59,7 +59,7 @@ Nerium oleander, commonly known as oleander, rose laurel, be-still tree or roseb
 
 ## Citrus (orange) (*Citrus × sinensis*)
 
-![Citrus (orange)](https://commons.wikimedia.org/wiki/Special:FilePath/Florida%20orange%20grove.JPG?width=640)
+![Citrus (orange)](../assets/wm/Florida-orange-grove_w640_e165c30a.jpg)
 { width=340 }
 
 **Geolocation tell:** Street oranges = Seville/Athens/Valencia; groves = subtropics

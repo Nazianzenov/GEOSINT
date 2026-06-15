@@ -2,7 +2,7 @@
 
 ## Rapeseed (*Brassica napus*)
 
-![Rapeseed](https://commons.wikimedia.org/wiki/Special:FilePath/Brassica_napus_-_K%C3%B6hler%E2%80%93s_Medizinal-Pflanzen-169.jpg?width=640)
+![Rapeseed](../assets/wm/Brassica_napus_-_K-hler-s_Medizinal-Pflanzen-169_w640_9e9d55e0.jpg)
 { width=340 }
 
 **Geolocation tell:** Blinding yellow spring fields: N/C Europe, Canada, China
@@ -37,7 +37,7 @@ Rapeseed, also known as rape and oilseed rape and canola, is a yellow-flowered m
 
 ## Agave (tequila) (*Agave tequilana*)
 
-![Agave (tequila)](https://commons.wikimedia.org/wiki/Special:FilePath/Agave_tequilana_1.jpg?width=640)
+![Agave (tequila)](../assets/wm/Agave_tequilana_1_w640_9ca72bff.jpg)
 { width=340 }
 
 **Geolocation tell:** Blue-grey spiky rows = Jalisco, Mexico

@@ -4,7 +4,7 @@
 
 ## Japanese cedar (*Cryptomeria japonica*)
 
-![Japanese cedar](https://commons.wikimedia.org/wiki/Special:FilePath/Cryptomeria_japonica_SZ124.png?width=640)
+![Japanese cedar](../assets/wm/Cryptomeria_japonica_SZ124_w640_f24db257.png)
 { width=340 }
 
 **Geolocation tell:** Japan's plantation conifer (sugi) — straight dark ranks on every hillside
@@ -15,7 +15,7 @@ Cryptomeria is a monotypic genus of conifer in the cypress family Cupressaceae. 
 
 ## Ginkgo (*Ginkgo biloba*)
 
-![Ginkgo](https://commons.wikimedia.org/wiki/Special:FilePath/GINKGOBAUM-2.jpg?width=640)
+![Ginkgo](../assets/wm/GINKGOBAUM-2_w640_4a9460b0.jpg)
 { width=340 }
 
 **Geolocation tell:** Fan leaves, gold in autumn; street tree of Japan/Korea/China cities
@@ -26,7 +26,7 @@ Ginkgo biloba, commonly known as ginkgo, also known as the maidenhair tree, and 
 
 ## Tea (*Camellia sinensis*)
 
-![Tea](https://commons.wikimedia.org/wiki/Special:FilePath/Tea%20plantations%20in%20Munnar%2C%20Kerala.jpg?width=640)
+![Tea](../assets/wm/Tea-plantations-in-Munnar-Kerala_w640_fa3ede16.jpg)
 { width=340 }
 
 **Geolocation tell:** Corduroy hedge rows on hills: China/Japan/India/Sri Lanka/Kenya
@@ -37,7 +37,7 @@ Camellia sinensis is a species of evergreen shrub or small tree in the flowering
 
 ## Moso bamboo (*Phyllostachys edulis*)
 
-![Moso bamboo](https://commons.wikimedia.org/wiki/Special:FilePath/Bamboo_forest.jpg?width=640)
+![Moso bamboo](../assets/wm/Bamboo_forest_w640_0c9dd719.jpg)
 { width=340 }
 
 **Geolocation tell:** Giant bamboo groves of China/Japan
@@ -48,7 +48,7 @@ Phyllostachys edulis, the mōsō bamboo, or tortoise-shell bamboo, or mao zhu, ,
 
 ## Rice (*Oryza sativa*)
 
-![Rice](https://commons.wikimedia.org/wiki/Special:FilePath/Longsheng%20Rice%20Terraces%20November%202017%20014.jpg?width=640)
+![Rice](../assets/wm/Longsheng-Rice-Terraces-November-2017-014_w640_bcf05456.jpg)
 { width=340 }
 
 **Geolocation tell:** Paddies = monsoon Asia; terraces = S. China/SE Asia/Philippines/Nepal

@@ -44,14 +44,15 @@ def _throttle():
 
 
 def _get(url, timeout=40):
-    """GET with UA + backoff honouring Retry-After on 429/503. Returns bytes."""
+    """GET with UA + backoff honouring Retry-After on 429/503.
+    Returns (bytes, content_type)."""
     last = None
     for attempt in range(6):
         _throttle()
         try:
             req = urllib.request.Request(url, headers={"User-Agent": UA})
             with urllib.request.urlopen(req, timeout=timeout) as r:
-                return r.read()
+                return r.read(), r.headers.get_content_type()
         except urllib.error.HTTPError as e:
             last = e
             if e.code not in (429, 500, 502, 503):
@@ -67,12 +68,18 @@ def _get(url, timeout=40):
     raise RuntimeError(f"request failed after retries: {url}")
 
 
+def get_bytes(url, timeout=40):
+    """Public: fetch a URL through the shared polite/backoff path.
+    Returns (bytes, content_type)."""
+    return _get(url, timeout)
+
+
 def api(host, params):
     """Call a MediaWiki/Wikidata api.php with JSON + maxlag; retries on maxlag."""
     for attempt in range(6):
         q = {**params, "format": "json", "maxlag": "5"}
         url = f"https://{host}/w/api.php?" + urllib.parse.urlencode(q)
-        data = json.loads(_get(url).decode("utf-8"))
+        data = json.loads(_get(url)[0].decode("utf-8"))
         if isinstance(data, dict) and data.get("error", {}).get("code") == "maxlag":
             time.sleep(min(60, 5 * (attempt + 1)))
             continue
@@ -135,14 +142,14 @@ def file_url(file_title):
 def download(url, dest, want_image=True):
     """Download `url` to Path `dest` (parent created). Optionally verify it looks
     like an image/SVG before writing. Returns the byte count."""
-    data = _get(url)
+    data, ctype = _get(url)
     if want_image:
         head = data.lstrip()[:200].lower()
         ok_svg = head.startswith((b"<?xml", b"<svg", b"<!doctype svg")) or b"<svg" in head
-        # binary images: trust the upload.wikimedia.org origin + extension
-        ok_bin = url.lower().rsplit(".", 1)[-1] in ("png", "jpg", "jpeg", "gif", "webp")
+        ok_bin = (ctype or "").startswith("image/") or \
+            url.lower().rsplit(".", 1)[-1] in ("png", "jpg", "jpeg", "gif", "webp", "svg")
         if not (ok_svg or ok_bin):
-            raise ValueError("response does not look like an image")
+            raise ValueError(f"response does not look like an image (content-type {ctype})")
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_bytes(data)
     return len(data)

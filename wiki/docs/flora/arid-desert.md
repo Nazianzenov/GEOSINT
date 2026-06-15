@@ -4,7 +4,7 @@
 
 ## Saguaro (*Carnegiea gigantea*)
 
-![Saguaro](https://commons.wikimedia.org/wiki/Special:FilePath/Carnegiea_gigantea_in_Saguaro_National_Park_near_Tucson%2C_Arizona_during_November_%2858%29.jpg?width=640)
+![Saguaro](../assets/wm/Carnegiea_gigantea_in_Saguaro_National_Park_near_Tucson-_Arizona_during_November_w640_4f35dea1.jpg)
 { width=340 }
 
 **Geolocation tell:** ONLY the Sonoran Desert (Arizona/Sonora) — instant pinpoint
@@ -15,7 +15,7 @@ The saguaro is a tree-like cactus species in the monotypic genus Carnegiea that 
 
 ## Joshua tree (*Yucca brevifolia*)
 
-![Joshua tree](https://commons.wikimedia.org/wiki/Special:FilePath/Joshua_Tree_01.jpg?width=640)
+![Joshua tree](../assets/wm/Joshua_Tree_01_w640_0734399e.jpg)
 { width=340 }
 
 **Geolocation tell:** Mojave Desert only (SE California/S Nevada)
@@ -26,7 +26,7 @@ Yucca brevifolia is a plant species belonging to the genus Yucca. It is tree-lik
 
 ## Prickly pear (*Opuntia ficus-indica*)
 
-![Prickly pear](https://commons.wikimedia.org/wiki/Special:FilePath/Dikenli_%C4%B0ncir_%28Opuntia_ficus-indica%29_Gaziantep_Turkey.IMG_1104.jpg?width=640)
+![Prickly pear](../assets/wm/Dikenli_-ncir_-Opuntia_ficus-indica-_Gaziantep_Turkey.IMG_1104_w640_c46234d2.jpg)
 { width=340 }
 
 **Geolocation tell:** Mexico native; naturalized fences across Med/N. Africa/India
@@ -37,7 +37,7 @@ Opuntia ficus-indica, the Indian fig opuntia, fig opuntia, or prickly pear, is a
 
 ## Date palm (*Phoenix dactylifera*)
 
-![Date palm](https://commons.wikimedia.org/wiki/Special:FilePath/Lush%20Oasis%20of%20Date%20Palm%20Trees.jpg?width=640)
+![Date palm](../assets/wm/Lush-Oasis-of-Date-Palm-Trees_w640_685b3126.jpg)
 { width=340 }
 
 **Geolocation tell:** Hot-desert oases: N. Africa, Gulf, Iran; California's Coachella
@@ -48,7 +48,7 @@ Phoenix dactylifera, commonly known as the date palm, is a flowering-plant speci
 
 ## Quiver tree (*Aloidendron dichotomum*)
 
-![Quiver tree](https://commons.wikimedia.org/wiki/Special:FilePath/QuiverTree-Namibia-2015.JPG?width=640)
+![Quiver tree](../assets/wm/QuiverTree-Namibia-2015_w640_1cfc1367.jpg)
 { width=340 }
 
 **Geolocation tell:** Namibia/NW South Africa — a southern-Africa pinpoint
@@ -59,7 +59,7 @@ Aloidendron dichotomum, formerly Aloe dichotoma, the quiver tree or kokerboom, i
 
 ## Welwitschia (*Welwitschia mirabilis*)
 
-![Welwitschia](https://commons.wikimedia.org/wiki/Special:FilePath/Welwitschia_mirabilis%282%29.jpg?width=640)
+![Welwitschia](../assets/wm/Welwitschia_mirabilis-2-_w640_a6928a3f.jpg)
 { width=340 }
 
 **Geolocation tell:** Namib desert only; two ragged leaves on bare gravel

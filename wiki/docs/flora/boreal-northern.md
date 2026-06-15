@@ -4,7 +4,7 @@
 
 ## Silver birch (*Betula pendula*)
 
-![Silver birch](https://commons.wikimedia.org/wiki/Special:FilePath/Betula_pendula_Finland.jpg?width=640)
+![Silver birch](../assets/wm/Betula_pendula_Finland_w640_75e9b24a.jpg)
 { width=340 }
 
 **Geolocation tell:** THE Russia/Scandinavia/Baltics tree; white bark with black fissures
@@ -15,7 +15,7 @@ Betula pendula, commonly known as silver birch, warty birch, European white birc
 
 ## Norway spruce (*Picea abies*)
 
-![Norway spruce](https://commons.wikimedia.org/wiki/Special:FilePath/Kuusk_Keila-Paldiski_rdt_%C3%A4%C3%A4res.jpg?width=640)
+![Norway spruce](../assets/wm/Kuusk_Keila-Paldiski_rdt_-res_w640_152693fe.jpg)
 { width=340 }
 
 **Geolocation tell:** Dark drooping conifer of N/C Europe; plantation forestry everywhere
@@ -26,7 +26,7 @@ Picea abies, the Norway spruce, Norway fir or European spruce, is a species of s
 
 ## Scots pine (*Pinus sylvestris*)
 
-![Scots pine](https://commons.wikimedia.org/wiki/Special:FilePath/Skuleskogen_pine.jpg?width=640)
+![Scots pine](../assets/wm/Skuleskogen_pine_w640_604ba6e8.jpg)
 { width=340 }
 
 **Geolocation tell:** Orange upper bark; Eurasia's most widespread pine
@@ -37,7 +37,7 @@ Pinus sylvestris is a species of tree in the pine family Pinaceae that is native
 
 ## Siberian larch (*Larix sibirica*)
 
-![Siberian larch](https://commons.wikimedia.org/wiki/Special:FilePath/Siberian-larch.jpg?width=640)
+![Siberian larch](../assets/wm/Siberian-larch_w640_67a260c1.jpg)
 { width=340 }
 
 **Geolocation tell:** Deciduous conifer — golden in autumn, bare in winter = Siberia/Mongolia
@@ -48,7 +48,7 @@ Larix sibirica, the Siberian larch or Russian larch, is a frost-hardy tree nativ
 
 ## Rowan (*Sorbus aucuparia*)
 
-![Rowan](https://commons.wikimedia.org/wiki/Special:FilePath/Rowan_tree_20081002b.jpg?width=640)
+![Rowan](../assets/wm/Rowan_tree_20081002b_w640_d19390b1.jpg)
 { width=340 }
 
 **Geolocation tell:** Red berry clusters; N. European gardens and roadsides

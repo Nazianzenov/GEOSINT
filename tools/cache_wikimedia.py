@@ -20,12 +20,12 @@ import hashlib
 import json
 import re
 import sys
-import time
-import urllib.error
 import urllib.parse
-import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import wikimedia as wm                     # unified resilient Wikimedia client
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -34,9 +34,6 @@ DOCS = ROOT / "wiki" / "docs"
 ASSETS = DOCS / "assets" / "wm"
 MANIFEST = ROOT / "wiki" / "wm_manifest.json"
 MAX_AGE = timedelta(days=30)
-
-# Wikimedia requires a descriptive User-Agent (meta.wikimedia.org/wiki/User-Agent_policy)
-UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 
 URL_RE = re.compile(
     r"https://(?:commons\.wikimedia\.org/wiki/Special:FilePath/"
@@ -57,25 +54,13 @@ def safe_name(url):
 
 
 def download(url, dest_name=None):
-    """Download url politely (delay + backoff on 429/5xx); return final
-    filename. If dest_name is given, reuse it so existing markdown
-    references stay valid on refresh."""
-    last = None
-    for attempt in range(4):
-        time.sleep(0.8 if attempt == 0 else 8 * attempt)   # politeness + backoff
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                ctype = resp.headers.get_content_type()
-                data = resp.read()
-            name = dest_name or (safe_name(url) + EXT.get(ctype, ".bin"))
-            (ASSETS / name).write_bytes(data)
-            return name
-        except urllib.error.HTTPError as e:
-            last = e
-            if e.code not in (429, 500, 502, 503):
-                raise
-    raise last
+    """Fetch url through the unified Wikimedia client (polite + Retry-After
+    backoff) and write it to assets/wm. Returns the final filename; if
+    dest_name is given it is reused so existing markdown references stay valid."""
+    data, ctype = wm.get_bytes(url)
+    name = dest_name or (safe_name(url) + EXT.get(ctype, ".bin"))
+    (ASSETS / name).write_bytes(data)
+    return name
 
 
 def main():

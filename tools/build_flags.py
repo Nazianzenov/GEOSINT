@@ -21,12 +21,11 @@ We sleep between fetches and skip anything already cached, so a re-run makes no
 network calls. Run:  .venv\\Scripts\\python tools\\build_flags.py
 """
 import sys
-import time
 import unicodedata
-import urllib.error
-import urllib.parse
-import urllib.request
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import wikimedia as wm                     # unified resilient Wikimedia client
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -34,8 +33,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "wiki" / "docs"
 PAGE = DOCS / "identify" / "flags.md"
 ASSETS = DOCS / "assets" / "flags"
-UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial; flags from Wikimedia Commons)"
-FILEPATH = "https://commons.wikimedia.org/wiki/Special:FilePath/"
 START = "<!-- GEOHINTS:flags START -->"
 END = "<!-- GEOHINTS:flags END -->"
 
@@ -190,25 +187,13 @@ def local_name(iso2, display):
 
 
 def download(filename, dest):
-    url = FILEPATH + urllib.parse.quote(filename)
-    last = None
-    for attempt in range(4):
-        time.sleep(0.6 if attempt == 0 else 8 * attempt)   # politeness + backoff
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                ctype = resp.headers.get_content_type()
-                data = resp.read()
-            head = data.lstrip()[:5].lower()
-            if "svg" not in ctype and not head.startswith((b"<?xml", b"<svg")):
-                raise ValueError(f"not an SVG (content-type {ctype})")
-            dest.write_bytes(data)
-            return True
-        except urllib.error.HTTPError as e:
-            last = e
-            if e.code not in (429, 500, 502, 503):
-                raise
-    raise last
+    """Fetch a known Commons flag file via the unified client: resolve its real
+    upload URL (imageinfo, not throttled) then download with polite backoff."""
+    url = wm.file_url(filename)
+    if not url:
+        raise LookupError(f"Commons file not found: {filename}")
+    wm.download(url, dest)
+    return True
 
 
 def main():

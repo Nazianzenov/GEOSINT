@@ -54,12 +54,12 @@ PAGE_CATEGORY = {
     "driving-side": "driving-side", "language-scripts": "language-scripts",
     "domains-phones": "domains-phones", "streetview-meta": "streetview-meta",
 }
-GEOHINTS_KEY = {  # marker key -> category key
+# gallery marker key -> category key. Only the markers actually present in the
+# wiki (see `grep GEOHINTS:` in wiki/docs/identify) are listed; the "flags"
+# gallery is now Wikimedia-sourced but keeps the historical marker name.
+GEOHINTS_KEY = {
     "bollards": "bollards", "utilityPoles": "utility-poles", "architecture": "architecture",
     "trafficLights": "traffic-lights", "flags": "flags", "sceneries": "sceneries",
-    "nature": "sceneries", "licensePlates": "license-plates", "lines": "road-markings",
-    "houseNumbers": "architecture", "postBoxes": "architecture",
-    "cameraGens": "streetview-meta", "followCars": "streetview-meta",
 }
 CATEGORY_LABEL = {
     "bollards": "Bollards", "utility-poles": "Utility poles", "architecture": "Architecture",
