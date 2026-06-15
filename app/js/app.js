@@ -235,7 +235,7 @@ function toggleMeasure(force) {
   $("#btn-measure").classList.toggle("armed", m.on);
   state.map.getContainer().style.cursor = m.on ? "crosshair" : "";
   if (!m.on) clearMeasure();
-  else status("measure: left-click to add points · right-drag a point to move · hold Shift for a range ring · Esc clears", false, 7000);
+  else status("measure: left-click to add points (each leg shows distance + bearing) · right-drag a point to move · hold Shift for a range ring · Esc clears", false, 7000);
 }
 
 function clearMeasure() {
@@ -267,14 +267,26 @@ function renderMeasure() {
   updateMeasureTotal();
 }
 
-/* lightweight per-frame update of the running total tooltip */
+/* lightweight per-frame update of the running tooltip: last-leg bearing +
+   distance (the A→B azimuth just drawn) plus the running total. */
 function updateMeasureTotal() {
   const m = state.measure;
   let total = 0;
   for (let i = 1; i < m.pts.length; i++) total += haversine(m.pts[i - 1], m.pts[i]);
-  const txt = m.pts.length > 1 ? `${fmtDist(total)} · ${(total / 1609.344).toFixed(2)} mi` : "click next point";
   const last = m.pts[m.pts.length - 1];
-  const icon = L.divIcon({ className: "measure-tip", html: txt, iconAnchor: [-8, 8] });
+  let html;
+  if (m.pts.length < 2) {
+    html = "click next point";
+  } else {
+    const a = m.pts[m.pts.length - 2], b = last;
+    const legD = haversine(a, b), legAz = bearing(a, b);
+    const leg = `${fmtDist(legD)} · ${legAz.toFixed(0)}° ${cardinal(legAz)}`;
+    // show the running total only once there's more than one leg
+    html = m.pts.length > 2
+      ? `<b>${leg}</b><span class="measure-tot">Σ ${fmtDist(total)} · ${(total / 1609.344).toFixed(2)} mi</span>`
+      : `<b>${leg}</b><span class="measure-tot">${(legD / 1609.344).toFixed(2)} mi</span>`;
+  }
+  const icon = L.divIcon({ className: "measure-tip", html, iconAnchor: [-8, 8] });
   if (!m.tip) m.tip = L.marker(last, { interactive: false, icon }).addTo(state.map);
   else m.tip.setLatLng(last).setIcon(icon);
 }

@@ -246,7 +246,9 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
 .leaflet-control-attribution a { color: var(--txt-dim) !important; }
 .leaflet-control-scale-line { background: #0b0e14cc !important; color: var(--txt) !important; border-color: var(--txt-dim) !important; }
 .measure-tip { background: var(--bg-1); color: var(--accent-2); border: 1px solid var(--line);
-               border-radius: 3px; font: 11px var(--mono); padding: 2px 6px; white-space: nowrap; }
+               border-radius: 3px; font: 11px var(--mono); padding: 2px 6px; white-space: nowrap;
+               line-height: 1.35; }
+.measure-tip .measure-tot { display: block; color: var(--txt-dim); font-size: 10px; }
 
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
