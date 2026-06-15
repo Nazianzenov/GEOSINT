@@ -87,20 +87,27 @@ contradiction — that is a falsification, and it is often the whole result.
 ## Worked example
 
 *Claim:* a protest photo is "Berlin, 14:00 local, 3 March."
+(Berlin ≈ 52.5° N; early March is standard time, UTC+1 — no DST yet.)
 
 1. **Place** — identified to a named Berlin square via the [workflow](workflow.md); active point set.
-2. **Shadow** — shadows of lamp posts point roughly NE; ratio ≈ 1.6×. Solver for 3 March at
-   Berlin returns a match band around **15:30–16:10 local**, *not* 14:00.
-3. **Clock test** — the 14:00 claim falls outside the solved band by ~1.5 h → first red flag
-   (or the photo is from a different date/time than stated).
-4. **Weather** — ERA5 for 3 March shows 95 % cloud all afternoon, yet the photo has crisp
-   hard shadows → second contradiction.
-5. **Season** — the square's lindens are in **full leaf**; in Berlin that is impossible in early
-   March → third, decisive contradiction.
+2. **Shadow** — at Berlin on 3 March at 14:00 the sun sits at ~27° elevation in the SW (azimuth
+   ~208°), so shadows point **NNE (~28°)** at a length ≈ **2.0× height**. If the photo's shadows
+   match that, the shadow geometry is *consistent* with the claimed time — it does **not** by
+   itself falsify the claim. (This is the honest outcome: one pillar passing is not a verdict.)
+3. **Weather** — pull ERA5 for that date in the Meteorology module. If it records full overcast
+   all afternoon while the photo shows crisp hard shadows, that *is* a contradiction; if it
+   shows clear skies, the photo is merely consistent — note it and move on.
+4. **Season** — the square's lindens are in **full leaf**. In Berlin, broadleaf trees are bare
+   in early March (leaf-out is ~late April); full canopy on 3 March is **impossible** → decisive
+   contradiction.
+5. **Cross-check the alternative** — at 14:00 in **midsummer** the Berlin sun is far higher
+   (~54° elevation, shadow ≈ 0.7× height). So if the real photo's shadows are short and point
+   more nearly NE, that points to a summer afternoon, matching the leaf-on trees.
 
-**Conclusion:** the image is not from 3 March; the leaf-on state plus the shadow geometry are
-consistent with **late spring/summer, ~16:00**. Three independent signals agree against the
-claim — far stronger than any single one.[^mh17]
+**Conclusion:** the image is **not** from 3 March — the leaf-on canopy rules that out outright,
+and the short-shadow geometry (if present) is consistent with a summer afternoon instead. Note
+the lesson: the shadow-vs-clock check here *passed*; it was the **seasonal** pillar that
+falsified the claim. A claim dies on its weakest-supported pillar, not on all of them.[^mh17]
 
 ## Worksheet
 
