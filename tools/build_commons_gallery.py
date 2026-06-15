@@ -90,6 +90,19 @@ TOPICS = {
         "intro": "Crash-barrier/guardrail type and chevron-sign style (colour, count, mounting) "
                  "are country tells on every road — complements road signs & markings.",
     },
+    "license-plates": {
+        "title": "License plates", "dir": "plates",
+        "cat": "License plates of {}",
+        "intro": "Plate colour, proportions, side bands, character style and the issuing-country "
+                 "code survive even heavy blur — one of the strongest single tells. Complements "
+                 "the [license-plates reference](../license-plates.md).",
+    },
+    "road-signs": {
+        "title": "Road signs", "dir": "roadsigns",
+        "cat": "Road signs in {}",
+        "intro": "Sign shapes, colours, fonts and pictograms follow national standards (Vienna "
+                 "Convention vs MUTCD families). Complements the [road-signs reference](../road-signs.md).",
+    },
 }
 
 GALLERY_CSS = (
@@ -170,10 +183,10 @@ def build_topic(tkey, topic):
 
 
 def write_index(done):
-    idx = ["# Micro-detail catalogues (Wikimedia Commons)\n",
-           "Country-organized galleries of small but high-discrimination features, sourced from "
-           "Wikimedia Commons category trees and cached locally. Flag-only style: image + country "
-           "(+ map link when the source photo is geotagged).\n",
+    idx = ["# Photo catalogues by country (Wikimedia Commons)\n",
+           "Country-organized photo galleries of high-discrimination features — license plates, "
+           "road signs, and street micro-details — sourced from Wikimedia Commons category trees "
+           "and cached locally. Image + country (+ map link when the source photo is geotagged).\n",
            "| Catalogue | Page |", "|---|---|"]
     for tkey in done:
         idx.append(f"| {TOPICS[tkey]['title']} | [{tkey}]({tkey}.md) |")

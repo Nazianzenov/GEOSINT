@@ -1,6 +1,6 @@
-# Micro-detail catalogues (Wikimedia Commons)
+# Photo catalogues by country (Wikimedia Commons)
 
-Country-organized galleries of small but high-discrimination features, sourced from Wikimedia Commons category trees and cached locally. Flag-only style: image + country (+ map link when the source photo is geotagged).
+Country-organized photo galleries of high-discrimination features — license plates, road signs, and street micro-details — sourced from Wikimedia Commons category trees and cached locally. Image + country (+ map link when the source photo is geotagged).
 
 | Catalogue | Page |
 |---|---|
@@ -9,3 +9,5 @@ Country-organized galleries of small but high-discrimination features, sourced f
 | Bus stops & shelters | [bus-stops](bus-stops.md) |
 | Electricity pylons | [pylons](pylons.md) |
 | Chevron signs & guardrails | [chevrons](chevrons.md) |
+| License plates | [license-plates](license-plates.md) |
+| Road signs | [road-signs](road-signs.md) |

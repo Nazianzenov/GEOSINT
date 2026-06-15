@@ -4,6 +4,8 @@ Even **blurred** plates (as in Street View) leak information: overall colour, sh
 band positions survive the blur. Full reference: the comprehensive
 [Wikipedia vehicle-registration-plate articles per country](https://en.wikipedia.org/wiki/Vehicle_registration_plate).
 
+📷 **[Plate photo gallery by country](commons/license-plates.md)** — real plates from ~37 countries (Wikimedia Commons, cached locally).
+
 ## Visual reference (Wikimedia Commons, free licenses)
 
 | | | |
