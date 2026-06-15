@@ -39,13 +39,14 @@ PY = sys.executable
 SOURCES = {
     "flags":     ("build_flags.py",             ["wiki/docs/identify/flags.md", "wiki/docs/assets/flags"]),
     "subflags":  ("build_subnational_flags.py", ["wiki/docs/identify/flags-subnational"]),
+    "commons":   ("build_commons_gallery.py",   ["wiki/docs/identify/commons"]),
     "refdata":   ("build_refdata.py",           ["wiki/docs/identify/domains-phones.md"]),
     "datasets":  ("fetch_datasets.py",          ["data/unesco.json", "data/national-parks.json",
                                                  "data/castles.json", "data/airports.json"]),
     "flora":     ("build_flora.py",             ["data/flora.json"]),
     "wikimedia": ("cache_wikimedia.py",         ["wiki/docs/assets/wm", "wiki/wm_manifest.json"]),
 }
-ORDER = ["flags", "subflags", "refdata", "datasets", "flora", "wikimedia"]
+ORDER = ["flags", "subflags", "commons", "refdata", "datasets", "flora", "wikimedia"]
 
 
 def tree_hash(path: Path):

@@ -61,6 +61,13 @@ nav:
           - Nations of the United Kingdom: identify/flags-subnational/united-kingdom.md
           - States & territories of Australia: identify/flags-subnational/australia.md
           - Dependencies & territories: identify/flags-subnational/dependencies.md
+      - Micro-detail catalogues (Commons):
+          - Overview: identify/commons/index.md
+          - Fire hydrants: identify/commons/fire-hydrants.md
+          - Manhole covers: identify/commons/manhole-covers.md
+          - Bus stops & shelters: identify/commons/bus-stops.md
+          - Electricity pylons: identify/commons/pylons.md
+          - Chevrons & guardrails: identify/commons/chevrons.md
       - Architecture by region: identify/architecture.md
       - Vegetation & climate: identify/vegetation-climate.md
       - Languages & scripts: identify/language-scripts.md

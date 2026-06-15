@@ -87,6 +87,31 @@ def api(host, params):
     raise RuntimeError(f"maxlag persisted for {host} {params}")
 
 
+def category_images(category, limit=8, thumb_width=480):
+    """Return image files in a Commons category as a list of dicts:
+    {title, url (thumbnail at thumb_width), mime, lat, lon}. Skips non-image
+    members. Used to build country-organized reference galleries."""
+    d = api(COMMONS, {
+        "action": "query", "generator": "categorymembers",
+        "gcmtitle": f"Category:{category}", "gcmtype": "file", "gcmlimit": limit,
+        "prop": "imageinfo|coordinates",
+        "iiprop": "url|mime", "iiurlwidth": thumb_width,
+    })
+    out = []
+    for p in d.get("query", {}).get("pages", {}).values():
+        ii = (p.get("imageinfo") or [{}])[0]
+        if not (ii.get("mime") or "").startswith("image/"):
+            continue
+        coord = (p.get("coordinates") or [{}])[0]
+        out.append({
+            "title": p["title"].replace("File:", ""),
+            "url": ii.get("thumburl") or ii.get("url"),
+            "mime": ii.get("mime"),
+            "lat": coord.get("lat"), "lon": coord.get("lon"),
+        })
+    return out
+
+
 def flag_of_qid(qid):
     """Deterministic: return the P41 flag-image Commons filename for a Wikidata
     QID (e.g. 'Q176'), or None. Preferred when the subject label is ambiguous
