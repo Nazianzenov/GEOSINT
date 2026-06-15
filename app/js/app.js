@@ -620,12 +620,14 @@ function renderSun() {
     <div class="card"><div class="v">${shadowAz.toFixed(0)}° ${cardinal(shadowAz)}</div><div class="k">shadow points to</div></div>`;
 
   const times = SunCalc.getTimes(sd.date, lat, lng);
+  const azOf = (t) => (t && !isNaN(t)) ? compassAz(SunCalc.getPosition(t, lat, lng).azimuth) : null;
   const rows = [
-    ["Civil dawn", times.dawn], ["Sunrise", times.sunrise],
+    ["Civil dawn", times.dawn], ["Sunrise", times.sunrise, azOf(times.sunrise)],
     ["Golden hour ends", times.goldenHourEnd], ["Solar noon", times.solarNoon],
-    ["Golden hour starts", times.goldenHour], ["Sunset", times.sunset], ["Civil dusk", times.dusk],
+    ["Golden hour starts", times.goldenHour], ["Sunset", times.sunset, azOf(times.sunset)], ["Civil dusk", times.dusk],
   ];
-  $("#sun-events").innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${fmtClock(v, sd.off)}</td></tr>`).join("");
+  $("#sun-events").innerHTML = rows.map(([k, v, azv]) =>
+    `<tr><td>${k}</td><td>${fmtClock(v, sd.off)}${azv != null ? ` <span class="muted">· ${azv.toFixed(0)}° ${cardinal(azv)}</span>` : ""}</td></tr>`).join("");
 
   const mi = SunCalc.getMoonIllumination(sd.date);
   const phases = ["New moon","Waxing crescent","First quarter","Waxing gibbous","Full moon","Waning gibbous","Last quarter","Waning crescent"];
@@ -635,10 +637,22 @@ function renderSun() {
     <tr><td>Illumination</td><td>${(mi.fraction * 100).toFixed(0)}%</td></tr>
     <tr><td>Moon altitude</td><td>${(mpos.altitude * 180 / Math.PI).toFixed(1)}°</td></tr>`;
 
+  const p = state.point;
   if (alt > 0) {
-    const p = state.point;
+    // current shadow direction (thick grey) + sun direction (thin gold)
     state.sunLayer.addLayer(L.polyline([p, project(p, shadowAz, 200)], { color: "#30363f", weight: 5, opacity: .85 }));
+    state.sunLayer.addLayer(L.polyline([p, project(p, az, 160)], { color: "#ffd23e", weight: 2, opacity: .8, dashArray: "2 4" }));
   }
+  // sunrise / sunset azimuth rays for the chosen date — for "sun on the horizon" chronolocation
+  const sunAzAt = (t) => (t && !isNaN(t)) ? compassAz(SunCalc.getPosition(t, lat, lng).azimuth) : null;
+  const riseAz = sunAzAt(times.sunrise), setAz = sunAzAt(times.sunset);
+  const ray = (deg, color, label) => {
+    const end = project(p, deg, 1500);
+    state.sunLayer.addLayer(L.polyline([p, end], { color, weight: 2.5, opacity: .9 })
+      .bindTooltip(`${label} ${deg.toFixed(0)}° ${cardinal(deg)}`, { permanent: false }));
+  };
+  if (riseAz != null) ray(riseAz, "#ff9e3d", "sunrise");
+  if (setAz != null) ray(setAz, "#ff5e62", "sunset");
   drawSunChart(sd, lat, lng);
 
   const dstr = `${sd.Y}.${String(sd.M).padStart(2, "0")}.${String(sd.D).padStart(2, "0")}`;
