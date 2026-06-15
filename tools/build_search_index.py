@@ -399,7 +399,12 @@ class Indexer:
                 self.landmarks(md, text)
                 self.md_images(md, text)
             elif rel.startswith("identify/"):
-                self.bold_entries(md, text, PAGE_CATEGORY.get(md.stem, "page"))
+                # bold-leading table/bullet rows on identify pages are prose
+                # recognition tips (e.g. the flags "look-alike groups" table),
+                # never images — tag them "recognition" so the client renders
+                # them as fact cards, not empty photo tiles. The actual photo
+                # galleries come from galleries()/md_images() below.
+                self.bold_entries(md, text, "recognition")
                 self.md_images(md, text)
         self.datasets()
         self.flora()

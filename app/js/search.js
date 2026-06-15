@@ -195,9 +195,18 @@ function photoGrid(items, cap) {
       c.map ? `<a href="${c.map}" target="_blank">map</a>` : "",
       c.page ? `<a href="${c.page}" target="_blank">wiki</a>` : "",
     ].filter(Boolean).join(" · ");
-    grid.insertAdjacentHTML("beforeend",
-      `<div class="pcard"><img src="${esc(c.img)}" loading="lazy" alt="">
-       <div class="cap"><b>${esc((c.c || []).join(", ") || c.t)}</b><span>${links}</span></div></div>`);
+    const title = esc((c.c || []).join(", ") || c.t);
+    // image-less cards (e.g. the flags "look-alike groups" tips) must NOT render
+    // an empty <img> (it shows as a black box) — show them as a text tile instead.
+    if (c.img) {
+      grid.insertAdjacentHTML("beforeend",
+        `<div class="pcard"><img src="${esc(c.img)}" loading="lazy" alt="">
+         <div class="cap"><b>${title}</b><span>${links}</span></div></div>`);
+    } else {
+      grid.insertAdjacentHTML("beforeend",
+        `<div class="pcard noimg"><div class="cap"><b>${title}</b>${
+          c.x ? `<small>${esc(c.x)}</small>` : ""}<span>${links}</span></div></div>`);
+    }
   });
   renderSlice(0, cap);
   wrap.appendChild(grid);
