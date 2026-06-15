@@ -19,59 +19,24 @@ Politeness / resilience (per https://www.mediawiki.org/wiki/API:Etiquette):
   * `maxlag=5` on API calls (server sheds load gracefully),
   * exponential backoff that honours the `Retry-After` header on 429/503.
 
-All callers share one RateLimiter so a run stays within one polite stream.
+The polite HTTP layer (UA, shared throttle, Retry-After backoff) lives in
+net.py; this module adds the Wikidata/Commons logic on top.
 """
-import json
+import sys
 import time
-import urllib.error
 import urllib.parse
-import urllib.request
+from pathlib import Path
 
-UA = ("GeOSINT-Workbench/1.0 (https://github.com/Nazianzenov/GEOSINT; "
-      "non-commercial personal OSINT tool) python-urllib")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import net                                  # shared polite HTTP layer
+
 COMMONS = "commons.wikimedia.org"
 WIKIDATA = "www.wikidata.org"
 
-_FLOOR = 0.5          # min seconds between any two requests
-_last = [0.0]
-
-
-def _throttle():
-    dt = time.time() - _last[0]
-    if dt < _FLOOR:
-        time.sleep(_FLOOR - dt)
-    _last[0] = time.time()
-
-
-def _get(url, timeout=40):
-    """GET with UA + backoff honouring Retry-After on 429/503.
-    Returns (bytes, content_type)."""
-    last = None
-    for attempt in range(6):
-        _throttle()
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                return r.read(), r.headers.get_content_type()
-        except urllib.error.HTTPError as e:
-            last = e
-            if e.code not in (429, 500, 502, 503):
-                raise
-            ra = e.headers.get("Retry-After")
-            wait = float(ra) if (ra and ra.isdigit()) else min(60, 5 * (attempt + 1) ** 2)
-            time.sleep(wait)
-        except urllib.error.URLError:
-            last = None
-            time.sleep(5 * (attempt + 1))
-    if last:
-        raise last
-    raise RuntimeError(f"request failed after retries: {url}")
-
 
 def get_bytes(url, timeout=40):
-    """Public: fetch a URL through the shared polite/backoff path.
-    Returns (bytes, content_type)."""
-    return _get(url, timeout)
+    """Fetch a URL via the shared polite layer. Returns (bytes, content_type)."""
+    return net.get(url, timeout=timeout)
 
 
 def api(host, params):
@@ -79,7 +44,7 @@ def api(host, params):
     for attempt in range(6):
         q = {**params, "format": "json", "maxlag": "5"}
         url = f"https://{host}/w/api.php?" + urllib.parse.urlencode(q)
-        data = json.loads(_get(url)[0].decode("utf-8"))
+        data = net.get_json(url)
         if isinstance(data, dict) and data.get("error", {}).get("code") == "maxlag":
             time.sleep(min(60, 5 * (attempt + 1)))
             continue
@@ -167,7 +132,7 @@ def file_url(file_title):
 def download(url, dest, want_image=True):
     """Download `url` to Path `dest` (parent created). Optionally verify it looks
     like an image/SVG before writing. Returns the byte count."""
-    data, ctype = _get(url)
+    data, ctype = net.get(url)
     if want_image:
         head = data.lstrip()[:200].lower()
         ok_svg = head.startswith((b"<?xml", b"<svg", b"<!doctype svg")) or b"<svg" in head

@@ -16,8 +16,10 @@ Run:  .venv\\Scripts\\python tools\\build_refdata.py   (offline after first run)
 """
 import json
 import sys
-import urllib.request
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import net                                  # shared polite HTTP layer
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -26,7 +28,6 @@ PAGE = ROOT / "wiki" / "docs" / "identify" / "domains-phones.md"
 DATA = ROOT / "data"
 COUNTRIES_CACHE = DATA / "countries.json"
 IANA_CACHE = DATA / "iana_cctlds.txt"
-UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 
 COUNTRIES_URL = "https://raw.githubusercontent.com/mledoze/countries/master/dist/countries.json"
 IANA_URL = "https://data.iana.org/TLD/tlds-alpha-by-domain.txt"
@@ -54,9 +55,7 @@ CC_OVERRIDE = {
 def fetch(url, cache, binary=False):
     if cache.is_file():
         return cache.read_bytes() if binary else cache.read_text(encoding="utf-8")
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        data = r.read()
+    data, _ = net.get(url)
     DATA.mkdir(parents=True, exist_ok=True)
     cache.write_bytes(data)
     return data if binary else data.decode("utf-8")

@@ -20,9 +20,11 @@ import re
 import sys
 import time
 import urllib.parse
-import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import net                                  # shared polite HTTP layer
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -30,7 +32,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 WIKI_DATA = ROOT / "wiki" / "docs" / "data"
 TTL = timedelta(days=30)
-UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 # QLever's Wikidata mirror first (fast, generous limits); WDQS as fallback.
 SPARQL_ENDPOINTS = [
     "https://qlever.cs.uni-freiburg.de/api/wikidata",
@@ -243,19 +244,10 @@ def fresh(path):
     return datetime.now(timezone.utc) - datetime.fromisoformat(meta["fetched"]) < TTL
 
 
-def http_get(url, accept=None, tries=3, backoff=10):
-    for attempt in range(tries):
-        try:
-            req = urllib.request.Request(url, headers={
-                "User-Agent": UA, **({"Accept": accept} if accept else {})})
-            with urllib.request.urlopen(req, timeout=180) as r:
-                return r.read()
-        except Exception as e:
-            if attempt == tries - 1:
-                raise
-            wait = 70 if "429" in str(e) else backoff * (attempt + 1)
-            print(f"  retry in {wait}s after: {e}")
-            time.sleep(wait)
+def http_get(url, accept=None):
+    """Fetch via the shared polite layer (long timeout for big SPARQL pulls)."""
+    data, _ = net.get(url, timeout=180, accept=accept)
+    return data
 
 
 def canon_country(label):

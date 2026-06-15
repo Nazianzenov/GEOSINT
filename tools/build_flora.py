@@ -15,9 +15,11 @@ import re
 import sys
 import time
 import urllib.parse
-import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import net                                  # shared polite HTTP layer
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -25,7 +27,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "flora.json"
 WIKI = ROOT / "wiki" / "docs" / "flora"
 TTL = timedelta(days=30)
-UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 
 # Köppen ↔ flora cross-link: each biome group -> (Köppen codes, short label).
 # Used to print "indicates climate X" on each flora group page and to build the
@@ -184,9 +185,7 @@ def override_url(common):
 
 
 def http_json(url):
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read())
+    return net.get_json(url)
 
 
 def thumb_url(src, width=640):

@@ -22,12 +22,12 @@ import argparse
 import json
 import re
 import sys
-import time
-import urllib.error
 import urllib.parse
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import net                                  # shared polite HTTP layer
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -35,8 +35,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "wiki" / "docs"
 ASSETS = DOCS / "assets" / "gh"
 MANIFEST = ROOT / "wiki" / "gh_manifest.json"
-
-UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 
 # https://<sub>.geohints.com/storage/<category>/<file>.<ext>
 URL_RE = re.compile(
@@ -58,27 +56,14 @@ def local_relpath(url):
 
 
 def download(url, dest):
-    """Download url politely (delay + backoff on 429/5xx) to dest (a Path).
-    Refuses to write a response that isn't an image — guards against an
-    error page or MITM'd payload being saved as a .jpg."""
-    last = None
-    for attempt in range(4):
-        time.sleep(0.4 if attempt == 0 else 8 * attempt)
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=60) as resp:
-                ctype = resp.headers.get_content_type()
-                data = resp.read()
-            if not (ctype.startswith("image/") or ctype == "application/octet-stream"):
-                raise ValueError(f"non-image content-type '{ctype}'")
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(data)
-            return
-        except urllib.error.HTTPError as e:
-            last = e
-            if e.code not in (429, 500, 502, 503):
-                raise
-    raise last
+    """Fetch url via the shared polite layer to dest (a Path). Refuses to write a
+    response that isn't an image — guards against an error page or MITM'd payload
+    being saved as a .jpg."""
+    data, ctype = net.get(url)
+    if not (ctype.startswith("image/") or ctype == "application/octet-stream"):
+        raise ValueError(f"non-image content-type '{ctype}'")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(data)
 
 
 def main():
