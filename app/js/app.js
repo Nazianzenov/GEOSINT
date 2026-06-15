@@ -1183,7 +1183,35 @@ function initData() {
   $("#wx-wind-load").addEventListener("click", loadWindEmbed);
   const qb = $("#data-qgis");
   if (qb) qb.addEventListener("click", openInQgis);
+  $("#pf-run").addEventListener("click", prefetchTiles);
   syncQgisButton();
+}
+
+/* Prefetch every tile of the current view across zoom..zoom+depth into the
+   server's tile cache, so the area is available offline. */
+async function prefetchTiles() {
+  const b = state.map.getBounds();
+  const z = state.map.getZoom();
+  const depth = Math.max(0, Math.min(8, parseInt($("#pf-depth").value, 10) || 0));
+  const layer = $("#pf-layer").value;
+  const body = {
+    layer,
+    bbox: [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()],
+    zmin: z, zmax: Math.min(19, z + depth),
+  };
+  $("#pf-status").textContent = `caching ${layer} z${body.zmin}–${body.zmax} for this view…`;
+  try {
+    const r = await fetch("/api/prefetch", {
+      method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
+      body: JSON.stringify(body),
+    });
+    const j = await r.json();
+    if (j.error) { $("#pf-status").textContent = `✗ ${j.error}`; return; }
+    $("#pf-status").textContent =
+      `✓ ${j.tiles} tiles for ${j.layer}: ${j.fetched} downloaded, ${j.cached} already cached`
+      + (j.failed ? `, ${j.failed} failed` : "") + " — area available offline.";
+    status(`prefetched ${j.fetched} tiles`);
+  } catch { $("#pf-status").textContent = "✗ local server unreachable"; }
 }
 
 /* Enable the QGIS button only when QGIS is installed; relabel by what we'd send. */

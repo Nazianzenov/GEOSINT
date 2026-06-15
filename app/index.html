@@ -193,6 +193,28 @@
         <div id="gbif-active"></div>
         <p class="srcnote">OSM data © OpenStreetMap contributors (ODbL) via Overpass;
            species tiles: <a href="https://www.gbif.org/" target="_blank">GBIF</a> occurrence density (CC0/CC-BY).</p>
+
+        <h3>Offline tile prefetch <span class="muted">(cache this area)</span></h3>
+        <p class="hint">Download every map tile for the <b>current view</b> across a zoom range
+           into the local cache, so the area works fully offline later (fieldwork OPSEC).</p>
+        <div class="field-row">
+          <div class="field"><label>Layer</label>
+            <select id="pf-layer">
+              <option value="osm">OpenStreetMap</option>
+              <option value="esri-sat">Satellite (Esri)</option>
+              <option value="opentopo">Topographic</option>
+              <option value="carto-dark">Dark</option>
+              <option value="esri-hillshade">Hillshade</option>
+            </select>
+          </div>
+          <div class="field"><label>Max zoom +</label>
+            <input type="number" id="pf-depth" value="3" min="0" max="8"
+                   title="how many zoom levels beyond the current zoom to cache"></div>
+          <button class="btn accent" id="pf-run">⭳ CACHE VIEW</button>
+        </div>
+        <div id="pf-status" class="muted"></div>
+        <p class="srcnote">Tiles cached 30 days in <code>cache/tiles/</code>. A large area or high
+           max-zoom is capped (6000 tiles) — zoom in or lower the depth if it refuses.</p>
       </section>
 
       <!-- ════════ ANNOTATIONS ════════ -->

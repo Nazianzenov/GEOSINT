@@ -184,6 +184,26 @@ def cache_fresh(path: Path, ttl: int) -> bool:
     return path.is_file() and time.time() - path.stat().st_mtime < ttl
 
 
+def _lonlat_to_tile(lon, lat, z):
+    """Slippy-map tile x,y for a lon/lat at zoom z (Web Mercator)."""
+    import math
+    n = 2 ** z
+    x = int((lon + 180.0) / 360.0 * n)
+    lat_r = math.radians(max(-85.0511, min(85.0511, lat)))
+    y = int((1 - math.asinh(math.tan(lat_r)) / math.pi) / 2 * n)
+    return max(0, min(n - 1, x)), max(0, min(n - 1, y))
+
+
+def tiles_in_bbox(s, w, n, e, zmin, zmax):
+    """Yield (z, x, y) for every tile covering bbox [s,w,n,e] over zmin..zmax."""
+    for z in range(zmin, zmax + 1):
+        x0, y0 = _lonlat_to_tile(w, n, z)        # NW corner
+        x1, y1 = _lonlat_to_tile(e, s, z)        # SE corner
+        for x in range(min(x0, x1), max(x0, x1) + 1):
+            for y in range(min(y0, y1), max(y0, y1) + 1):
+                yield z, x, y
+
+
 def upstream_get(url: str, timeout=30) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -278,6 +298,42 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_cached_body(f.read_bytes(), "image/png", "stale", 3600)
             return self.send_json({"error": "tile upstream unreachable"}, 502)
 
+    # ---- API: prefetch a bbox of tiles for offline use ------------------
+    def api_prefetch(self, payload):
+        """Download every tile covering a bbox over a zoom range into the tile
+        cache, so the area works offline later. Capped to keep it polite."""
+        layer = str(payload.get("layer") or "")
+        if layer not in TILE_LAYERS:
+            return self.send_json({"error": "unknown tile layer"}, 400)
+        try:
+            s, w, n, e = (float(payload["bbox"][i]) for i in range(4))
+            zmin, zmax = int(payload["zmin"]), int(payload["zmax"])
+        except (KeyError, TypeError, ValueError, IndexError):
+            return self.send_json({"error": "bbox [s,w,n,e] + zmin/zmax required"}, 400)
+        if not (0 <= zmin <= zmax <= 19):
+            return self.send_json({"error": "need 0 <= zmin <= zmax <= 19"}, 400)
+        tiles = list(tiles_in_bbox(s, w, n, e, zmin, zmax))
+        MAX_TILES = 6000                          # ~politeness/disk guard
+        if len(tiles) > MAX_TILES:
+            return self.send_json({"error": f"{len(tiles)} tiles exceeds the {MAX_TILES} "
+                                            f"cap — narrow the area or lower max zoom"}, 413)
+        fetched = cached = failed = 0
+        for z, x, y in tiles:
+            f = TILE_CACHE / layer / str(z) / str(x) / f"{y}.png"
+            if cache_fresh(f, TILE_TTL):
+                cached += 1
+                continue
+            try:
+                body = upstream_get(TILE_LAYERS[layer].format(z=z, x=x, y=y), timeout=20)
+                f.parent.mkdir(parents=True, exist_ok=True)
+                f.write_bytes(body)
+                fetched += 1
+                time.sleep(0.05)                  # gentle on the tile server
+            except Exception:
+                failed += 1
+        return self.send_json({"ok": True, "layer": layer, "tiles": len(tiles),
+                               "fetched": fetched, "cached": cached, "failed": failed})
+
     # ---- generic cached GET proxy: /api/pget?u=<allowlisted url> ---------
     def api_pget(self, query):
         url = urllib.parse.parse_qs(query).get("u", [""])[0]
@@ -359,6 +415,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.api_overpass(payload)
         if path == "/api/qgis":
             return self.api_qgis(payload)
+        if path == "/api/prefetch":
+            return self.api_prefetch(payload)
         self.send_json({"error": "not found"}, 404)
 
     # ---- API: hand off GeoJSON to QGIS ----------------------------------
