@@ -37,12 +37,19 @@ OVERPASS_CACHE = CACHE / "overpass"
 TILE_CACHE = CACHE / "tiles"
 PGET_CACHE = CACHE / "pget"
 OVERPASS_TTL = 30 * 86400
+# Canonical instance first — it's the most reliable; the others are fallbacks for
+# when it's rate-limiting. (kumi.systems used to lead but is frequently slow.)
 OVERPASS_MIRRORS = [
+    "https://overpass-api.de/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-    "https://overpass-api.de/api/interpreter",
 ]
+# Per-mirror upstream timeout. Sits just above the query's own [timeout:20]
+# compute budget (headroom for network + transfer), so a valid slow query isn't
+# aborted by our socket before Overpass itself would have. A longer timeout
+# mostly just prolongs a hung mirror before we fail over to the next.
+OVERPASS_TIMEOUT = 25
 _preferred_mirror = [None]      # last mirror that answered (tried first)
 
 # /tiles/<layer>/<z>/<x>/<y> -> upstream template, cached 30 days on disk
@@ -520,7 +527,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 req = urllib.request.Request(mirror, data=data,
                                              headers={"User-Agent": UA})
-                with _no_redirect_opener.open(req, timeout=40) as resp:
+                with _no_redirect_opener.open(req, timeout=OVERPASS_TIMEOUT) as resp:
                     body = resp.read(MAX_UPSTREAM_BYTES + 1)[:MAX_UPSTREAM_BYTES]
                 json.loads(body)            # validate before caching
                 _preferred_mirror[0] = mirror

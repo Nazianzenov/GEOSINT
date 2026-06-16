@@ -1417,7 +1417,7 @@ async function runOverpass(selectors, label, minZoom = 10) {
   }
   const b = state.map.getBounds();
   const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map((v) => v.toFixed(4)).join(",");
-  const q = `[out:json][timeout:25];(${selectors.map((s) => `${s}(${bbox});`).join("")});out center 600;`;
+  const q = `[out:json][timeout:20];(${selectors.map((s) => `${s}(${bbox});`).join("")});out center 600;`;
   const t0 = Date.now();
   const tick = setInterval(() => {
     $("#data-status").textContent =
