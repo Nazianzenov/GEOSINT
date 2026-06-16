@@ -283,7 +283,16 @@
   </div>
   <textarea id="case-notes" spellcheck="false" placeholder="Working notes, clues, eliminations, candidate locations…
 Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
-  <div id="evidence-log" class="muted" title="Images you drop are logged here with a SHA-256 + thumbnail (originals stay on your disk). Saved in the case file; drives the upcoming timeline / dossier."></div>
+  <div id="evidence-log" class="muted" title="Images you drop are logged here with a SHA-256 + thumbnail (originals stay on your disk). Saved in the case file; drives the timeline / dossier."></div>
+  <div id="custody-wrap" hidden>
+    <div class="notes-head" style="margin-top:8px">
+      <strong>Chain of custody</strong>
+      <span class="muted">append-only · sha-256 + observed time</span>
+      <button id="custody-csv" class="icon-btn" title="Export the evidence log as CSV">⭳ CSV</button>
+      <button id="custody-json" class="icon-btn" title="Export the evidence log as JSON">⭳ JSON</button>
+    </div>
+    <div class="table-scroll" style="max-height:220px"><table id="custody-table" class="data"></table></div>
+  </div>
 </div>
 <div id="elev-panel" hidden>
   <div class="elev-head">

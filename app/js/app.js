@@ -1750,17 +1750,74 @@ function addArtifact(a) {
   return art;
 }
 
-/* Minimal evidence-log readout in the notes drawer (the full timeline is 5C.1).
-   Confirms capture is happening and that originals are not stored. */
+/* Evidence-log readout + chain-of-custody table in the notes drawer (5C.3).
+   Confirms capture is happening, originals are not stored, and gives a
+   defensible, exportable provenance record. */
+const ART_SYM = { image: "🖼", note: "📝", point: "📍", obs: "👁" };
+
 function renderEvidenceLog() {
-  const el = $("#evidence-log");
+  const el = $("#evidence-log"), wrap = $("#custody-wrap");
   if (!el) return;
   const arts = state.artifacts;
-  if (!arts.length) { el.textContent = ""; return; }
+  if (!arts.length) {
+    el.textContent = "";
+    if (wrap) wrap.hidden = true;
+    return;
+  }
   const imgs = arts.filter((a) => a.kind === "image").length;
   const withGps = arts.filter((a) => a.ll).length;
   el.textContent = `🔒 evidence log: ${arts.length} artifact(s) · ${imgs} image(s) · ${withGps} geotagged `
     + `— SHA-256 + thumbnail only, originals stay on disk`;
+  renderCustodyTable();
+  if (wrap) wrap.hidden = false;
+}
+
+/* Append-only custody table: observed time, kind, source, sha-256 (short), GPS.
+   Sorted by observed time (the chronological provenance record). */
+function renderCustodyTable() {
+  const t = $("#custody-table");
+  if (!t) return;
+  const arts = [...state.artifacts].sort((a, b) => String(a.t).localeCompare(String(b.t)));
+  const short = (h) => h ? `<span title="${esc(h)}" style="font-family:monospace">${esc(h.slice(0, 10))}…</span>` : "—";
+  t.innerHTML = `<tr><th>observed</th><th>kind</th><th>source</th><th>sha-256</th><th>GPS</th></tr>` +
+    arts.map((a) => `<tr>
+      <td>${esc(String(a.t).replace("T", " ").slice(0, 19))}</td>
+      <td>${ART_SYM[a.kind] || "•"} ${esc(a.kind)}</td>
+      <td title="${esc(a.source || "")}">${esc((a.source || "—").slice(0, 28))}</td>
+      <td>${short(a.sha256)}</td>
+      <td>${a.ll ? `${a.ll[0].toFixed(4)}, ${a.ll[1].toFixed(4)}` : "—"}</td>
+    </tr>`).join("");
+}
+
+/* Chain-of-custody export. JSON = the raw artifacts (minus bulky thumbnails);
+   CSV = a flat provenance table for a report appendix. */
+function exportCustody(fmt) {
+  const arts = state.artifacts;
+  if (!arts.length) return status("evidence log is empty", true);
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+  let body, type, ext;
+  if (fmt === "csv") {
+    const q = (v) => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
+    const rows = [["id", "observed", "kind", "source", "sha256", "lat", "lng", "added", "text"]];
+    [...arts].sort((a, b) => String(a.t).localeCompare(String(b.t))).forEach((a) =>
+      rows.push([a.id, a.t, a.kind, a.source || "", a.sha256 || "",
+                 a.ll ? a.ll[0] : "", a.ll ? a.ll[1] : "",
+                 (a.meta && a.meta.added) || "", a.text || ""]));
+    body = rows.map((r) => r.map(q).join(",")).join("\r\n");
+    type = "text/csv"; ext = "csv";
+  } else {
+    // strip thumbnails so the custody record stays small and text-diffable
+    const slim = arts.map(({ thumb, ...rest }) => rest);
+    body = JSON.stringify({ app: "geosint-workbench", kind: "chain-of-custody",
+                            exported: new Date().toISOString(), artifacts: slim }, null, 1);
+    type = "application/json"; ext = "json";
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([body], { type }));
+  a.download = `custody-${stamp}.${ext}`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  status(`exported ${arts.length} custody record(s) as ${ext.toUpperCase()}`);
 }
 
 /* Fire-and-forget capture that's still safe to SAVE against: the promise is
@@ -1913,6 +1970,9 @@ function initCase() {
   });
   $("#btn-notes").addEventListener("click", () => toggleNotes());
   $("#notes-close").addEventListener("click", () => toggleNotes(false));
+  const cc = $("#custody-csv"), cj = $("#custody-json");
+  if (cc) cc.addEventListener("click", () => exportCustody("csv"));
+  if (cj) cj.addEventListener("click", () => exportCustody("json"));
 }
 
 /* ═══════════════════════ wiring / keyboard ═════════════════════ */
