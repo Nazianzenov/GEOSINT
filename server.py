@@ -68,6 +68,15 @@ PGET_ALLOW = [
 UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")
 
+# Temp-file extensions ExifTool is allowed to see. The suffix steers ExifTool's
+# format handler and is attacker-controlled via X-Filename, so a hostile client
+# can't aim it at a riskier parser. Shared by /api/exif and /api/exif-preview.
+EXIF_SUFFIXES = {
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".tif", ".tiff", ".bmp",
+    ".heic", ".heif", ".avif", ".dng", ".cr2", ".cr3", ".nef", ".arw",
+    ".raf", ".orf", ".rw2", ".pef", ".srw", ".mp4", ".mov", ".jxl",
+}
+
 # Host header allowlist (set in main() once the port is known). Defends against
 # DNS rebinding: a remote page that rebinds its hostname to 127.0.0.1 sends
 # same-origin requests (carrying our X-GeOSINT header), defeating the CORS/CSRF
@@ -427,9 +436,9 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             return self.send_json({"error": "bad content-length"}, 400)
-        # /api/exif takes raw image bytes (bounded to 200 MB inside the handler);
-        # every other POST is small JSON. Cap the in-memory read accordingly.
-        cap = 200 * 1024 * 1024 if path == "/api/exif" else 2 * 1024 * 1024
+        # The ExifTool endpoints take raw image bytes (bounded to 200 MB inside
+        # the handler); every other POST is small JSON. Cap the read accordingly.
+        cap = 200 * 1024 * 1024 if path in ("/api/exif", "/api/exif-preview") else 2 * 1024 * 1024
         if length < 0 or length > cap:
             return self.send_json({"error": "request too large"}, 413)
         raw = self.rfile.read(length) if length else b""
@@ -444,6 +453,8 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/exif":
             return self.api_exif(raw)
+        if path == "/api/exif-preview":
+            return self.api_exif_preview(raw)
 
         try:
             payload = json.loads(raw or b"{}")
@@ -522,6 +533,17 @@ class Handler(BaseHTTPRequestHandler):
                                          "application/json; charset=utf-8", "stale")
         return self.send_json({"error": f"Overpass unreachable: {last_err}"}, 502)
 
+    def _write_exif_temp(self, raw: bytes) -> Path:
+        """Write uploaded image bytes to a temp file whose extension is restricted
+        to the EXIF_SUFFIXES allowlist (X-Filename is attacker-controlled)."""
+        name = Path(unquote(self.headers.get("X-Filename") or "image.jpg")).name
+        suffix = Path(name).suffix.lower()
+        if suffix not in EXIF_SUFFIXES:
+            suffix = ".jpg"
+        with tempfile.NamedTemporaryFile(prefix="geosint_", suffix=suffix, delete=False) as f:
+            f.write(raw)
+            return Path(f.name)
+
     # ---- API: ExifTool deep metadata dump -------------------------------
     def api_exif(self, raw: bytes):
         """Run local ExifTool on an uploaded image; body = raw bytes,
@@ -533,23 +555,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"error": "empty body"}, 400)
         if len(raw) > 200 * 1024 * 1024:
             return self.send_json({"error": "file too large"}, 413)
-        name = Path(unquote(self.headers.get("X-Filename") or "image.jpg")).name
-        # The suffix steers how ExifTool picks a format handler and is fully
-        # attacker-controlled via X-Filename. Restrict it to known image/media
-        # extensions so a hostile client can't aim ExifTool at a riskier parser.
-        ALLOWED_SUFFIXES = {
-            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".tif", ".tiff", ".bmp",
-            ".heic", ".heif", ".avif", ".dng", ".cr2", ".cr3", ".nef", ".arw",
-            ".raf", ".orf", ".rw2", ".pef", ".srw", ".mp4", ".mov", ".jxl",
-        }
-        suffix = Path(name).suffix.lower()
-        if suffix not in ALLOWED_SUFFIXES:
-            suffix = ".jpg"
         tmp = None
         try:
-            with tempfile.NamedTemporaryFile(prefix="geosint_", suffix=suffix, delete=False) as f:
-                tmp = Path(f.name)
-                f.write(raw)
+            tmp = self._write_exif_temp(raw)
             proc = subprocess.run(
                 [str(exiftool), "-json", "-a", "-G1", "-api", "largefilesupport=1", str(tmp)],
                 capture_output=True, timeout=30,
@@ -572,6 +580,91 @@ class Handler(BaseHTTPRequestHandler):
                     tmp.unlink()
                 except OSError:
                     pass
+
+    # ---- API: extract the largest embedded preview/thumbnail -------------
+    # Embedded previews are often the *uncropped* original — when an image is
+    # cropped or redacted before sharing, the buried preview can still show what
+    # was cut out. We also read the preview's OWN gps/time and flag any mismatch
+    # with the main image (a tampering/splicing signal). Returns the preview as
+    # raw image bytes; the forensic analysis rides in X-* response headers.
+    PREVIEW_TAGS = ("JpgFromRaw", "PreviewImage", "OtherImage", "ThumbnailImage")
+
+    def _exif_gps_time(self, exiftool, path):
+        """Return (gps 'lat,lon' or None, DateTimeOriginal/CreateDate or None)."""
+        try:
+            proc = subprocess.run(
+                [str(exiftool), "-json", "-n", "-GPSLatitude", "-GPSLongitude",
+                 "-DateTimeOriginal", "-CreateDate", str(path)],
+                capture_output=True, timeout=20, stdin=subprocess.DEVNULL,
+            )
+            d = (json.loads(proc.stdout.decode("utf-8", "replace")) or [{}])[0]
+        except (OSError, json.JSONDecodeError, ValueError, subprocess.TimeoutExpired):
+            return None, None
+        lat, lon = d.get("GPSLatitude"), d.get("GPSLongitude")
+        gps = f"{lat},{lon}" if (lat is not None and lon is not None) else None
+        return gps, (d.get("DateTimeOriginal") or d.get("CreateDate"))
+
+    def api_exif_preview(self, raw: bytes):
+        exiftool = find_exiftool()
+        if exiftool is None:
+            return self.send_json({"error": "ExifTool not found. Install: winget install OliverBetz.ExifTool"}, 409)
+        if not raw:
+            return self.send_json({"error": "empty body"}, 400)
+        if len(raw) > 200 * 1024 * 1024:
+            return self.send_json({"error": "file too large"}, 413)
+        tmp = prev_tmp = None
+        try:
+            tmp = self._write_exif_temp(raw)
+            # find the first preview tag that has bytes, extract it to stdout
+            chosen, body = None, b""
+            for tag in self.PREVIEW_TAGS:
+                try:
+                    p = subprocess.run([str(exiftool), "-b", "-" + tag, str(tmp)],
+                                       capture_output=True, timeout=30, stdin=subprocess.DEVNULL)
+                except subprocess.TimeoutExpired:
+                    return self.send_json({"error": "exiftool timed out"}, 504)
+                if p.returncode in (0, 1) and p.stdout:
+                    chosen, body = tag, p.stdout
+                    break
+            if not body:
+                return self.send_json({"ok": True, "has_preview": False,
+                                       "msg": "no embedded preview/thumbnail in this image"}, 200)
+
+            # main vs preview gps/time — read the preview's own metadata
+            main_gps, main_time = self._exif_gps_time(exiftool, tmp)
+            with tempfile.NamedTemporaryFile(prefix="geosint_prev_", suffix=".jpg", delete=False) as pf:
+                pf.write(body)
+                prev_tmp = Path(pf.name)
+            prev_gps, prev_time = self._exif_gps_time(exiftool, prev_tmp)
+            gps_mismatch = bool(main_gps and prev_gps and main_gps != prev_gps)
+            time_mismatch = bool(main_time and prev_time and main_time != prev_time)
+
+            ctype = "image/jpeg" if body[:2] == b"\xff\xd8" else "application/octet-stream"
+            self.send_response(200)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Preview-Tag", chosen)
+            self.send_header("X-Preview-Bytes", str(len(body)))
+            if main_gps:  self.send_header("X-Main-GPS", main_gps)
+            if prev_gps:  self.send_header("X-Preview-GPS", prev_gps)
+            if main_time: self.send_header("X-Main-Time", main_time)
+            if prev_time: self.send_header("X-Preview-Time", prev_time)
+            self.send_header("X-GPS-Mismatch", "1" if gps_mismatch else "0")
+            self.send_header("X-Time-Mismatch", "1" if time_mismatch else "0")
+            self.end_headers()
+            if self.command != "HEAD":
+                self.wfile.write(body)
+        except (OSError, ValueError) as e:
+            return self.send_json({"error": str(e)[:500]}, 500)
+        finally:
+            for t in (tmp, prev_tmp):
+                if t:
+                    try:
+                        t.unlink()
+                    except OSError:
+                        pass
 
     # ---- API: launch a local GUI tool -----------------------------------
     def api_launch(self, payload):

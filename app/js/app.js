@@ -962,11 +962,60 @@ function renderUrlButtons() {
     : "";
 }
 
-/* Deep metadata dump via the locally installed ExifTool (server-side, stays on-machine). */
+/* Deep metadata dump + embedded-preview recovery via the locally installed
+   ExifTool (server-side, stays on-machine). */
 function exiftoolButton() {
   if (!state.tools || !state.tools.exiftool || !state.tools.exiftool.found) return "";
-  return `<div class="gps-actions"><button class="btn" id="exiftool-dump">⚙ FULL METADATA (ExifTool)</button></div>
+  return `<div class="gps-actions">
+      <button class="btn" id="exiftool-dump">⚙ FULL METADATA (ExifTool)</button>
+      <button class="btn" id="exiftool-preview" title="Extract the image embedded inside this file (RAW/HEIC/JPEG preview or thumbnail). Often the UNCROPPED original — recovers what a crop or redaction cut out.">⛏ RECOVER EMBEDDED PREVIEW</button>
+    </div>
     <div id="exiftool-out"></div>`;
+}
+
+/* 5B.1 — extract the largest embedded preview/thumbnail and flag any
+   main-vs-preview GPS/time mismatch (a tampering signal). The preview is often
+   the uncropped original — what a crop/redaction removed can still live here. */
+async function previewExtract() {
+  const out = $("#exiftool-out");
+  out.innerHTML = `<p class="hint">extracting embedded preview locally…</p>`;
+  try {
+    const r = await fetch("/api/exif-preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/octet-stream", "X-GeOSINT": "1",
+                 "X-Filename": encodeURIComponent(state.lastFile.name) },
+      body: state.lastFile,
+    });
+    // a JSON body means "no preview" or an error; image bytes mean success
+    if ((r.headers.get("Content-Type") || "").startsWith("application/json")) {
+      const j = await r.json();
+      out.innerHTML = `<p class="nomatch">✗ ${esc(j.error || j.msg || "no embedded preview")}</p>`;
+      return;
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const tag = r.headers.get("X-Preview-Tag") || "preview";
+    const kb = Math.round((+r.headers.get("X-Preview-Bytes") || blob.size) / 1024);
+    const gpsBad = r.headers.get("X-GPS-Mismatch") === "1";
+    const timeBad = r.headers.get("X-Time-Mismatch") === "1";
+    const mainGps = r.headers.get("X-Main-GPS"), prevGps = r.headers.get("X-Preview-GPS");
+    const mainTime = r.headers.get("X-Main-Time"), prevTime = r.headers.get("X-Preview-Time");
+    let warn = "";
+    if (gpsBad || timeBad) {
+      const rows = [];
+      if (gpsBad) rows.push(`<tr><td>GPS</td><td>main <b>${esc(mainGps)}</b></td><td>preview <b>${esc(prevGps)}</b></td></tr>`);
+      if (timeBad) rows.push(`<tr><td>time</td><td>main <b>${esc(mainTime)}</b></td><td>preview <b>${esc(prevTime)}</b></td></tr>`);
+      warn = `<div class="nomatch" style="margin:6px 0">⚠ <b>Preview metadata differs from the main image</b>
+        — a possible edit/splice signal. Treat as a lead, not proof.
+        <table class="kv" style="margin-top:4px">${rows.join("")}</table></div>`;
+    }
+    out.innerHTML = `<h3>Embedded preview — ${esc(tag)} · ${kb} KB</h3>
+      ${warn}
+      <p class="hint">If this differs from the visible image, the original was likely cropped or edited
+        after capture — the embedded copy can show what was removed.</p>
+      <img src="${url}" style="max-width:100%;border:1px solid var(--line);border-radius:4px;margin:6px 0" alt="embedded preview">
+      <div class="gps-actions"><a class="btn" href="${url}" download="embedded-preview.jpg">⭳ save preview</a></div>`;
+  } catch { out.innerHTML = `<p class="nomatch">✗ local server unreachable</p>`; }
 }
 
 async function exiftoolDump() {
@@ -1005,6 +1054,8 @@ async function loadImage(file) {
       ${exiftoolButton()}`;
     const b0 = $("#exiftool-dump");
     if (b0) b0.onclick = exiftoolDump;
+    const p0 = $("#exiftool-preview");
+    if (p0) p0.onclick = previewExtract;
     return;
   }
   const rows = [];
@@ -1042,6 +1093,8 @@ async function loadImage(file) {
       href="https://www.bellingcat.com/resources/how-tos/2017/06/30/advanced-guide-verifying-video-content/">Bellingcat verification guide</a>)</p>`;
   const bd = $("#exiftool-dump");
   if (bd) bd.onclick = exiftoolDump;
+  const pv = $("#exiftool-preview");
+  if (pv) pv.onclick = previewExtract;
   if (ex.latitude != null) {
     $("#exif-goto").onclick = () => setPoint(L.latLng(ex.latitude, ex.longitude), { fly: true, zoom: 16 });
     $("#exif-copy").onclick = () => copyText(`${ex.latitude.toFixed(6)}, ${ex.longitude.toFixed(6)}`);
