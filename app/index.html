@@ -109,12 +109,31 @@
         <h3>Hourly <span class="muted">(location local time)</span></h3>
         <div class="table-scroll"><table id="wx-table" class="data"></table></div>
         <div class="linkrow" id="wx-links"></div>
-        <h3>Wind &amp; weather map <span class="muted">(Windy embed)</span></h3>
-        <button class="btn" id="wx-wind-load">≋ LOAD WIND MAP AT ACTIVE POINT</button>
-        <div id="wx-wind"></div>
-        <p class="srcnote">Data: <a href="https://open-meteo.com/en/docs/historical-weather-api" target="_blank">Open-Meteo</a>
-           (ERA5 / ERA5-Land reanalysis, ECMWF). Archive lags ~5 days behind real time; recent dates use the forecast API.
-           Wind map: <a href="https://www.windy.com/" target="_blank">Windy</a> embed (free non-commercial).</p>
+        <h3>Wind &amp; weather map <span class="muted">(opens externally)</span></h3>
+        <div class="field-row">
+          <div class="field grow">
+            <label for="wx-wind-layer">Map layer</label>
+            <select id="wx-wind-layer">
+              <option value="wind">Wind</option>
+              <option value="gust">Wind gusts</option>
+              <option value="temp">Temperature</option>
+              <option value="clouds">Cloud cover</option>
+              <option value="rain">Rain &amp; thunder</option>
+              <option value="snow">Snow accumulation</option>
+              <option value="pressure">Pressure</option>
+              <option value="rh">Humidity</option>
+              <option value="waves">Waves</option>
+            </select>
+          </div>
+          <button class="btn" id="wx-windy">↗ WINDY</button>
+          <button class="btn" id="wx-nullschool">↗ EARTH</button>
+        </div>
+        <p class="srcnote">Opens at the active point, selected layer and the date above (Windy honours the date;
+           earth.nullschool is current-conditions). The interactive maps run on their own sites
+           (<a href="https://www.windy.com/" target="_blank">windy.com</a> /
+           <a href="https://earth.nullschool.net/" target="_blank">earth.nullschool.net</a>) — nothing is embedded here.</p>
+        <p class="srcnote">Data above: <a href="https://open-meteo.com/en/docs/historical-weather-api" target="_blank">Open-Meteo</a>
+           (ERA5 / ERA5-Land reanalysis, ECMWF). Archive lags ~5 days behind real time; recent dates use the forecast API.</p>
       </section>
 
       <!-- ════════ IMAGE ════════ -->

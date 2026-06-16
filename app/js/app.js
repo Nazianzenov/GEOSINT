@@ -1257,7 +1257,8 @@ function initData() {
     syncQgisButton();
   });
   $("#gbif-add").addEventListener("click", () => gbifOverlay($("#gbif-name").value.trim()));
-  $("#wx-wind-load").addEventListener("click", loadWindEmbed);
+  $("#wx-windy").addEventListener("click", () => openWindMap("windy"));
+  $("#wx-nullschool").addEventListener("click", () => openWindMap("nullschool"));
   const qb = $("#data-qgis");
   if (qb) qb.addEventListener("click", openInQgis);
   $("#pf-run").addEventListener("click", prefetchTiles);
@@ -1404,11 +1405,21 @@ async function gbifOverlay(name, knownKey) {
   } catch { status("GBIF unreachable", true); }
 }
 
-function loadWindEmbed() {
+// Wind/weather maps open on their own sites (the embedded iframe was unstable —
+// Windy's player crashes on fast timeline scrubbing). For an area, state.point is
+// the Nominatim centroid. Windy accepts a UTC YYYY-MM-DD-HH time in the hash.
+function openWindMap(site) {
   const p = state.point || state.map.getCenter();
-  $("#wx-wind").innerHTML =
-    `<iframe width="100%" height="380" style="border:1px solid var(--line);border-radius:4px" loading="lazy"
-      src="https://embed.windy.com/embed2.html?lat=${p.lat.toFixed(3)}&lon=${p.lng.toFixed(3)}&detailLat=${p.lat.toFixed(3)}&detailLon=${p.lng.toFixed(3)}&zoom=6&level=surface&overlay=wind&menu=&message=true&marker=true&calendar=now&type=map&location=coordinates&metricWind=km%2Fh&metricTemp=%C2%B0C"></iframe>`;
+  const lat = p.lat.toFixed(3), lon = p.lng.toFixed(3);
+  if (site === "nullschool") {                       // current conditions only
+    window.open(`https://earth.nullschool.net/#current/wind/surface/level/orthographic=${lon},${lat},2000`, "_blank");
+    return;
+  }
+  const overlay = $("#wx-wind-layer").value || "wind";
+  const d = $("#wx-date").value;                      // YYYY-MM-DD from the weather panel
+  // Windy URL: ?overlay,YYYY-MM-DD-HH,lat,lon,zoom (UTC; midday on the chosen date)
+  const t = d ? `${d}-12,` : "";
+  window.open(`https://www.windy.com/?${overlay},${t}${lat},${lon},6`, "_blank");
 }
 
 /* ═══════════════════════════ ANNOTATIONS ═══════════════════════ */
