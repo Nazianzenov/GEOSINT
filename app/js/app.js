@@ -14,6 +14,7 @@ const state = {
   measure: { on: false, pts: [], line: null, tip: null, verts: [], dragIdx: null, shift: false, radius: null },
   tools: null,            // /api/status -> local desktop tool availability
   lastFile: null,         // last image dropped into the Image module
+  artifacts: [],          // case v2 evidence log — see ARTIFACTS section
 };
 
 const $  = (s) => document.querySelector(s);
@@ -901,6 +902,7 @@ async function batchProcess(files) {
       dir: ex && ex.GPSImgDirection != null ? Math.round(ex.GPSImgDirection) : null,
       size: f.size,
     });
+    captureImage(f, ex);                         // case v2 evidence log (hash + thumb; deduped)
     if (++done % 10 === 0) $("#batch-status").textContent = `parsed ${done}/${imgs.length}…`;
   }
   const withGps = _batch.rows.filter((r) => r.lat != null).length;
@@ -996,6 +998,7 @@ async function loadImage(file) {
   out.innerHTML = `<p class="hint">reading metadata…</p>`;
   let ex = null;
   try { ex = await exifr.parse(file, { gps: true, exif: true, tiff: true, ifd0: true }); } catch { /* not parseable */ }
+  captureImage(file, ex);                       // case v2 evidence log (hash + thumb; deduped)
   if (!ex || Object.keys(ex).length === 0) {
     out.innerHTML = `<h3>EXIF</h3><p class="hint">No metadata found — typical for images from social media
       (Twitter/X, Facebook, Telegram strip EXIF on upload). The pixels are still searchable below.</p>
@@ -1627,11 +1630,112 @@ async function annoToQgis() {
   } catch { status("local server unreachable", true); }
 }
 
+/* ═══════════════════════════ ARTIFACTS (case v2) ═══════════════════════════
+   Append-only evidence log. Every item the analyst pulls in (an image, a logged
+   observation) becomes an artifact with a timestamp and provenance, so the case
+   can drive a timeline (5C.1), a sourced dossier (5C.2) and a chain-of-custody
+   view (5C.3). Images store a SHA-256 of the ORIGINAL bytes + a small thumbnail
+   — never the full image. All local: crypto.subtle and canvas, nothing uploaded.
+
+   Artifact shape:
+     { id, kind: 'image'|'note'|'point'|'obs',
+       t: ISO8601 (observed/added time), source, sha256?, ll?, text?, thumb?,
+       meta? }                                                                    */
+let _artId = 0;
+const _artPending = new Set();   // in-flight logImageArtifact() promises; saveCase awaits them
+
+/* SHA-256 of a Blob/ArrayBuffer/string → lowercase hex. Uses the Web Crypto API
+   (local, no network). */
+async function sha256(input) {
+  const buf = input instanceof Blob ? await input.arrayBuffer()
+            : typeof input === "string" ? new TextEncoder().encode(input)
+            : input;
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/* Render a small JPEG thumbnail (base64 data URL) from an image File, longest
+   side `max` px. Returns null if the file can't be decoded. Drawn on a canvas
+   entirely in-browser. */
+function makeThumbnail(file, max = 160) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * scale));
+      const h = Math.max(1, Math.round(img.naturalHeight * scale));
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      try { resolve(cv.toDataURL("image/jpeg", 0.7)); }
+      catch { resolve(null); }                 // tainted canvas etc.
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
+/* Append an artifact; defaults id + time. Returns the stored artifact. */
+function addArtifact(a) {
+  const art = { id: ++_artId, t: a.t || new Date().toISOString(), ...a };
+  state.artifacts.push(art);
+  renderEvidenceLog();
+  return art;
+}
+
+/* Minimal evidence-log readout in the notes drawer (the full timeline is 5C.1).
+   Confirms capture is happening and that originals are not stored. */
+function renderEvidenceLog() {
+  const el = $("#evidence-log");
+  if (!el) return;
+  const arts = state.artifacts;
+  if (!arts.length) { el.textContent = ""; return; }
+  const imgs = arts.filter((a) => a.kind === "image").length;
+  const withGps = arts.filter((a) => a.ll).length;
+  el.textContent = `🔒 evidence log: ${arts.length} artifact(s) · ${imgs} image(s) · ${withGps} geotagged `
+    + `— SHA-256 + thumbnail only, originals stay on disk`;
+}
+
+/* Fire-and-forget capture that's still safe to SAVE against: the promise is
+   tracked in _artPending and awaited by saveCase, so a case saved right after a
+   drop never loses the just-dropped image. */
+function captureImage(file, ex) {
+  const p = logImageArtifact(file, ex).catch(() => null).finally(() => _artPending.delete(p));
+  _artPending.add(p);
+}
+
+/* Record a dropped image as an evidence artifact (sha-256 of original bytes +
+   thumbnail + the parsed EXIF facts we already have). Deduped by hash so the
+   same file dropped twice doesn't double-log. `ex` is the exifr result (or null). */
+async function logImageArtifact(file, ex) {
+  let hash = null;
+  try { hash = await sha256(file); } catch { /* crypto unavailable — log without */ }
+  if (hash && state.artifacts.some((a) => a.kind === "image" && a.sha256 === hash)) return null;
+  const thumb = await makeThumbnail(file);
+  return addArtifact({
+    kind: "image",
+    t: ex && ex.DateTimeOriginal ? new Date(ex.DateTimeOriginal).toISOString() : new Date().toISOString(),
+    source: file.name,
+    sha256: hash,
+    ll: (ex && ex.latitude != null && ex.longitude != null) ? [ex.latitude, ex.longitude] : undefined,
+    thumb: thumb || undefined,
+    meta: {
+      added: new Date().toISOString(),
+      size: file.size,
+      camera: ex ? [ex.Make, ex.Model].filter(Boolean).join(" ") || undefined : undefined,
+      taken: ex && ex.DateTimeOriginal ? new Date(ex.DateTimeOriginal).toISOString() : undefined,
+    },
+  });
+}
+
 /* ═══════════════════════════ CASE FILE ═════════════════════════ */
 /* Save/restore the whole workspace to a local .geosint.json — point, map view,
-   measure shapes, active data/GBIF layers, every module's inputs, and notes.
+   measure shapes, active data/GBIF layers, every module's inputs, notes, and
+   the v2 artifacts evidence log.
    Pure client-side: the file never leaves the machine. */
-const CASE_VERSION = 1;
+const CASE_VERSION = 2;
 const val = (sel) => { const el = $(sel); return el ? el.value : undefined; };
 const setVal = (sel, v) => { const el = $(sel); if (el && v != null) el.value = v; };
 
@@ -1648,6 +1752,8 @@ function serializeCase() {
     gbif: Object.entries(state.gbifLayers).map(([key, tl]) => ({ key: +key, name: tl._caseName || "" })),
     data: state.lastData ? { label: state.lastData.label } : null,
     notes: val("#case-notes") || "",
+    artifacts: state.artifacts,
+
     inputs: {
       sunDt: val("#sun-dt"), sunOffset: val("#sun-offset"),
       solverAz: val("#solver-az"), solverRatio: val("#solver-ratio"), solverTol: val("#solver-tol"),
@@ -1658,7 +1764,13 @@ function serializeCase() {
   };
 }
 
-function saveCase() {
+async function saveCase() {
+  // Let any in-flight image captures (hash + thumbnail) finish so a case saved
+  // right after a drop includes the just-dropped evidence.
+  if (_artPending.size) {
+    status("finalizing evidence log…", false, 1500);
+    await Promise.all([..._artPending]);
+  }
   const data = JSON.stringify(serializeCase(), null, 1);
   const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
   const a = document.createElement("a");
@@ -1673,6 +1785,11 @@ function applyCase(c) {
   if (!c || c.app !== "geosint-workbench") return status("not a GeOSINT case file", true);
   // notes + every field first (so module renders pick them up)
   setVal("#case-notes", c.notes || "");
+  // evidence log (v2). Rehydrate _artId past the loaded max so new artifacts
+  // don't collide with restored ids.
+  state.artifacts = Array.isArray(c.artifacts) ? c.artifacts : [];
+  _artId = state.artifacts.reduce((m, a) => Math.max(m, a.id || 0), 0);
+  renderEvidenceLog();
   const f = c.inputs || {};
   setVal("#sun-dt", f.sunDt); setVal("#sun-offset", f.sunOffset);
   setVal("#solver-az", f.solverAz); setVal("#solver-ratio", f.solverRatio); setVal("#solver-tol", f.solverTol);
