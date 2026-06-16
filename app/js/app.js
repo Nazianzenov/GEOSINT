@@ -1236,6 +1236,18 @@ const OSM_PRESETS = [
     'nwr["military"="barracks"]'], 8],
   ["Water towers", ['nwr["man_made"="water_tower"]'], 9],
   ["Lighthouses", ['nwr["man_made"="lighthouse"]'], 6],
+  // 5D.3 — border crossings & checkpoints (movement/conflict/migration analysis)
+  ["Border crossings & checkpoints", ['nwr["barrier"="border_control"]',
+    'nwr["amenity"="customs"]', 'nwr["barrier"="checkpoint"]'], 7],
+  // 5D.4 — extra investigative categories
+  ["Prisons & detention", ['nwr["amenity"="prison"]'], 8],
+  ["Embassies & consulates", ['nwr["diplomatic"="embassy"]',
+    'nwr["diplomatic"="consulate"]', 'nwr["office"="diplomatic"]'], 9],
+  ["Ports & harbours", ['nwr["industrial"="port"]', 'way["landuse"="port"]',
+    'nwr["harbour"="yes"]', 'nwr["amenity"="ferry_terminal"]'], 7],
+  // helipads alone (the "Airfields & helipads" preset bundles them with aerodromes;
+  // a helipad-only view isolates rooftop/hospital/rig pads)
+  ["Helipads", ['nwr["aeroway"="helipad"]'], 10],
 ];
 
 function initData() {
