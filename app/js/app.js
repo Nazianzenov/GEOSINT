@@ -1875,6 +1875,92 @@ function openTimeline() {
   panel.hidden = false;
 }
 
+/* ── dossier export (5C.2) ──
+   A self-contained HTML report of the case: active point (all coord formats),
+   notes, annotations, the evidence log with inline thumbnails, the timeline,
+   and a sources/provenance section. Renders from case state + v2 artifacts;
+   thumbnails are already base64 so no originals are needed. 100% local. */
+function buildDossier() {
+  const now = new Date();
+  const p = state.point;
+  const ptBlock = p ? `
+    <table class="kv">
+      <tr><td>Decimal</td><td>${esc(fmtDD(p))}</td></tr>
+      <tr><td>DMS</td><td>${esc(fmtDMS(p))}</td></tr>
+      <tr><td>MGRS</td><td>${esc(fmtMGRS(p))}</td></tr>
+      <tr><td>UTM</td><td>${esc(fmtUTM(p))}</td></tr>
+      <tr><td>Plus Code</td><td>${esc(fmtPlus(p))}</td></tr>
+    </table>` : `<p class="muted">No active point set.</p>`;
+
+  const notes = (val("#case-notes") || "").trim();
+  const notesBlock = notes
+    ? `<pre>${esc(notes)}</pre>` : `<p class="muted">No notes.</p>`;
+
+  const annos = state.annos || [];
+  const annoBlock = annos.length ? `<table class="kv">
+      <tr><th>type</th><th>text</th><th>location</th></tr>
+      ${annos.map((a) => `<tr><td>${esc(a.type)}</td><td>${esc(a.text)}</td>
+        <td>${a.ll[0].toFixed(5)}, ${a.ll[1].toFixed(5)}</td></tr>`).join("")}
+    </table>` : `<p class="muted">No annotations.</p>`;
+
+  const arts = state.artifacts || [];
+  const artBlock = arts.length ? `<div class="grid">
+      ${[...arts].sort((a, b) => String(a.t).localeCompare(String(b.t))).map((a) => `
+        <div class="ev">
+          ${a.thumb ? `<img src="${esc(a.thumb)}" alt="">` : `<div class="noimg">${ART_SYM[a.kind] || "•"}</div>`}
+          <div class="ev-meta">
+            <b>${esc(a.source || a.text || a.kind)}</b>
+            <div class="muted">${esc(String(a.t).replace("T", " ").slice(0, 19))} · ${esc(a.kind)}</div>
+            ${a.ll ? `<div class="muted">${a.ll[0].toFixed(5)}, ${a.ll[1].toFixed(5)}</div>` : ""}
+            ${a.sha256 ? `<div class="mono">sha256 ${esc(a.sha256)}</div>` : ""}
+          </div>
+        </div>`).join("")}
+    </div>` : `<p class="muted">No evidence artifacts.</p>`;
+
+  const ev = timelineEvents();
+  const tlBlock = ev.length ? `<table class="kv">
+      <tr><th>time</th><th>event</th><th>location</th></tr>
+      ${ev.map((e) => `<tr><td class="mono">${esc(String(e.t).replace("T", " ").slice(0, 16))}</td>
+        <td>${esc(e.label)}${e.detail ? ` <span class="muted">— ${esc(e.detail)}</span>` : ""}</td>
+        <td>${e.ll ? `${e.ll[0].toFixed(4)}, ${e.ll[1].toFixed(4)}` : ""}</td></tr>`).join("")}
+    </table>` : `<p class="muted">No dated events.</p>`;
+
+  const css = `body{font:14px/1.5 "Segoe UI",system-ui,sans-serif;color:#1a1d24;max-width:880px;margin:24px auto;padding:0 16px}
+    h1{font-size:22px;margin:0 0 2px} h2{font-size:15px;margin:22px 0 6px;border-bottom:1px solid #ddd;padding-bottom:3px}
+    .muted{color:#6b7280} .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#374151;word-break:break-all}
+    table.kv{border-collapse:collapse;width:100%} table.kv td,table.kv th{border:1px solid #e5e7eb;padding:4px 7px;text-align:left;vertical-align:top;font-size:13px}
+    table.kv th{background:#f3f4f6} pre{white-space:pre-wrap;background:#f9fafb;border:1px solid #e5e7eb;padding:8px;border-radius:4px}
+    .grid{display:flex;flex-wrap:wrap;gap:10px} .ev{display:flex;gap:8px;border:1px solid #e5e7eb;border-radius:5px;padding:6px;width:260px}
+    .ev img{width:80px;height:80px;object-fit:cover;border-radius:3px} .ev .noimg{width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#f3f4f6;border-radius:3px}
+    .ev-meta{font-size:12px;overflow:hidden} footer{margin-top:28px;color:#6b7280;font-size:12px;border-top:1px solid #ddd;padding-top:8px}`;
+
+  return `<!doctype html><html><head><meta charset="utf-8">
+    <title>GeOSINT dossier — ${esc(now.toISOString().slice(0, 16).replace("T", " "))}</title>
+    <style>${css}</style></head><body>
+    <h1>GeOSINT case dossier</h1>
+    <div class="muted">Generated ${esc(now.toISOString().replace("T", " ").slice(0, 19))} (UTC) · GeOSINT Workbench (local)</div>
+    <h2>Active point</h2>${ptBlock}
+    <h2>Case notes</h2>${notesBlock}
+    <h2>Annotations (${annos.length})</h2>${annoBlock}
+    <h2>Evidence log (${arts.length})</h2>
+    <p class="muted">SHA-256 of original bytes + embedded thumbnail. Originals retained on the analyst's machine.</p>${artBlock}
+    <h2>Timeline (${ev.length})</h2>${tlBlock}
+    <footer>EXIF, geocoder and OSM data are leads, not proof — cross-check with sun, weather and visual features.
+      Map data © OpenStreetMap contributors (ODbL). Generated entirely on-machine; nothing was uploaded.</footer>
+    </body></html>`;
+}
+
+function exportDossier() {
+  const html = buildDossier();
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+  a.download = `dossier-${stamp}.html`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  status("dossier exported to your Downloads folder");
+}
+
 /* Fire-and-forget capture that's still safe to SAVE against: the promise is
    tracked in _artPending and awaited by saveCase, so a case saved right after a
    drop never loses the just-dropped image. */
@@ -2031,6 +2117,11 @@ function initCase() {
   const tlo = $("#timeline-open"), tlc = $("#timeline-close");
   if (tlo) tlo.addEventListener("click", openTimeline);
   if (tlc) tlc.addEventListener("click", () => { $("#timeline-panel").hidden = true; });
+  const dz = $("#btn-dossier");
+  if (dz) dz.addEventListener("click", async () => {
+    if (_artPending.size) { status("finalizing evidence log…", false, 1500); await Promise.all([..._artPending]); }
+    exportDossier();
+  });
 }
 
 /* ═══════════════════════ wiring / keyboard ═════════════════════ */
