@@ -288,6 +288,7 @@ Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
     <div class="notes-head" style="margin-top:8px">
       <strong>Chain of custody</strong>
       <span class="muted">append-only · sha-256 + observed time</span>
+      <button id="timeline-open" class="icon-btn" title="Chronological timeline of every dated artifact + case event">⏱ TIMELINE</button>
       <button id="custody-csv" class="icon-btn" title="Export the evidence log as CSV">⭳ CSV</button>
       <button id="custody-json" class="icon-btn" title="Export the evidence log as JSON">⭳ JSON</button>
     </div>
@@ -302,6 +303,14 @@ Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
   </div>
   <canvas id="elev-chart" width="540" height="170"></canvas>
   <div id="elev-readout" class="muted"></div>
+</div>
+<div id="timeline-panel" hidden>
+  <div class="elev-head">
+    <strong>Case timeline</strong>
+    <span id="timeline-stats" class="muted"></span>
+    <button id="timeline-close" class="icon-btn" title="Close [Esc]">✕</button>
+  </div>
+  <div id="timeline-body" class="table-scroll" style="max-height:60vh"></div>
 </div>
 <div id="help-overlay" hidden>
   <div class="help-card">

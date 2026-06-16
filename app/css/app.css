@@ -235,6 +235,20 @@ table.batch .batch-go { text-decoration: none; font-size: 14px; }
 #elev-chart { display: block; background: var(--bg); border-radius: 4px; cursor: crosshair; max-width: 100%; }
 #elev-readout { margin-top: 5px; font: 10px var(--mono); }
 
+/* timeline (5C.1) */
+#timeline-panel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2600;
+  width: min(560px, calc(100vw - 24px)); background: var(--bg-1); border: 1px solid var(--line);
+  border-radius: 8px; box-shadow: 0 8px 28px #000a; padding: 8px 10px 10px; }
+.tl { position: relative; padding-left: 6px; }
+.tl-row { display: grid; grid-template-columns: 116px 22px 1fr; gap: 8px; align-items: start;
+  padding: 6px 0; border-top: 1px solid var(--line); }
+.tl-row:first-child { border-top: 0; }
+.tl-time { font: 11px var(--mono); color: var(--txt-dim); padding-top: 2px; }
+.tl-dot { text-align: center; }
+.tl-card { font: 12px var(--sans); }
+.tl-label { line-height: 1.35; }
+.tl-go { font: 11px var(--mono); color: var(--accent); display: inline-block; margin-top: 3px; }
+
 /* annotations */
 .anno-dot { background: var(--bad); border: 2px solid #fff; border-radius: 50%; box-sizing: border-box; }
 .anno-pin { font-size: 18px; line-height: 1; text-shadow: 0 1px 2px #000a; }

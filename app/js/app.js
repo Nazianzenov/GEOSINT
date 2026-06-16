@@ -1820,6 +1820,61 @@ function exportCustody(fmt) {
   status(`exported ${arts.length} custody record(s) as ${ext.toUpperCase()}`);
 }
 
+/* ── timeline (5C.1) ──
+   Chronological strip of every dated artifact plus case-context events (the
+   weather date and the Sun module's date), so a sequence-of-events reads off
+   one view. Each event carries an optional location → ⌖ jump-to-map. */
+function timelineEvents() {
+  const ev = [];
+  for (const a of state.artifacts) {
+    ev.push({ t: a.t, kind: a.kind, sym: ART_SYM[a.kind] || "•",
+              label: a.source || a.text || a.kind,
+              detail: a.kind === "image" ? (a.meta && a.meta.camera || "") : (a.text || ""),
+              ll: a.ll || null, thumb: a.thumb || null,
+              sha: a.sha256 || null });
+  }
+  // case-context events from module inputs (date-only → noon, for ordering)
+  const sunDt = val("#sun-dt");
+  if (sunDt) ev.push({ t: sunDt.length === 16 ? sunDt + ":00" : sunDt, kind: "context",
+                       sym: "☀", label: "Sun & Shadow date", detail: "chronolocation reading",
+                       ll: state.point ? [state.point.lat, state.point.lng] : null });
+  const wxDate = val("#wx-date");
+  if (wxDate) ev.push({ t: wxDate + "T12:00:00", kind: "context",
+                        sym: "☁", label: "Weather date", detail: "meteorology lookup",
+                        ll: state.point ? [state.point.lat, state.point.lng] : null });
+  // sort ascending by parseable time; unparseable sink to the bottom
+  const key = (e) => { const d = Date.parse(String(e.t).replace(" ", "T")); return isNaN(d) ? Infinity : d; };
+  return ev.sort((a, b) => key(a) - key(b));
+}
+
+function openTimeline() {
+  const panel = $("#timeline-panel"), body = $("#timeline-body");
+  const ev = timelineEvents();
+  $("#timeline-stats").textContent = ev.length ? `${ev.length} event(s)` : "";
+  if (!ev.length) {
+    body.innerHTML = `<p class="hint" style="padding:10px">No dated events yet — drop an image, or set the weather/sun dates.</p>`;
+  } else {
+    const fmtT = (t) => { const d = new Date(String(t).replace(" ", "T")); return isNaN(d) ? esc(String(t)) : d.toISOString().replace("T", " ").slice(0, 16); };
+    body.innerHTML = `<div class="tl">${ev.map((e, i) => `
+      <div class="tl-row" data-i="${i}">
+        <div class="tl-time">${fmtT(e.t)}</div>
+        <div class="tl-dot">${e.sym}</div>
+        <div class="tl-card">
+          <div class="tl-label"><b>${esc(e.label)}</b>${e.detail ? ` <span class="muted">· ${esc(e.detail)}</span>` : ""}</div>
+          ${e.thumb ? `<img src="${esc(e.thumb)}" style="max-width:120px;border-radius:3px;margin:4px 0">` : ""}
+          ${e.sha ? `<div class="muted" style="font-family:monospace;font-size:11px">sha256 ${esc(e.sha.slice(0, 16))}…</div>` : ""}
+          ${e.ll ? `<a href="#" class="tl-go" data-i="${i}">⌖ ${e.ll[0].toFixed(4)}, ${e.ll[1].toFixed(4)}</a>` : ""}
+        </div>
+      </div>`).join("")}</div>`;
+    body.querySelectorAll(".tl-go").forEach((el) => el.onclick = (e) => {
+      e.preventDefault();
+      const ll = ev[+el.dataset.i].ll;
+      if (ll) { setPoint(L.latLng(ll[0], ll[1]), { fly: true, zoom: 15 }); }
+    });
+  }
+  panel.hidden = false;
+}
+
 /* Fire-and-forget capture that's still safe to SAVE against: the promise is
    tracked in _artPending and awaited by saveCase, so a case saved right after a
    drop never loses the just-dropped image. */
@@ -1973,6 +2028,9 @@ function initCase() {
   const cc = $("#custody-csv"), cj = $("#custody-json");
   if (cc) cc.addEventListener("click", () => exportCustody("csv"));
   if (cj) cj.addEventListener("click", () => exportCustody("json"));
+  const tlo = $("#timeline-open"), tlc = $("#timeline-close");
+  if (tlo) tlo.addEventListener("click", openTimeline);
+  if (tlc) tlc.addEventListener("click", () => { $("#timeline-panel").hidden = true; });
 }
 
 /* ═══════════════════════ wiring / keyboard ═════════════════════ */
@@ -1986,6 +2044,7 @@ function initKeys() {
     if (e.key === "Escape") {
       if (cancelArrow()) return;
       if (state.measure.on) return toggleMeasure(false);
+      if (!$("#timeline-panel").hidden) { $("#timeline-panel").hidden = true; return; }
       if (!$("#notes-drawer").hidden) return toggleNotes(false);
       if (!$("#elev-panel").hidden) { $("#elev-panel").hidden = true; return; }
       $("#help-overlay").hidden = true;
