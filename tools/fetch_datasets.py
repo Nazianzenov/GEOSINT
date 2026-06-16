@@ -313,6 +313,71 @@ def fetch_airports():
     return rows
 
 
+# 5D.2 — submarine cables & landing points (TeleGeography, CC BY-NC-SA 3.0).
+# Public GeoJSON, no key. Cable routes are line geometry (kept as a self-contained
+# GeoJSON the map overlays directly); landing points are named coordinates (also
+# fed to the search index via the standard rows shape). Attribution is mandatory
+# and surfaced in the Data Layers UI.
+TELEGEOGRAPHY = {
+    "cables": "https://www.submarinecablemap.com/api/v3/cable/cable-geo.json",
+    "landings": "https://www.submarinecablemap.com/api/v3/landing-point/landing-point-geo.json",
+}
+TG_LICENSE = "TeleGeography, CC BY-NC-SA 3.0"
+TG_ATTRIB = "© TeleGeography · CC BY-NC-SA 3.0"
+TG_SOURCE = "https://www.submarinecablemap.com/"
+
+
+def fetch_submarine_cables():
+    """Write data/submarine-cables.json: a self-contained cable-route GeoJSON
+    (MultiLineString) plus the landing points (Point), with attribution baked in.
+    Returns the landing-point rows for the search index."""
+    cables = net.get_json(TELEGEOGRAPHY["cables"], timeout=120)
+    landings = net.get_json(TELEGEOGRAPHY["landings"], timeout=120)
+
+    # Slim the cable features to what the map needs (drop the redundant
+    # properties.coordinates label point TeleGeography ships per feature).
+    cable_feats = []
+    for f in cables.get("features", []):
+        p = f.get("properties", {})
+        cable_feats.append({
+            "type": "Feature", "geometry": f["geometry"],
+            "properties": {"id": p.get("id"), "name": p.get("name"),
+                           "color": p.get("color")},
+        })
+    landing_feats = []
+    rows = []
+    for f in landings.get("features", []):
+        p = f.get("properties", {})
+        if p.get("is_tbd"):
+            continue                       # unconfirmed/planned landing
+        geom = f.get("geometry") or {}
+        if geom.get("type") != "Point":
+            continue
+        lng, lat = geom["coordinates"][:2]
+        name = p.get("name") or p.get("id") or "landing point"
+        landing_feats.append({
+            "type": "Feature", "geometry": geom,
+            "properties": {"id": p.get("id"), "name": name},
+        })
+        # search-index row: "Town, Country" splits to a name + a country guess.
+        country = name.rsplit(",", 1)[-1].strip() if "," in name else None
+        rows.append({"n": name, "lat": round(lat, 5), "lng": round(lng, 5),
+                     "c": canon_country(country), "url": TG_SOURCE})
+
+    out = {
+        "fetched": datetime.now(timezone.utc).isoformat(),
+        "label": "Submarine cables & landing points",
+        "license": TG_LICENSE, "attribution": TG_ATTRIB, "source": TG_SOURCE,
+        "cables": {"type": "FeatureCollection", "features": cable_feats},
+        "landings": {"type": "FeatureCollection", "features": landing_feats},
+    }
+    DATA.mkdir(exist_ok=True)
+    (DATA / "submarine-cables.json").write_text(
+        json.dumps(out, ensure_ascii=False), encoding="utf-8")
+    print(f"  submarine-cables: {len(cable_feats)} cables, {len(landing_feats)} landing points")
+    return rows
+
+
 def write_dataset(key, label, license_, source, rows):
     DATA.mkdir(exist_ok=True)
     out = {"fetched": datetime.now(timezone.utc).isoformat(), "label": label,
@@ -323,7 +388,7 @@ def write_dataset(key, label, license_, source, rows):
 
 def write_wiki_pages():
     WIKI_DATA.mkdir(parents=True, exist_ok=True)
-    for key in list(QUERIES) + ["airports"]:
+    for key in list(QUERIES) + ["airports", "cable-landings"]:
         f = DATA / f"{key}.json"
         if not f.is_file():
             continue
@@ -364,6 +429,15 @@ def main():
                       "https://ourairports.com/data/", fetch_airports())
     else:
         print("  airports: fresh (cache hit)")
+    # 5D.2 — submarine cables (self-contained GeoJSON) + landing points (searchable).
+    path = DATA / "submarine-cables.json"
+    if args.force or not fresh(path):
+        print("  fetching submarine cables from TeleGeography…")
+        landing_rows = fetch_submarine_cables()
+        write_dataset("cable-landings", "Cable landing points",
+                      TG_LICENSE, TG_SOURCE, landing_rows)
+    else:
+        print("  submarine-cables: fresh (cache hit)")
     write_wiki_pages()
     return 0
 

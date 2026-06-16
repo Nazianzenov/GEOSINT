@@ -35,6 +35,11 @@ DATA_DIR = ROOT / "data"
 OUT = ROOT / "app" / "data" / "search-index.json"
 GRAPH_OUT = ROOT / "app" / "data" / "graph.json"
 WM_MANIFEST = ROOT / "wiki" / "wm_manifest.json"
+# 5D.2 — the submarine-cable route GeoJSON is line geometry, so it bypasses the
+# point search index and is served to the map directly. Copy it into app/data/
+# (the only client-served data dir) when present.
+CABLES_SRC = DATA_DIR / "submarine-cables.json"
+CABLES_OUT = ROOT / "app" / "data" / "submarine-cables.json"
 
 # dataset file -> (category key, label, wiki summary page)
 DATASETS = {
@@ -52,6 +57,7 @@ DATASETS = {
     "hospitals": ("hospitals", "Hospitals", "/wiki/data/hospitals/"),
     "worship": ("worship", "Places of worship", "/wiki/data/worship/"),
     "military": ("military", "Military bases", "/wiki/data/military/"),
+    "cable-landings": ("cable-landings", "Cable landing points", "/wiki/data/cable-landings/"),
 }
 
 CONTINENTS = ["Africa", "Asia", "Europe", "North America", "Oceania", "South America"]
@@ -490,6 +496,9 @@ class Indexer:
         }
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
+        if CABLES_SRC.is_file():           # 5D.2 — serve the cable GeoJSON to the map
+            CABLES_OUT.write_bytes(CABLES_SRC.read_bytes())
+            print(f"  copied submarine-cables.json -> {CABLES_OUT}")
         self.graph()
         cats = {}
         for c in self.cards:

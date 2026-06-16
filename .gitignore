@@ -7,6 +7,7 @@ __pycache__/
 wiki/site/
 app/data/search-index.json
 app/data/graph.json
+app/data/submarine-cables.json
 
 # user-saved source pages (large, user-provided)
 import/

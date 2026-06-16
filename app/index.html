@@ -209,6 +209,19 @@
         <p class="hint">Hands the plotted features (and the active point) to QGIS as a GeoJSON
            layer — for measurement, overlay on your own rasters, georeferencing, export.</p>
 
+        <h3>Submarine cables &amp; landing points <span class="muted">(global)</span></h3>
+        <p class="hint">Overlay the world's <b>submarine cable routes and landing points</b> —
+           critical-infrastructure CTI and connectivity chokepoints. Global layer (not
+           limited to the current view). Landing points are also in the
+           <a href="search.html" target="_blank">smart search</a>.</p>
+        <div class="field-row">
+          <button class="btn accent" id="cables-toggle" title="Show/hide the submarine-cable overlay">⎋ SHOW CABLES</button>
+          <button class="btn" id="cables-qgis" title="Open the cable routes + landing points in QGIS as a layer">▦ QGIS</button>
+        </div>
+        <div id="cables-status" class="muted"></div>
+        <p class="srcnote" id="cables-attrib">Cable data: <a href="https://www.submarinecablemap.com/"
+           target="_blank">© TeleGeography</a> · CC BY-NC-SA 3.0.</p>
+
         <h3>Species distribution overlay <span class="muted">(GBIF)</span></h3>
         <p class="hint">Live occurrence-density tiles for any species — e.g. <i>Betula pendula</i>
            (silver birch) to compare a scene's vegetation against the real range.

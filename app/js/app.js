@@ -141,6 +141,7 @@ function initMap() {
   state.sunLayer = L.layerGroup().addTo(state.map);
   state.imgLayer = L.layerGroup().addTo(state.map);
   state.dataLayer = L.layerGroup().addTo(state.map);
+  state.cableLayer = L.layerGroup().addTo(state.map);   // 5D.2 submarine cables (toggled)
   state.gbifLayers = {};   // name -> tileLayer
 
   state.map.on("mousemove", (e) => { $("#cursor-coords").textContent = fmtDD(e.latlng); });
@@ -1301,6 +1302,16 @@ const OSM_PRESETS = [
   // helipads alone (the "Airfields & helipads" preset bundles them with aerodromes;
   // a helipad-only view isolates rooftop/hospital/rig pads)
   ["Helipads", ['nwr["aeroway"="helipad"]'], 10],
+  // 5D.1 — cellular/radio infrastructure (corroborate a location from network
+  // metadata; map comms infra for CTI). Distinct from "Towers & masts": this
+  // filters to mobile-phone / telecom-tagged structures, not water/observation
+  // towers. communication:mobile_phone=yes is the OSM convention for cell sites.
+  ["Cell towers & radio masts", ['nwr["communication:mobile_phone"="yes"]',
+    'nwr["man_made"="mast"]["tower:type"="communication"]',
+    'nwr["man_made"="communications_tower"]', 'nwr["telecom"="data_center"]'], 11],
+  // IXPs via OSM (not PeeringDB — data-reuse terms unstated; see ROADMAP 5D).
+  ["Internet exchange points", ['nwr["telecom"="exchange"]',
+    'nwr["telecom"="data_center"]'], 8],
 ];
 
 function initData() {
@@ -1324,6 +1335,8 @@ function initData() {
     $("#data-status").textContent = "";
     syncQgisButton();
   });
+  $("#cables-toggle").addEventListener("click", toggleCables);
+  $("#cables-qgis").addEventListener("click", cablesToQgis);
   $("#gbif-add").addEventListener("click", () => gbifOverlay($("#gbif-name").value.trim()));
   $("#wx-windy").addEventListener("click", () => openWindMap("windy"));
   $("#wx-nullschool").addEventListener("click", () => openWindMap("nullschool"));
@@ -1445,6 +1458,75 @@ async function runOverpass(selectors, label, minZoom = 10) {
     $("#data-status").textContent = "";
     status(err.message || "Overpass failed", true, 8000);
   }
+}
+
+/* 5D.2 — submarine cables & landing points (TeleGeography, CC BY-NC-SA 3.0).
+   A global overlay built from the self-contained GeoJSON copied to app/data/.
+   Toggled on/off; the data is fetched once and cached on state. */
+async function loadCables() {
+  if (state.cables) return state.cables;
+  const r = await fetch("/app/data/submarine-cables.json");
+  if (!r.ok) throw new Error("cable data not built — run the dataset fetcher + index build");
+  state.cables = await r.json();
+  return state.cables;
+}
+
+async function toggleCables() {
+  const btn = $("#cables-toggle");
+  if (state.cablesShown) {                         // hide
+    state.cableLayer.clearLayers();
+    state.cablesShown = false;
+    btn.textContent = "⎋ SHOW CABLES";
+    btn.classList.remove("accent");
+    $("#cables-status").textContent = "";
+    return;
+  }
+  $("#cables-status").textContent = "loading cable map…";
+  try {
+    const d = await loadCables();
+    state.cableLayer.clearLayers();
+    // cable routes (MultiLineString) — GeoJSON is [lng,lat]; Leaflet wants [lat,lng].
+    L.geoJSON(d.cables, {
+      style: (f) => ({ color: f.properties.color || "#4cc2ff", weight: 1.5, opacity: 0.75 }),
+      onEachFeature: (f, lyr) => lyr.bindPopup(
+        `<b>${esc(f.properties.name || "cable")}</b><br>submarine cable` +
+        `<br><span class="muted">© TeleGeography · CC BY-NC-SA 3.0</span>`),
+    }).addTo(state.cableLayer);
+    // landing points
+    for (const lp of d.landings.features) {
+      const [lng, lat] = lp.geometry.coordinates;
+      L.circleMarker([lat, lng], {
+        radius: 1.5, color: "#ffd23e", fillColor: "#ffd23e", fillOpacity: 0.9, weight: 1,
+      }).bindPopup(
+        `<b>${esc(lp.properties.name || "landing point")}</b><br>cable landing point` +
+        `<br><span style="font-family:monospace">${lat.toFixed(5)}, ${lng.toFixed(5)}</span>` +
+        `<br><a href="#" onclick="setPoint(L.latLng(${lat},${lng}));return false">set active point</a>`)
+        .addTo(state.cableLayer);
+    }
+    state.cablesShown = true;
+    btn.textContent = "⎋ HIDE CABLES";
+    btn.classList.add("accent");
+    const nc = d.cables.features.length, nl = d.landings.features.length;
+    $("#cables-status").textContent = `${nc} cables · ${nl} landing points · © TeleGeography (CC BY-NC-SA 3.0)`;
+    status(`submarine cables overlaid (${nc} cables)`);
+  } catch (err) {
+    $("#cables-status").textContent = `✗ ${err.message}`;
+    status(err.message, true, 8000);
+  }
+}
+
+/* Hand the cable routes + landing points to QGIS as a GeoJSON layer. */
+async function cablesToQgis() {
+  try {
+    const d = await loadCables();
+    const features = [...d.cables.features, ...d.landings.features];
+    const r = await fetch("/api/qgis", {
+      method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
+      body: JSON.stringify({ geojson: { type: "FeatureCollection", features }, name: "submarine-cables" }),
+    });
+    const j = await r.json();
+    status(j.error ? j.error : `QGIS opening with ${j.features} cable feature(s)…`, !!j.error, 8000);
+  } catch (err) { status(err.message || "local server unreachable", true); }
 }
 
 async function gbifOverlay(name, knownKey) {
