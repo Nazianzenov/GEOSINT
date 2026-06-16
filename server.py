@@ -68,6 +68,12 @@ PGET_ALLOW = [
 UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")
 
+# Host header allowlist (set in main() once the port is known). Defends against
+# DNS rebinding: a remote page that rebinds its hostname to 127.0.0.1 sends
+# same-origin requests (carrying our X-GeOSINT header), defeating the CORS/CSRF
+# guard — but the Host header it sends is the attacker's domain, not loopback.
+ALLOWED_HOSTS = set()
+
 KML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Placemark>
@@ -204,10 +210,24 @@ def tiles_in_bbox(s, w, n, e, zmin, zmax):
                 yield z, x, y
 
 
+# Opener that refuses to follow 3xx redirects. The /api/pget and /tiles proxies
+# only fetch allowlisted hosts; without this, an allowlisted host (or a DNS/MITM
+# attacker on the path) could 302 us to an internal address — classic SSRF pivot.
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):
+        return None
+
+
+_no_redirect_opener = urllib.request.build_opener(_NoRedirect)
+
+# Hard ceiling on any single proxied response, so an upstream can't exhaust RAM/disk.
+MAX_UPSTREAM_BYTES = 64 * 1024 * 1024
+
+
 def upstream_get(url: str, timeout=30) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+    with _no_redirect_opener.open(req, timeout=timeout) as r:
+        return r.read(MAX_UPSTREAM_BYTES + 1)[:MAX_UPSTREAM_BYTES]
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -238,6 +258,16 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(data)
+
+    def host_ok(self):
+        """Reject requests whose Host header isn't our loopback bind — blocks
+        DNS-rebinding attacks that would otherwise reach the local API."""
+        host = (self.headers.get("Host") or "").strip().lower()
+        # Bracketed IPv6 loopback or bare host with no port are also fine.
+        if host in ALLOWED_HOSTS:
+            return True
+        hostname = host.rsplit(":", 1)[0] if host.count(":") == 1 else host
+        return hostname in ("127.0.0.1", "localhost", "[::1]", "::1")
 
     def do_HEAD(self):
         self.do_GET()
@@ -356,6 +386,8 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- routes --------------------------------------------------------
     def do_GET(self):
+        if not self.host_ok():
+            return self.send_json({"error": "bad host"}, 403)
         parsed = urlparse(self.path)
         path = parsed.path
         if path in ("/", "/index.html"):
@@ -388,8 +420,18 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json({"error": "not found"}, 404)
 
     def do_POST(self):
+        if not self.host_ok():
+            return self.send_json({"error": "bad host"}, 403)
         path = urlparse(self.path).path
-        length = int(self.headers.get("Content-Length") or 0)
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            return self.send_json({"error": "bad content-length"}, 400)
+        # /api/exif takes raw image bytes (bounded to 200 MB inside the handler);
+        # every other POST is small JSON. Cap the in-memory read accordingly.
+        cap = 200 * 1024 * 1024 if path == "/api/exif" else 2 * 1024 * 1024
+        if length < 0 or length > cap:
+            return self.send_json({"error": "request too large"}, 413)
         raw = self.rfile.read(length) if length else b""
 
         # CSRF guard: every POST launches a local app or runs a local binary.
@@ -467,8 +509,8 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 req = urllib.request.Request(mirror, data=data,
                                              headers={"User-Agent": UA})
-                with urllib.request.urlopen(req, timeout=40) as resp:
-                    body = resp.read()
+                with _no_redirect_opener.open(req, timeout=40) as resp:
+                    body = resp.read(MAX_UPSTREAM_BYTES + 1)[:MAX_UPSTREAM_BYTES]
                 json.loads(body)            # validate before caching
                 _preferred_mirror[0] = mirror
                 cached.write_bytes(body)
@@ -492,7 +534,17 @@ class Handler(BaseHTTPRequestHandler):
         if len(raw) > 200 * 1024 * 1024:
             return self.send_json({"error": "file too large"}, 413)
         name = Path(unquote(self.headers.get("X-Filename") or "image.jpg")).name
-        suffix = Path(name).suffix or ".jpg"
+        # The suffix steers how ExifTool picks a format handler and is fully
+        # attacker-controlled via X-Filename. Restrict it to known image/media
+        # extensions so a hostile client can't aim ExifTool at a riskier parser.
+        ALLOWED_SUFFIXES = {
+            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".tif", ".tiff", ".bmp",
+            ".heic", ".heif", ".avif", ".dng", ".cr2", ".cr3", ".nef", ".arw",
+            ".raf", ".orf", ".rw2", ".pef", ".srw", ".mp4", ".mov", ".jxl",
+        }
+        suffix = Path(name).suffix.lower()
+        if suffix not in ALLOWED_SUFFIXES:
+            suffix = ".jpg"
         tmp = None
         try:
             with tempfile.NamedTemporaryFile(prefix="geosint_", suffix=suffix, delete=False) as f:
@@ -581,6 +633,13 @@ def main():
     ap.add_argument("--port", type=int, default=8650)
     ap.add_argument("--no-browser", action="store_true")
     args = ap.parse_args()
+
+    # Lock the Host allowlist to this run's loopback bind (DNS-rebinding guard).
+    global ALLOWED_HOSTS
+    ALLOWED_HOSTS = {
+        f"127.0.0.1:{args.port}", f"localhost:{args.port}", f"[::1]:{args.port}",
+        "127.0.0.1", "localhost", "[::1]",
+    }
 
     try:
         srv = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
