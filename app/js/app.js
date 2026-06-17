@@ -2160,14 +2160,17 @@ async function saveCase() {
     status("finalizing evidence log…", false, 1500);
     await Promise.all([..._artPending]);
   }
-  const data = JSON.stringify(serializeCase(), null, 1);
-  const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+  const caseObj = serializeCase();
+  const data = JSON.stringify(caseObj, null, 1);
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");  // second precision: distinct saves get distinct names
+  const fname = `case-${stamp}.geosint.json`;
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([data], { type: "application/json" }));
-  a.download = `case-${stamp}.geosint.json`;
+  a.download = fname;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   clearAutosave();                                // durable copy exists; drop the snapshot
+  recordRecent(caseObj, fname);                   // add to the in-app recent list
   status("case saved to your Downloads folder");
 }
 
@@ -2217,11 +2220,90 @@ function applyCase(c) {
 function loadCase(file) {
   const reader = new FileReader();
   reader.onload = () => {
-    try { applyCase(JSON.parse(reader.result)); clearAutosave(); }
-    catch { status("could not parse case file", true); }
+    try {
+      const c = JSON.parse(reader.result);
+      applyCase(c);
+      clearAutosave();
+      recordRecent(c, file.name);                  // a loaded file is now a working case
+    } catch { status("could not parse case file", true); }
   };
   reader.readAsText(file);
 }
+
+/* ── recent cases (7.3) ──────────────────────────────────────────────
+   A small local index of saved/loaded cases so you can reopen one in-app
+   (no file re-pick). Stores the full snapshot per entry; capped + quota-safe.
+   100% local (localStorage). The browser can't reopen files by path, so this
+   keeps the snapshots itself. */
+const RECENT_KEY = "geosint:recent";
+const RECENT_MAX = 8;
+
+function readRecent() {
+  try { const a = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); return Array.isArray(a) ? a : []; }
+  catch { return []; }
+}
+function writeRecent(list) {
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); return true; }
+  catch {
+    // Quota: drop oldest snapshots (tombstone), then oldest entries, until it fits.
+    const trimmed = list.slice();
+    for (let i = trimmed.length - 1; i >= 0; i--) {
+      if (trimmed[i].snapshot) { trimmed[i] = { ...trimmed[i], snapshot: null }; }
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(trimmed)); return true; } catch { /* keep trimming */ }
+    }
+    while (trimmed.length) {
+      trimmed.pop();
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(trimmed)); return true; } catch { /* keep popping */ }
+    }
+    return false;
+  }
+}
+
+function recordRecent(caseObj, name) {
+  if (!caseObj || caseObj.app !== "geosint-workbench") return;
+  if (!lsAvailable()) return;
+  const entry = {
+    id: Date.now(),
+    name: (name || `case ${new Date().toISOString().slice(0, 16).replace("T", " ")}`).replace(/\.geosint\.json$/i, ""),
+    saved: caseObj.saved || new Date().toISOString(),
+    point: caseObj.point ? `${caseObj.point.lat.toFixed(4)}, ${caseObj.point.lng.toFixed(4)}` : null,
+    counts: { annos: (caseObj.annos || []).length, artifacts: (caseObj.artifacts || []).length,
+              measure: (caseObj.measure || []).length },
+    snapshot: caseObj,
+  };
+  let list = readRecent().filter((e) => e.name !== entry.name);   // dedupe by name
+  list.unshift(entry);
+  if (list.length > RECENT_MAX) list = list.slice(0, RECENT_MAX);
+  writeRecent(list);
+}
+
+function renderRecentMenu() {
+  const menu = $("#recent-menu");
+  const list = readRecent();
+  let html = list.map((e, i) => {
+    const tomb = !e.snapshot;
+    const meta = [e.point || "no point",
+      `${e.counts ? e.counts.annos : 0}📌 ${e.counts ? e.counts.artifacts : 0}🖼`,
+      (e.saved || "").slice(0, 16).replace("T", " ")].join(" · ");
+    return `<div class="rc-item${tomb ? " tomb" : ""}" data-i="${i}"${tomb ? ' title="Snapshot dropped to save space — use ⭱ LOAD to open the file"' : ""}>
+      <div class="rc-name">${esc(e.name)}${tomb ? " (file only)" : ""}</div>
+      <div class="rc-meta">${esc(meta)}</div></div>`;
+  }).join("");
+  if (!list.length) html = `<div class="rc-empty">No recent cases yet — save one with ⭳ SAVE.</div>`;
+  html += `<div class="rc-open" data-open="1">⭱ Open a case file…</div>`;
+  menu.innerHTML = html;
+  menu.querySelectorAll(".rc-item[data-i]").forEach((el) => el.addEventListener("click", () => {
+    const e = list[+el.dataset.i];
+    closeRecentMenu();
+    if (e.snapshot) { applyCase(e.snapshot); clearAutosave(); }
+    else { status("snapshot was dropped to save space — opening file picker", false, 4000); $("#case-file").click(); }
+  }));
+  menu.querySelector("[data-open]").addEventListener("click", () => { closeRecentMenu(); $("#case-file").click(); });
+}
+
+function openRecentMenu() { renderRecentMenu(); $("#recent-menu").hidden = false; }
+function closeRecentMenu() { $("#recent-menu").hidden = true; }
+function toggleRecentMenu() { $("#recent-menu").hidden ? openRecentMenu() : closeRecentMenu(); }
 
 /* ── autosave / crash recovery (7.2) ─────────────────────────────────
    Continuously snapshot the live case to localStorage so a crash / accidental
@@ -2332,6 +2414,11 @@ function initCase() {
   });
   $("#btn-notes").addEventListener("click", () => toggleNotes());
   $("#notes-close").addEventListener("click", () => toggleNotes(false));
+  // recent-cases dropdown
+  $("#btn-recent").addEventListener("click", (e) => { e.stopPropagation(); toggleRecentMenu(); });
+  document.addEventListener("click", (e) => {
+    if (!$("#recent-menu").hidden && !e.target.closest(".menu-wrap")) closeRecentMenu();
+  });
   const cc = $("#custody-csv"), cj = $("#custody-json");
   if (cc) cc.addEventListener("click", () => exportCustody("csv"));
   if (cj) cj.addEventListener("click", () => exportCustody("json"));
@@ -2518,6 +2605,7 @@ function initKeys() {
     }
     if (e.key === "Escape") {
       if (_palette.open) return closePalette();
+      if (!$("#recent-menu").hidden) { closeRecentMenu(); return; }
       if (cancelArrow()) return;
       if (state.measure.on) return toggleMeasure(false);
       if (!$("#timeline-panel").hidden) { $("#timeline-panel").hidden = true; return; }
