@@ -10,19 +10,24 @@ tools + a fully sourced field wiki.
 ## Quick start
 
 ```
-run.bat
+run.bat            # Windows
+./run.sh           # macOS / Linux
+python -m geosint  # any OS (same one-command bootstrap)
 ```
 
 That's it. First run creates `.venv`, installs the wiki builder (mkdocs-material), builds the
 wiki, starts the server on `http://127.0.0.1:8650/` and opens your browser.
 
+Prefer not to install Python? Use a **portable build** or the **Docker image** instead — see
+[docs/DEPLOY.md](docs/DEPLOY.md).
+
 Manual equivalent:
 
-```powershell
+```bash
 python -m venv .venv
-.venv\Scripts\pip install -r requirements.txt
-.venv\Scripts\mkdocs build -f wiki\mkdocs.yml
-.venv\Scripts\python server.py
+.venv/bin/pip install -r requirements.txt      # Windows: .venv\Scripts\pip
+.venv/bin/mkdocs build -f wiki/mkdocs.yml
+.venv/bin/python server.py
 ```
 
 ## The modules
@@ -41,32 +46,30 @@ python -m venv .venv
 | **Tool Launcher** | 4 | ~35 curated tools, each opening **centred on your active point**: Google Earth web, Esri Wayback, Sentinel/Copernicus, NASA Worldview, Zoom Earth, Mapillary, KartaView, Yandex/Baidu, Overpass Turbo, Bellingcat OSM Search, OpenInfraMap, OpenRailwayMap, PeakVisor/PeakFinder, ShadeMap, Flightradar24, MarineTraffic, … |
 | **Wiki** | top-right | MkDocs Material site: methodology (workflow, chronolocation, verification), identification catalogues (bollards, poles, road lines, signs, plates, architecture, vegetation, scripts, domains/phones, Street View meta), per-continent recognition notes, country quick-reference table, landmark gazetteer, master source list. **Every claim is referenced** to a standard, paper, database or maintained community catalogue |
 
-### Desktop integration
+### Desktop integration (optional tools)
 
-The server detects locally installed tools (shown in the Tools module under
-*Local desktop tools*, and in the status bar):
+These desktop tools are **optional** — the workbench detects whichever are
+installed (shown in the Tools module under *Local desktop tools* and in the
+status bar) and unlocks the matching one-click hand-off. Detection re-runs on
+every page load: install a tool and refresh, no config needed. Anything not
+installed is simply hidden; nothing else depends on it.
 
-| Tool | Status | Role |
+| Tool | Install | What it unlocks |
 |---|---|---|
-| **ExifTool** | ✓ installed (`winget install OliverBetz.ExifTool`) | "FULL METADATA" button in the Image module runs it on your file via `/api/exif` — all ~hundreds of tags, locally |
-| **Google Earth Pro** | ✓ installed | Tools module entry generates a KML and flies GE Pro to the active point (`/api/flyto`) |
-| **QGIS** | installed (`winget install OSGeo.QGIS.LTR`) | launches via its `qgis-ltr.bat` (sets up the Qt/GDAL env). The Data-layers module's **Open in QGIS** button hands off the plotted OSM features + active point as a GeoJSON layer (`/api/qgis`) |
-| **Sherloq** (image forensics) | not installed — `git clone https://github.com/GuidoBartoli/sherloq tools\sherloq` + venv per its README | one-click launch once present in `tools\sherloq` |
+| **ExifTool** | `winget install OliverBetz.ExifTool` · macOS `brew install exiftool` · Linux `apt install libimage-exiftool-perl` | The Image module's **FULL METADATA** button runs it on your file via `/api/exif` — all ~hundreds of tags, locally |
+| **Google Earth Pro** | [google.com/earth](https://www.google.com/earth/about/versions/#earth-pro) | Tools-module entry generates a KML and flies GE Pro to the active point (`/api/flyto`) |
+| **QGIS** | `winget install OSGeo.QGIS.LTR` · macOS `brew install --cask qgis` · Linux `apt install qgis` | The Data-layers module's **Open in QGIS** button hands off the plotted OSM features + active point as a GeoJSON layer (`/api/qgis`) |
+| **Sherloq** (image forensics) | `git clone https://github.com/GuidoBartoli/sherloq tools/sherloq` + a venv per its README | One-click launch once present in `tools/sherloq` |
 
-Detection re-runs on every page load — install a tool and refresh; no config needed.
+## Requirements
 
-## Requirements & blockers
-
-| Thing | Status |
+| Requirement | Notes |
 |---|---|
-| Python 3.10+ | ✓ you have 3.14 |
-| `mkdocs-material` (in `.venv` only) | ✓ installed — the server itself is stdlib-only |
-| Google Earth Pro | ✓ detected at `C:\Program Files\Google\Google Earth Pro\` |
-| ExifTool | ✓ installed via winget (`%LOCALAPPDATA%\Programs\ExifTool`) |
-| Wiki images | Wikimedia images are **cached locally** in `wiki/docs/assets/wm/` by `tools/cache_wikimedia.py` (re-checked against Commons only when >30 days old; manifest in `wiki/wm_manifest.json`) — wiki works offline. Identification photo galleries are hotlinked, not copied — they load in the browser and are not stored in the repo (internet required to display them) |
-| Internet | needed for tiles/geocoding/weather/external tools; the wiki and EXIF parsing work offline |
-| Reverse image with **local** files | engines can't be auto-submitted a local file — the app opens the engine and you drag/paste the image in (URL-based search *is* fully automated). This is an engine-side limitation, not a missing feature |
-| AI geolocators (GeoSpy/Picarta) | linked but flagged: they upload your image to a third party |
+| **Python 3.10+** | The only prerequisite to run from source; the server itself is stdlib-only (the lone dependency, `mkdocs-material`, builds the wiki and lives in `.venv`). Not needed if you use a portable build or the Docker image. |
+| **Internet** | Needed for map tiles, geocoding, weather and the external tools; the wiki and local EXIF parsing work fully offline. Revisited areas are disk-cached and then work offline too. |
+| **Wiki images** | Wikimedia images are cached locally so the wiki works offline; identification photo galleries are hotlinked (loaded in the browser, internet required to display them). |
+| **Reverse image with local files** | Reverse-search engines fetch an image *URL* from their own servers, so a local file can't be auto-submitted. The workbench copies the image to your clipboard and opens the engines — you just paste. (URL-based search *is* fully automated.) |
+| **AI geolocators (GeoSpy/Picarta)** | Linked but flagged — they upload your image to a third party; off by default, opt-in only. |
 
 ## Open datasets (all free / non-commercial licensed)
 
