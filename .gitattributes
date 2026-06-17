@@ -11,3 +11,11 @@ wiki/docs/assets/** binary
 # Cached upstream data — keep LF, don't normalize.
 data/*.json -text
 data/*.txt -text
+
+# Shell scripts + container/CI files MUST stay LF — CRLF breaks the shebang on
+# macOS/Linux (bad interpreter) and inside Docker.
+*.sh text eol=lf
+run.sh text eol=lf
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+*.yml text eol=lf
