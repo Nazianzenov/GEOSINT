@@ -19,7 +19,7 @@
   <div id="active-coords" class="coord-readout" title="Active point (click map to set)">no active point</div>
   <button id="btn-copy-dd" class="icon-btn" title="Copy decimal coordinates">⧉ DD</button>
   <button id="btn-copy-dms" class="icon-btn" title="Copy DMS coordinates">⧉ DMS</button>
-  <button id="btn-notes" class="icon-btn" title="Case notes [N]">✎ NOTES</button>
+  <button id="btn-notes" class="icon-btn" data-key="N" title="Case notes [N]">✎ NOTES</button>
   <button id="btn-case-save" class="icon-btn" title="Save the whole workspace (point, view, measure, layers, module inputs, notes) to a local .geosint.json file — nothing leaves your machine">⭳ SAVE</button>
   <button id="btn-case-load" class="icon-btn" title="Load a previously saved .geosint.json case file">⭱ LOAD</button>
   <button id="btn-dossier" class="icon-btn" title="Export a self-contained HTML report: active point, notes, annotations, evidence thumbnails, timeline and sources — nothing leaves your machine">📄 DOSSIER</button>
@@ -35,15 +35,15 @@
 
 <div id="layout">
   <nav id="rail">
-    <button class="rail-btn" data-module="sun"     title="Sun &amp; shadow analysis [1]"><span>☀</span><label>SUN</label></button>
-    <button class="rail-btn" data-module="weather" title="Historical &amp; current weather [2]"><span>☂</span><label>WX</label></button>
-    <button class="rail-btn" data-module="image"   title="Image intelligence — EXIF + reverse search [3]"><span>▣</span><label>IMG</label></button>
-    <button class="rail-btn" data-module="tools"   title="External tool launcher [4]"><span>⌬</span><label>TOOLS</label></button>
-    <button class="rail-btn" data-module="data"    title="Data layers — OSM features &amp; species distributions on the map [6]"><span>⛏</span><label>DATA</label></button>
-    <button class="rail-btn" data-module="anno"    title="Annotations — pins, labels &amp; arrows; export GeoJSON/KML [7]"><span>✎</span><label>NOTE</label></button>
-    <button class="rail-btn" data-module="wiki" title="Smart wiki search — countries, bollards, anything [5]"><span>⌕</span><label>FIND</label></button>
+    <button class="rail-btn" data-module="sun"     data-key="1" title="Sun &amp; shadow analysis [1]"><span>☀</span><label>SUN</label></button>
+    <button class="rail-btn" data-module="weather" data-key="2" title="Historical &amp; current weather [2]"><span>☂</span><label>WX</label></button>
+    <button class="rail-btn" data-module="image"   data-key="3" title="Image intelligence — EXIF + reverse search [3]"><span>▣</span><label>IMG</label></button>
+    <button class="rail-btn" data-module="tools"   data-key="4" title="External tool launcher [4]"><span>⌬</span><label>TOOLS</label></button>
+    <button class="rail-btn" data-module="data"    data-key="6" title="Data layers — OSM features &amp; species distributions on the map [6]"><span>⛏</span><label>DATA</label></button>
+    <button class="rail-btn" data-module="anno"    data-key="7" title="Annotations — pins, labels &amp; arrows; export GeoJSON/KML [7]"><span>✎</span><label>NOTE</label></button>
+    <button class="rail-btn" data-module="wiki"    data-key="5" title="Smart wiki search — countries, bollards, anything [5]"><span>⌕</span><label>FIND</label></button>
     <div class="rail-spacer"></div>
-    <button class="rail-btn" id="btn-measure" title="Measure distance [M] — click to add points; right-drag a point to move; hold Shift for a range ring; Esc clears"><span>⤢</span><label>RULER</label></button>
+    <button class="rail-btn" id="btn-measure" data-key="M" title="Measure distance [M] — click to add points; right-drag a point to move; hold Shift for a range ring; Esc clears"><span>⤢</span><label>RULER</label></button>
     <button class="rail-btn" id="btn-help" title="Keyboard shortcuts"><span>?</span><label>KEYS</label></button>
   </nav>
 
