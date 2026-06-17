@@ -145,7 +145,7 @@ function initMap() {
   state.sunLayer = L.layerGroup().addTo(state.map);
   state.imgLayer = L.layerGroup().addTo(state.map);
   state.dataLayer = L.layerGroup().addTo(state.map);
-  state.cableLayer = L.layerGroup().addTo(state.map);   // 5D.2 submarine cables (toggled)
+  state.cableLayer = L.layerGroup().addTo(state.map);   // submarine cables (toggled)
   state.gbifLayers = {};   // name -> tileLayer
 
   state.map.on("mousemove", (e) => { $("#cursor-coords").textContent = fmtDD(e.latlng); });
@@ -1029,7 +1029,7 @@ function renderUrlButtons() {
 }
 
 // Reverse-search engines fetch an image URL from THEIR servers, so a local file
-// (or a loopback URL) can't be auto-submitted. 8B.3 doctrine-safe assist: copy
+// (or a loopback URL) can't be auto-submitted. Doctrine-safe assist: copy
 // the dropped image to the clipboard and open the engines' upload pages, so the
 // analyst just pastes (Ctrl+V). Nothing leaves the machine.
 const REVERSE_UPLOAD_PAGES = [
@@ -1059,7 +1059,7 @@ async function localReverseSearch() {
     : "clipboard blocked — drag the image into the engine tab", !copied, 6000);
 }
 
-// Local reverse-search assist button (8B.3) — copy-to-clipboard + open engines.
+// Local reverse-search assist button — copy-to-clipboard + open engines.
 function reverseSearchButton() {
   return `<div class="gps-actions">
       <button class="btn" id="local-reverse" title="Copy this image to the clipboard and open the reverse-search engines — then paste (Ctrl/Cmd+V). Nothing is uploaded by GeOSINT.">🔍 REVERSE SEARCH (paste-ready)</button>
@@ -1081,7 +1081,7 @@ function exiftoolButton() {
     <div id="exiftool-out"></div>`;
 }
 
-/* 5B.1 — extract the largest embedded preview/thumbnail and flag any
+/* extract the largest embedded preview/thumbnail and flag any
    main-vs-preview GPS/time mismatch (a tampering signal). The preview is often
    the uncropped original — what a crop/redaction removed can still live here. */
 async function previewExtract() {
@@ -1145,7 +1145,7 @@ async function exiftoolDump() {
   } catch { out.innerHTML = `<p class="nomatch">✗ local server unreachable</p>`; }
 }
 
-/* 8B.2 — turn the raw EXIF dump into findings. All local, from fields exifr
+/* turn the raw EXIF dump into findings. All local, from fields exifr
    already parsed. Returns [{sev:'high'|'med'|'info', msg}], most severe first. */
 function analyzeExifAnomalies(ex) {
   const out = [];
@@ -1236,7 +1236,7 @@ async function loadImage(file) {
   } else {
     add("GPS", "<i>none embedded</i>", true);
   }
-  // 8B.2 — anomaly findings derived from the EXIF (edit signatures, timestamp
+  // anomaly findings derived from the EXIF (edit signatures, timestamp
   // skew, GPS/timezone mismatch). Surfaced as a compact severity-ranked panel.
   const SEV = { high: ["⚠", "bad"], med: ["▲", "accent-2"], info: ["·", "muted"] };
   const anomalies = analyzeExifAnomalies(ex);
@@ -1455,10 +1455,10 @@ const OSM_PRESETS = [
     'nwr["military"="barracks"]'], 8],
   ["Water towers", ['nwr["man_made"="water_tower"]'], 9],
   ["Lighthouses", ['nwr["man_made"="lighthouse"]'], 6],
-  // 5D.3 — border crossings & checkpoints (movement/conflict/migration analysis)
+  // border crossings & checkpoints (movement/conflict/migration analysis)
   ["Border crossings & checkpoints", ['nwr["barrier"="border_control"]',
     'nwr["amenity"="customs"]', 'nwr["barrier"="checkpoint"]'], 7],
-  // 5D.4 — extra investigative categories
+  // extra investigative categories
   ["Prisons & detention", ['nwr["amenity"="prison"]'], 8],
   ["Embassies & consulates", ['nwr["diplomatic"="embassy"]',
     'nwr["diplomatic"="consulate"]', 'nwr["office"="diplomatic"]'], 9],
@@ -1467,7 +1467,7 @@ const OSM_PRESETS = [
   // helipads alone (the "Airfields & helipads" preset bundles them with aerodromes;
   // a helipad-only view isolates rooftop/hospital/rig pads)
   ["Helipads", ['nwr["aeroway"="helipad"]'], 10],
-  // 5D.1 — cellular/radio infrastructure (corroborate a location from network
+  // cellular/radio infrastructure (corroborate a location from network
   // metadata; map comms infra for CTI). Distinct from "Towers & masts": this
   // filters to mobile-phone / telecom-tagged structures, not water/observation
   // towers. communication:mobile_phone=yes is the OSM convention for cell sites.
@@ -1625,7 +1625,7 @@ async function runOverpass(selectors, label, minZoom = 10) {
   }
 }
 
-/* 5D.2 — submarine cables & landing points (TeleGeography, CC BY-NC-SA 3.0).
+/* submarine cables & landing points (TeleGeography, CC BY-NC-SA 3.0).
    A global overlay built from the self-contained GeoJSON copied to app/data/.
    Toggled on/off; the data is fetched once and cached on state. */
 async function loadCables() {
@@ -1947,8 +1947,8 @@ async function annoToQgis() {
 /* ═══════════════════════════ ARTIFACTS (case v2) ═══════════════════════════
    Append-only evidence log. Every item the analyst pulls in (an image, a logged
    observation) becomes an artifact with a timestamp and provenance, so the case
-   can drive a timeline (5C.1), a sourced dossier (5C.2) and a chain-of-custody
-   view (5C.3). Images store a SHA-256 of the ORIGINAL bytes + a small thumbnail
+   can drive a timeline, a sourced dossier and a chain-of-custody
+   view. Images store a SHA-256 of the ORIGINAL bytes + a small thumbnail
    — never the full image. All local: crypto.subtle and canvas, nothing uploaded.
 
    Artifact shape:
@@ -2000,7 +2000,7 @@ function addArtifact(a) {
   return art;
 }
 
-/* Evidence-log readout + chain-of-custody table in the notes drawer (5C.3).
+/* Evidence-log readout + chain-of-custody table in the notes drawer.
    Confirms capture is happening, originals are not stored, and gives a
    defensible, exportable provenance record. */
 const ART_SYM = { image: "🖼", note: "📝", point: "📍", obs: "👁" };
@@ -2070,7 +2070,7 @@ function exportCustody(fmt) {
   status(`exported ${arts.length} custody record(s) as ${ext.toUpperCase()}`);
 }
 
-/* ── timeline (5C.1) ──
+/* ── timeline ──
    Chronological strip of every dated artifact plus case-context events (the
    weather date and the Sun module's date), so a sequence-of-events reads off
    one view. Each event carries an optional location → ⌖ jump-to-map. */
@@ -2125,7 +2125,7 @@ function openTimeline() {
   panel.hidden = false;
 }
 
-/* ── dossier export (5C.2) ──
+/* ── dossier export ──
    A self-contained HTML report of the case: active point (all coord formats),
    notes, annotations, the evidence log with inline thumbnails, the timeline,
    and a sources/provenance section. Renders from case state + v2 artifacts;
@@ -2175,7 +2175,7 @@ function buildDossier() {
         <td>${e.ll ? `${e.ll[0].toFixed(4)}, ${e.ll[1].toFixed(4)}` : ""}</td></tr>`).join("")}
     </table>` : `<p class="muted">No dated events.</p>`;
 
-  // 8A.3 — chronolocation finding with its stated uncertainty (if the solver ran).
+  // chronolocation finding with its stated uncertainty (if the solver ran).
   const sr = state.solverResult;
   const chronoBlock = !sr ? "" : (sr.status === "inconsistent"
     ? `<h2>Chronolocation finding</h2><p><b>Claim inconsistent</b> (${esc(sr.confidence)} confidence) —
@@ -2365,7 +2365,7 @@ function loadCase(file) {
   reader.readAsText(file);
 }
 
-/* ── recent cases (7.3) ──────────────────────────────────────────────
+/* ── recent cases ──────────────────────────────────────────────
    A small local index of saved/loaded cases so you can reopen one in-app
    (no file re-pick). Stores the full snapshot per entry; capped + quota-safe.
    100% local (localStorage). The browser can't reopen files by path, so this
@@ -2440,7 +2440,7 @@ function openRecentMenu() { renderRecentMenu(); $("#recent-menu").hidden = false
 function closeRecentMenu() { $("#recent-menu").hidden = true; }
 function toggleRecentMenu() { $("#recent-menu").hidden ? openRecentMenu() : closeRecentMenu(); }
 
-/* ── bundled sample case + first-run onboarding (7.8) ─────────────────
+/* ── bundled sample case + first-run onboarding ─────────────────
    A real, self-contained demo case that teaches the verification spine.
    No network, no external file — loaded via the existing applyCase(). */
 const SAMPLE_CASE = {
@@ -2498,7 +2498,7 @@ function dismissWelcome() {
   try { localStorage.setItem(SEEN_KEY, "1"); } catch { /* ignore */ }
 }
 
-/* ── autosave / crash recovery (7.2) ─────────────────────────────────
+/* ── autosave / crash recovery ─────────────────────────────────
    Continuously snapshot the live case to localStorage so a crash / accidental
    close / reload never loses work since the last manual Save. 100% local —
    localStorage is per-origin, on the user's disk; nothing is uploaded.
@@ -2624,7 +2624,7 @@ function initCase() {
     exportDossier();
   });
 
-  // ── autosave wiring (7.2) ──
+  // ── autosave wiring ──
   const notes = $("#case-notes");
   if (notes) notes.addEventListener("input", markDirty);
   setInterval(writeAutosave, 20000);             // coarse backstop in case a mutator is missed
@@ -2634,14 +2634,14 @@ function initCase() {
   document.addEventListener("visibilitychange", () => { if (document.hidden) writeAutosave(); });
   maybeOfferRestore();                            // offer to restore a prior unsaved snapshot
 
-  // first-run welcome + sample case (7.8)
+  // first-run welcome + sample case
   $("#welcome-sample").addEventListener("click", () => { dismissWelcome(); loadSampleCase(); });
   $("#welcome-keys").addEventListener("click", () => { dismissWelcome(); $("#help-overlay").hidden = false; });
   $("#welcome-start").addEventListener("click", dismissWelcome);
   maybeWelcome();                                 // show on first visit (after restore check)
 }
 
-/* ═══════════════════════ command palette (7.4) ═════════════════════
+/* ═══════════════════════ command palette ═════════════════════
    Ctrl/Cmd+K: fuzzy-jump to any module, tool, coordinate action or wiki search.
    Commands are rebuilt on each open so point-dependent ones reflect live state. */
 const _palette = { open: false, items: [], sel: 0, prevFocus: null };

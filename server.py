@@ -543,9 +543,10 @@ class Handler(BaseHTTPRequestHandler):
             return self.serve_static(APP_DIR, path[len("/app"):].lstrip("/"))
         if path.startswith("/wiki"):
             if not (WIKI_SITE / "index.html").is_file():
-                body = (b"<h1>Wiki not built yet</h1><p>Run <code>run.bat</code> "
-                        b"(or <code>.venv\\Scripts\\mkdocs build -f wiki\\mkdocs.yml</code>) "
-                        b"to build the wiki, then reload.</p>")
+                body = (b"<h1>Wiki not built yet</h1><p>Start the workbench with "
+                        b"<code>run.ps1</code> (Windows) or <code>run.sh</code> "
+                        b"(macOS/Linux) \xe2\x80\x94 or run <code>python -m geosint</code> "
+                        b"\xe2\x80\x94 to build the wiki, then reload.</p>")
                 self.send_response(503)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(body)))
