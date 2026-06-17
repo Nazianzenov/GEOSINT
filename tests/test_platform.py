@@ -1,0 +1,127 @@
+"""Cross-platform detection + launch tests (6.1 / 6.2).
+
+The server is pure stdlib, so we import it directly and exercise the OS branches
+by monkeypatching server.IS_WIN/IS_MAC/IS_LINUX and stubbing subprocess/shutil.
+This verifies the Windows/macOS/Linux code paths on any host (incl. CI's matrix).
+"""
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import server  # noqa: E402
+
+
+@pytest.fixture
+def os_mode(monkeypatch):
+    """Return a setter that flips server's platform flags to a given OS."""
+    def set_os(name):
+        monkeypatch.setattr(server, "IS_WIN", name == "win")
+        monkeypatch.setattr(server, "IS_MAC", name == "mac")
+        monkeypatch.setattr(server, "IS_LINUX", name == "linux")
+    return set_os
+
+
+# ── _launch_app: the right spawn shape per OS ─────────────────────────────
+def test_launch_windows_bat_uses_cmd(os_mode, monkeypatch):
+    os_mode("win")
+    calls = []
+    monkeypatch.setattr(server.subprocess, "Popen", lambda cmd, **kw: calls.append((cmd, kw)) or "P")
+    server._launch_app(Path(r"C:\QGIS\bin\qgis-ltr.bat"), [Path("layer.geojson")])
+    cmd, kw = calls[0]
+    assert cmd[:2] == ["cmd", "/c"]
+    assert cmd[2].endswith("qgis-ltr.bat")
+    assert cmd[-1].endswith("layer.geojson")
+
+
+def test_launch_windows_exe_direct(os_mode, monkeypatch):
+    os_mode("win")
+    calls = []
+    monkeypatch.setattr(server.subprocess, "Popen", lambda cmd, **kw: calls.append(cmd))
+    server._launch_app(Path(r"C:\x\googleearth.exe"))
+    assert calls[0][0].endswith("googleearth.exe")
+    assert "cmd" not in calls[0]
+
+
+def test_launch_mac_app_uses_open_a(os_mode, monkeypatch):
+    os_mode("mac")
+    calls = []
+    monkeypatch.setattr(server.subprocess, "Popen", lambda cmd, **kw: calls.append(cmd))
+    app = Path("/Applications/QGIS.app")
+    server._launch_app(app, [Path("/tmp/x.geojson")])
+    assert calls[0][0] == "open"
+    assert calls[0][1] == "-a"
+    assert calls[0][2] == str(app)            # str(Path) is OS-agnostic for the comparison
+    assert "--args" in calls[0]
+
+
+def test_launch_linux_direct(os_mode, monkeypatch):
+    os_mode("linux")
+    calls = []
+    monkeypatch.setattr(server.subprocess, "Popen", lambda cmd, **kw: calls.append(cmd))
+    qgis = Path("/usr/bin/qgis")
+    server._launch_app(qgis)
+    assert calls[0] == [str(qgis)]
+
+
+def test_launch_no_shell_ever(os_mode, monkeypatch):
+    # no launch path should ever pass shell=True
+    seen = []
+    monkeypatch.setattr(server.subprocess, "Popen", lambda cmd, **kw: seen.append(kw))
+    for mode in ("win", "mac", "linux"):
+        os_mode(mode)
+        server._launch_app(Path("/x/app" + (".bat" if mode == "win" else "")))
+    assert all("shell" not in kw or kw["shell"] is False for kw in seen)
+
+
+# ── _open_document_with: open a KML in the detected app ───────────────────
+def test_open_document_mac_app(os_mode, monkeypatch):
+    os_mode("mac")
+    calls = []
+    monkeypatch.setattr(server.subprocess, "Popen", lambda cmd, **kw: calls.append(cmd))
+    app, doc = Path("/Applications/Google Earth Pro.app"), Path("/tmp/f.kml")
+    server._open_document_with(app, doc)
+    assert calls[0] == ["open", "-a", str(app), str(doc)]
+
+
+def test_open_document_linux_binary(os_mode, monkeypatch):
+    os_mode("linux")
+    calls = []
+    monkeypatch.setattr(server.subprocess, "Popen", lambda cmd, **kw: calls.append(cmd))
+    binp, doc = Path("/opt/google/earth/pro/googleearth"), Path("/tmp/f.kml")
+    server._open_document_with(binp, doc)
+    assert calls[0] == [str(binp), str(doc)]
+
+
+# ── find_* OS branches ────────────────────────────────────────────────────
+def test_find_exiftool_prefers_path(os_mode, monkeypatch):
+    os_mode("linux")
+    monkeypatch.setattr(server.shutil, "which", lambda n: "/usr/bin/exiftool" if n == "exiftool" else None)
+    assert server.find_exiftool() == Path("/usr/bin/exiftool")
+
+
+def test_find_qgis_windows_bat(os_mode, monkeypatch):
+    os_mode("win")
+    monkeypatch.setattr(server, "_first_existing", lambda paths: Path(list(paths)[0]))
+    res = server.find_qgis()
+    assert str(res).lower().endswith(".bat")
+
+
+def test_find_qgis_mac_app(os_mode, monkeypatch):
+    os_mode("mac")
+    monkeypatch.setattr(server, "_first_existing", lambda paths: Path(list(paths)[0]))
+    assert str(server.find_qgis()).endswith(".app")
+
+
+def test_venv_python_dir(os_mode):
+    os_mode("win")
+    assert server._venv_python_dir() == "Scripts"
+    os_mode("linux")
+    assert server._venv_python_dir() == "bin"
+
+
+# ── version surface ───────────────────────────────────────────────────────
+def test_version_constant():
+    assert server.VERSION
+    assert server.UA.startswith(f"GeOSINT-Workbench/{server.VERSION}")
