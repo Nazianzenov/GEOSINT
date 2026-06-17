@@ -184,6 +184,10 @@ table.data td:first-child, table.data th:first-child { text-align: left; }
 
 #solver-out .match { font: 12px var(--mono); padding: 4px 8px; border-left: 3px solid var(--good); margin: 4px 0; background: var(--bg-2); }
 #solver-out .nomatch { color: var(--bad); font-size: 12px; }
+#solver-out .solver-conf { font-size: 12px; margin-top: 8px; padding: 5px 8px; border-radius: 4px; background: var(--bg-2); }
+#solver-out .conf-high b { color: var(--good); }
+#solver-out .conf-moderate b { color: var(--accent-2); }
+#solver-out .conf-low b { color: var(--bad); }
 
 /* image module */
 #dropzone {
@@ -204,6 +208,15 @@ table.batch td .muted { color: var(--txt-dim); }
 table.batch .batch-go { text-decoration: none; font-size: 14px; }
 #img-preview { max-width: 100%; max-height: 220px; border-radius: 4px; border: 1px solid var(--line); margin-bottom: 8px; }
 #exif-out .gps-actions { margin: 8px 0; display: flex; gap: 6px; }
+
+/* EXIF anomaly findings (8B.2) */
+.exif-anom { margin: 10px 0; border: 1px solid var(--line); border-radius: 5px; padding: 8px 10px; background: var(--bg); }
+.exif-anom h4 { margin: 0 0 6px; font: 600 11px var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--accent-2); }
+.exif-anom.ok { color: var(--good); font-size: 12px; border-color: var(--line); }
+.anom-row { font-size: 12px; padding: 3px 0; line-height: 1.4; }
+.anom-high { color: var(--bad); }
+.anom-med  { color: var(--accent-2); }
+.anom-info { color: var(--txt-dim); }
 
 /* tools */
 .tool-group h3 { margin-top: 16px; }
