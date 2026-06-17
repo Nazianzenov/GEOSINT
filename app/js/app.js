@@ -2572,4 +2572,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
     e.preventDefault(); openModule("wiki");
   });
+  // keep the Leaflet map sized correctly when the viewport changes (responsive)
+  let _resizeT;
+  window.addEventListener("resize", () => {
+    clearTimeout(_resizeT);
+    _resizeT = setTimeout(() => state.map && state.map.invalidateSize(), 150);
+  });
 });

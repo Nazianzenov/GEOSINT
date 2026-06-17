@@ -71,7 +71,7 @@ kbd { background: var(--bg-2); border: 1px solid var(--line); border-radius: 3px
 .wiki-btn:hover { background: var(--accent); color: var(--bg) !important; text-decoration: none; }
 
 /* ── layout ── */
-#layout { flex: 1; display: flex; min-height: 0; }
+#layout { flex: 1; display: flex; min-height: 0; position: relative; }  /* relative: anchor the overlay panel on narrow viewports */
 #rail {
   width: 58px; flex: none; display: flex; flex-direction: column; align-items: center;
   gap: 4px; padding: 8px 0; background: var(--bg-1); border-right: 1px solid var(--line);
@@ -392,3 +392,28 @@ table.batch .batch-go { text-decoration: none; font-size: 14px; }
 .geosearch .more { margin: 10px 0; }
 .geosearch .empty { color: var(--txt-dim); padding: 40px 0; font-size: 14px; }
 .geosearch mark { background: #4cc2ff33; color: var(--accent); border-radius: 2px; padding: 0 1px; }
+
+/* ── responsive (7.6) ──────────────────────────────────────────────────
+   Desktop keeps the rail | map | side-panel columns. On narrow viewports the
+   panel floats OVER the map (so it never crushes it), the topbar wraps, and the
+   rail shrinks. No JS behaviour change. */
+@media (max-width: 900px) {
+  /* topbar: let the controls wrap onto a second row instead of overflowing */
+  #topbar { height: auto; min-height: 46px; flex-wrap: wrap; padding: 4px 8px; }
+  .search-wrap { min-width: 160px; }
+  /* panel overlays the map instead of taking a flex column */
+  #panel {
+    position: absolute; top: 0; right: 0; bottom: 0; z-index: 1500;
+    width: min(380px, 90vw);
+    box-shadow: -8px 0 24px #0008;
+  }
+  #panel.wide { width: min(620px, 95vw); }
+}
+@media (max-width: 560px) {
+  #rail { width: 46px; }
+  .rail-btn { width: 40px; height: 40px; }
+  .rail-btn span { font-size: 16px; }
+  #panel, #panel.wide { width: 100%; }            /* full-screen module on phones */
+  .brand-sub { display: none; }                    /* reclaim topbar width */
+  #topbar { overflow-x: auto; }                    /* last-resort: scroll the controls */
+}
