@@ -21,6 +21,10 @@
   <button id="btn-copy-dms" class="icon-btn" title="Copy DMS coordinates">⧉ DMS</button>
   <button id="btn-notes" class="icon-btn" data-key="N" title="Case notes [N]">✎ NOTES</button>
   <button id="btn-case-save" class="icon-btn" title="Save the whole workspace (point, view, measure, layers, module inputs, notes) to a local .geosint.json file — nothing leaves your machine">⭳ SAVE</button>
+  <div class="menu-wrap">
+    <button id="btn-recent" class="icon-btn" title="Reopen a recently saved/loaded case (kept locally in your browser)">↺ RECENT</button>
+    <div id="recent-menu" hidden></div>
+  </div>
   <button id="btn-case-load" class="icon-btn" title="Load a previously saved .geosint.json case file">⭱ LOAD</button>
   <button id="btn-dossier" class="icon-btn" title="Export a self-contained HTML report: active point, notes, annotations, evidence thumbnails, timeline and sources — nothing leaves your machine">📄 DOSSIER</button>
   <input type="file" id="case-file" accept=".json,application/json" hidden>
