@@ -302,6 +302,15 @@ table.batch .batch-go { text-decoration: none; font-size: 14px; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
+/* ── autosave restore banner (7.2) ── */
+#restore-bar[hidden] { display: none; }          /* explicit display below would otherwise beat [hidden] */
+#restore-bar { display: flex; align-items: center; gap: 12px; padding: 7px 14px;
+  background: var(--bg-2); border-bottom: 1px solid var(--accent);
+  font-size: 12.5px; color: var(--txt); }
+#restore-bar b { color: var(--accent-2); font-weight: 600; }
+#restore-bar .btn { padding: 3px 12px; }
+#restore-bar #restore-no { margin-left: -4px; }
+
 /* ── shared Wiki Search styles (GeoSearch.mount) ──────────────────────
    Used by both the standalone search.html page and the docked #module-wiki
    panel, so the two render identically. Scoped under .geosearch. */
