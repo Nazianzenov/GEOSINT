@@ -106,7 +106,12 @@ EXIF_SUFFIXES = {
 # DNS rebinding: a remote page that rebinds its hostname to 127.0.0.1 sends
 # same-origin requests (carrying our X-GeOSINT header), defeating the CORS/CSRF
 # guard — but the Host header it sends is the attacker's domain, not loopback.
-ALLOWED_HOSTS = set()
+ALLOWED_HOSTS = set()           # exact host:port strings (fast path)
+# Accepted Host *hostnames* (port stripped). Always includes loopback names;
+# off-loopback binds add the bind host + any --allow-host names. The guard matches
+# on hostname, not port, so DNS-rebinding (an attacker domain) is rejected while
+# Docker port-mapping (localhost:<any-port>) still works.
+ALLOWED_HOSTNAMES = {"127.0.0.1", "localhost", "[::1]", "::1"}
 
 KML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -379,14 +384,24 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(data)
 
     def host_ok(self):
-        """Reject requests whose Host header isn't our loopback bind — blocks
-        DNS-rebinding attacks that would otherwise reach the local API."""
+        """Reject requests whose Host *hostname* isn't loopback or an explicit
+        allow-host — blocks DNS-rebinding attacks reaching the local API.
+
+        We match on the HOSTNAME, not the host:port string: the rebinding threat
+        is an attacker domain (evil.com) rebound to our IP, and the attacker
+        cannot make the victim's browser send Host: localhost for that domain.
+        The port is irrelevant to the guard (and varies under Docker port
+        mapping, e.g. -p 8664:8650), so we strip it. Off-loopback binds add the
+        bind host + any --allow-host names to the accepted set."""
         host = (self.headers.get("Host") or "").strip().lower()
-        # Bracketed IPv6 loopback or bare host with no port are also fine.
-        if host in ALLOWED_HOSTS:
+        if host in ALLOWED_HOSTS:                 # exact host:port (fast path)
             return True
-        hostname = host.rsplit(":", 1)[0] if host.count(":") == 1 else host
-        return hostname in ("127.0.0.1", "localhost", "[::1]", "::1")
+        # strip a trailing :port (but not the colons inside a bracketed IPv6 [::1])
+        if host.startswith("["):
+            hostname = host.split("]", 1)[0] + "]"
+        else:
+            hostname = host.rsplit(":", 1)[0] if host.count(":") == 1 else host
+        return hostname in ALLOWED_HOSTNAMES
 
     def do_HEAD(self):
         self.do_GET()
@@ -843,20 +858,33 @@ def main():
     # the port to an untrusted network.
     ap.add_argument("--host", default="127.0.0.1",
                     help="bind address (default 127.0.0.1; use 0.0.0.0 only inside a container)")
+    ap.add_argument("--allow-host", action="append", default=[], metavar="HOST[:PORT]",
+                    help="extra Host header value to accept (repeatable); needed for direct "
+                         "IP/hostname access when bound off-loopback")
     args = ap.parse_args()
 
-    # Lock the Host allowlist to this run's loopback bind (DNS-rebinding guard).
-    global ALLOWED_HOSTS
+    # Build the DNS-rebinding guard's accepted Host set for this run.
+    global ALLOWED_HOSTS, ALLOWED_HOSTNAMES
     ALLOWED_HOSTS = {
         f"127.0.0.1:{args.port}", f"localhost:{args.port}", f"[::1]:{args.port}",
         "127.0.0.1", "localhost", "[::1]",
     }
-    if args.host not in ("127.0.0.1", "localhost", "::1"):
-        # Non-loopback bind: allow the container/host name through the Host check,
-        # and make the relaxed posture explicit in the log.
-        ALLOWED_HOSTS |= {f"{args.host}:{args.port}", args.host}
-        print(f"[geosint] WARNING: binding to {args.host} (not loopback) — do not expose "
-              f"this port to an untrusted network.")
+    ALLOWED_HOSTNAMES = {"127.0.0.1", "localhost", "[::1]", "::1"}
+    # Operator-supplied trusted Host names (accepted on any port).
+    for h in args.allow_host:
+        h = h.strip().lower()
+        ALLOWED_HOSTNAMES.add(h.rsplit(":", 1)[0] if (":" in h and not h.startswith("[")) else h)
+    loopback = args.host in ("127.0.0.1", "localhost", "::1")
+    if not loopback:
+        # Off-loopback bind (e.g. 0.0.0.0 in a container). Loopback names still
+        # work for the common `-p host:container` Docker case; direct IP/hostname
+        # access needs --allow-host. The hostname-based guard still rejects a
+        # rebound attacker domain. Make the network exposure explicit.
+        ALLOWED_HOSTNAMES.add(args.host)
+        print(f"[geosint] WARNING: binding to {args.host} (not loopback). Reach it via "
+              f"http://localhost:{args.port}/ or pass --allow-host <name>. Do NOT publish "
+              f"this port to an untrusted network (prefer "
+              f"`-p 127.0.0.1:{args.port}:{args.port}` in Docker).")
 
     try:
         srv = ThreadingHTTPServer((args.host, args.port), Handler)
