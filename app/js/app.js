@@ -2305,6 +2305,64 @@ function openRecentMenu() { renderRecentMenu(); $("#recent-menu").hidden = false
 function closeRecentMenu() { $("#recent-menu").hidden = true; }
 function toggleRecentMenu() { $("#recent-menu").hidden ? openRecentMenu() : closeRecentMenu(); }
 
+/* ── bundled sample case + first-run onboarding (7.8) ─────────────────
+   A real, self-contained demo case that teaches the verification spine.
+   No network, no external file — loaded via the existing applyCase(). */
+const SAMPLE_CASE = {
+  app: "geosint-workbench", version: 2,
+  saved: "(bundled sample)",
+  point: { lat: -33.85679, lng: 151.21528 },        // Sydney Opera House
+  view: { lat: -33.8568, lng: 151.2153, zoom: 17 },
+  module: null,
+  measure: [],
+  annos: [
+    { type: "pin", ll: [-33.85679, 151.21528], text: "Claimed location: the sail-shell roof" },
+    { type: "label", ll: [-33.8575, 151.2140], text: "Cross-check: harbour bridge to the NW" },
+  ],
+  gbif: [], data: null,
+  notes: [
+    "SAMPLE CASE — Sydney Opera House (a worked example of the verification spine).",
+    "",
+    "The workflow GeOSINT is built around:",
+    "1. IMAGE [3] — drop a photo. Local EXIF gives GPS (→ jump to map) and a",
+    "   timestamp (auto-fills Sun & Weather). No EXIF? Recover the embedded",
+    "   preview and reverse-search the pixels.",
+    "2. Map — set/confirm the active point (already set here). Right-click to copy",
+    "   DD/DMS/MGRS/UTM/Plus, or open Street View / Google Earth centred here.",
+    "3. SUN [1] — verify a claimed time from shadows; the shadow solver inverts a",
+    "   shadow azimuth + length ratio into matching time windows (or proves the",
+    "   claim impossible).",
+    "4. WEATHER [2] — ERA5 archive back to 1940: was it really clear/overcast/",
+    "   snowing there that day?",
+    "5. Build the case — annotations (here: a pin + a label), this notes file, and",
+    "   the evidence log feed the TIMELINE and the one-click DOSSIER. Save with",
+    "   Ctrl+S; reopen from ↺ RECENT.",
+    "",
+    "Press Ctrl+K any time for the command palette. Replace this with your own case.",
+  ].join("\n"),
+  artifacts: [],
+  inputs: { sunDt: "2023-06-15T14:30", wxDate: "2023-06-15" },
+};
+
+function loadSampleCase() {
+  applyCase(SAMPLE_CASE);
+  clearAutosave();
+  status("sample case loaded — see the notes [N] for the workflow", false, 6000);
+}
+
+const SEEN_KEY = "geosint:seen";
+function maybeWelcome() {
+  // Don't double-prompt: if an autosave restore is being offered, skip the welcome.
+  let seen = true;
+  try { seen = !!localStorage.getItem(SEEN_KEY); } catch { seen = true; }
+  if (seen || !$("#restore-bar").hidden) return;
+  $("#welcome-overlay").hidden = false;
+}
+function dismissWelcome() {
+  $("#welcome-overlay").hidden = true;
+  try { localStorage.setItem(SEEN_KEY, "1"); } catch { /* ignore */ }
+}
+
 /* ── autosave / crash recovery (7.2) ─────────────────────────────────
    Continuously snapshot the live case to localStorage so a crash / accidental
    close / reload never loses work since the last manual Save. 100% local —
@@ -2440,6 +2498,12 @@ function initCase() {
   window.addEventListener("pagehide", writeAutosave);
   document.addEventListener("visibilitychange", () => { if (document.hidden) writeAutosave(); });
   maybeOfferRestore();                            // offer to restore a prior unsaved snapshot
+
+  // first-run welcome + sample case (7.8)
+  $("#welcome-sample").addEventListener("click", () => { dismissWelcome(); loadSampleCase(); });
+  $("#welcome-keys").addEventListener("click", () => { dismissWelcome(); $("#help-overlay").hidden = false; });
+  $("#welcome-start").addEventListener("click", dismissWelcome);
+  maybeWelcome();                                 // show on first visit (after restore check)
 }
 
 /* ═══════════════════════ command palette (7.4) ═════════════════════
@@ -2467,6 +2531,8 @@ function buildCommands() {
   // case actions
   C("Case", "Save case file", () => saveCase(), "Ctrl+S");
   C("Case", "Load case file", () => $("#case-file").click());
+  C("Case", "Recent cases", () => toggleRecentMenu());
+  C("Case", "Load sample case", () => loadSampleCase(), "", "demo example tour onboarding");
   C("Case", "Export dossier (HTML)", () => $("#btn-dossier").click());
 
   // coordinate actions (only meaningful with an active point)
@@ -2605,6 +2671,7 @@ function initKeys() {
     }
     if (e.key === "Escape") {
       if (_palette.open) return closePalette();
+      if (!$("#welcome-overlay").hidden) { dismissWelcome(); return; }
       if (!$("#recent-menu").hidden) { closeRecentMenu(); return; }
       if (cancelArrow()) return;
       if (state.measure.on) return toggleMeasure(false);
