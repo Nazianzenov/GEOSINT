@@ -219,8 +219,14 @@ function showCtx(e) {
     // ruler armed with a drawn line → offer its elevation profile
     items.push(["⛰ Elevation profile of this line", () => elevationProfile()]);
   }
+  // While the ruler is armed, annotation actions are unavailable (they'd collide
+  // with measure's clicks). Say so explicitly instead of silently omitting them.
+  const note = state.measure.on
+    ? `<div class="ctx-note">✎ Annotations paused — ruler is armed (press M to exit)</div>`
+    : "";
   menu.innerHTML = `<div class="ctx-coords">${fmtDD(ll)}</div>` +
-    items.map((it, i) => `<div class="ctx-item" data-i="${i}">${it[0]}</div>`).join("");
+    items.map((it, i) => `<div class="ctx-item" data-i="${i}">${it[0]}</div>`).join("") +
+    note;
   menu.querySelectorAll(".ctx-item").forEach((el) =>
     el.addEventListener("click", () => { hideCtx(); items[+el.dataset.i][1](); }));
   menu.style.left = Math.min(e.originalEvent.clientX, innerWidth - 260) + "px";
@@ -1030,7 +1036,7 @@ async function exiftoolDump() {
       body: state.lastFile,
     });
     const j = await r.json();
-    if (j.error) { out.innerHTML = `<p class="nomatch">✗ ${j.error}</p>`; return; }
+    if (j.error) { out.innerHTML = `<p class="nomatch">✗ ${esc(j.error)}</p>`; return; }
     const keys = Object.keys(j.tags);
     out.innerHTML = `<h3>ExifTool — ${keys.length} tags</h3>
       <div class="table-scroll"><table class="kv">${keys.map((k) =>

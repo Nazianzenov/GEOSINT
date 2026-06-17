@@ -201,6 +201,7 @@ table.batch .batch-go { text-decoration: none; font-size: 14px; }
 #ctx-menu .ctx-coords { font: 11px var(--mono); color: var(--accent-2); padding: 6px 10px; border-bottom: 1px solid var(--line); }
 #ctx-menu .ctx-item { padding: 6px 10px; cursor: pointer; border-radius: 3px; }
 #ctx-menu .ctx-item:hover { background: var(--bg-2); color: var(--accent); }
+#ctx-menu .ctx-note { font-size: 11px; color: var(--txt-dim); padding: 6px 10px; margin-top: 2px; border-top: 1px solid var(--line); }
 
 /* help overlay */
 #help-overlay { position: fixed; inset: 0; z-index: 3000; background: #000a;

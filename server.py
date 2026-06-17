@@ -482,15 +482,17 @@ class Handler(BaseHTTPRequestHandler):
     # ---- API: hand off GeoJSON to QGIS ----------------------------------
     def api_qgis(self, payload):
         """Write a GeoJSON FeatureCollection to disk and open it in QGIS as a layer."""
-        qgis = find_qgis()
-        if qgis is None:
-            return self.send_json({"error": "QGIS not found. Install: winget install OSGeo.QGIS.LTR"}, 409)
+        # Validate the payload before probing for the tool, so a malformed request
+        # gets a 400 (not a misleading "QGIS not found" 409). Mirrors api_flyto.
         fc = payload.get("geojson")
         if not isinstance(fc, dict) or fc.get("type") != "FeatureCollection":
             return self.send_json({"error": "geojson FeatureCollection required"}, 400)
         feats = fc.get("features")
         if not isinstance(feats, list) or not (1 <= len(feats) <= 5000):
             return self.send_json({"error": "1-5000 features required"}, 400)
+        qgis = find_qgis()
+        if qgis is None:
+            return self.send_json({"error": "QGIS not found. Install: winget install OSGeo.QGIS.LTR"}, 409)
         out = CACHE / "qgis"
         out.mkdir(parents=True, exist_ok=True)
         name = re.sub(r"[^A-Za-z0-9_-]+", "_", str(payload.get("name") or "geosint"))[:40] or "geosint"
@@ -722,8 +724,13 @@ class Handler(BaseHTTPRequestHandler):
             name=_html.escape(name),
             lat=lat, lng=lng, range=rng, tilt=35,
         )
-        kml_path = Path(tempfile.gettempdir()) / "geosint_flyto.kml"
-        kml_path.write_text(kml, encoding="utf-8")
+        # Unpredictable per-call name (not a fixed path in the shared temp dir):
+        # a predictable world-readable name invites symlink/TOCTOU pre-creation
+        # and lets another local user read the target coordinate.
+        with tempfile.NamedTemporaryFile(prefix="geosint_flyto_", suffix=".kml",
+                                         mode="w", encoding="utf-8", delete=False) as f:
+            f.write(kml)
+            kml_path = Path(f.name)
         subprocess.Popen([str(gep), str(kml_path)])
         return self.send_json({"ok": True, "kml": str(kml_path)})
 
