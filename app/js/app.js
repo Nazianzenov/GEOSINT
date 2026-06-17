@@ -788,8 +788,16 @@ function runSolver() {
     matches.push({ m, shAz, ratio, err });
   }
   if (!matches.length) {
-    out.innerHTML = `<p class="nomatch">✗ No time on this date matches at this location — the claimed
-      place/date is inconsistent with the shadow, or your measurements need a wider tolerance.</p>`;
+    // A no-match is a falsification result; its strength depends on the tolerance
+    // used — a tight tolerance makes the inconsistency more confident.
+    const conf = tol <= 5 ? "high" : tol <= 12 ? "moderate" : "low";
+    out.innerHTML = `<p class="nomatch">✗ <b>Claim inconsistent (${conf} confidence)</b> — no time on this
+      date matches at this location. ${conf === "low"
+        ? "Tolerance is wide, so this is weak; tighten your measurement to strengthen it."
+        : "Tighten the tolerance only if you can justify a more precise reading."}</p>`;
+    state.solverResult = { status: "inconsistent", confidence: conf, tol, twoShadow,
+      inputs: { azT, ratioT, az2, ratio2, dt2 } };
+    markDirty();
     return;
   }
   // group contiguous runs, report each window
@@ -801,14 +809,35 @@ function runSolver() {
   }
   groups.push(g);
   const hm = (mins) => `${String(Math.floor(((mins % 1440) + 1440) % 1440 / 60)).padStart(2, "0")}:${String(((mins % 1440) + 1440) % 1440 % 60).padStart(2, "0")}`;
+
+  // Confidence: total matched minutes (narrower = more precise) weighted by the
+  // tolerance the analyst allowed (looser tolerance = weaker claim) and tightened
+  // by two-shadow mode. Reported alongside the windows and carried to the dossier.
+  const totalWidth = groups.reduce((s, gr) => s + (gr[gr.length - 1].m - gr[0].m + 2), 0);
+  let conf, why;
+  if (totalWidth <= 30 && tol <= 8 && groups.length === 1) { conf = "high"; why = "single narrow window, tight tolerance"; }
+  else if (totalWidth <= 90 && groups.length <= 2) { conf = "moderate"; why = `${groups.length} window(s), ~${totalWidth} min total`; }
+  else { conf = "low"; why = `${groups.length} windows spanning ~${totalWidth} min — ambiguous`; }
+  if (twoShadow && conf !== "high") why += " (two-shadow constraint applied)";
+
   const header = twoShadow
     ? `<p class="hint">Two-shadow mode: times where both readings fit (1st reading's time shown; 2nd is ${dt2 > 0 ? "+" : ""}${dt2} min later).</p>`
     : "";
-  out.innerHTML = header + groups.map((gr) => {
+  const windowsHtml = groups.map((gr) => {
     const best = gr.reduce((a, b) => (a.err < b.err ? a : b));
     return `<div class="match">✓ ${hm(gr[0].m)}–${hm(gr[gr.length - 1].m)} local
       (best ${hm(best.m)} · shadow→${best.shAz.toFixed(0)}° · ${best.ratio.toFixed(2)}×)</div>`;
   }).join("");
+  out.innerHTML = header + windowsHtml +
+    `<div class="solver-conf conf-${conf}">Confidence: <b>${conf}</b> — ${why} (tolerance ±${tol}°).</div>`;
+
+  // Persist the latest result so the dossier can state the chronolocation finding.
+  state.solverResult = {
+    status: "match", confidence: conf, why, tol, twoShadow,
+    windows: groups.map((gr) => `${hm(gr[0].m)}–${hm(gr[gr.length - 1].m)}`),
+    inputs: { azT, ratioT, az2, ratio2, dt2 },
+  };
+  markDirty();
 }
 
 /* ══════════════════════════ WEATHER ════════════════════════════ */
@@ -999,6 +1028,48 @@ function renderUrlButtons() {
     : "";
 }
 
+// Reverse-search engines fetch an image URL from THEIR servers, so a local file
+// (or a loopback URL) can't be auto-submitted. 8B.3 doctrine-safe assist: copy
+// the dropped image to the clipboard and open the engines' upload pages, so the
+// analyst just pastes (Ctrl+V). Nothing leaves the machine.
+const REVERSE_UPLOAD_PAGES = [
+  ["Google Lens", "https://lens.google.com/"],
+  ["Yandex", "https://yandex.com/images/"],
+  ["Bing", "https://www.bing.com/visualsearch"],
+  ["TinEye", "https://tineye.com/"],
+];
+async function localReverseSearch() {
+  const file = state.lastFile;
+  if (!file) return status("Drop an image first.", true);
+  let copied = false;
+  try {
+    // Clipboard image write needs a PNG blob; convert via canvas (handles any
+    // source type the browser decoded). Stays entirely local.
+    const bmp = await createImageBitmap(file);
+    const c = document.createElement("canvas");
+    c.width = bmp.width; c.height = bmp.height;
+    c.getContext("2d").drawImage(bmp, 0, 0);
+    const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    copied = true;
+  } catch { /* clipboard-image blocked or unsupported */ }
+  REVERSE_UPLOAD_PAGES.forEach(([, url]) => window.open(url, "_blank"));
+  status(copied
+    ? "image copied — paste it into the engine (Ctrl/Cmd+V)"
+    : "clipboard blocked — drag the image into the engine tab", !copied, 6000);
+}
+
+// Local reverse-search assist button (8B.3) — copy-to-clipboard + open engines.
+function reverseSearchButton() {
+  return `<div class="gps-actions">
+      <button class="btn" id="local-reverse" title="Copy this image to the clipboard and open the reverse-search engines — then paste (Ctrl/Cmd+V). Nothing is uploaded by GeOSINT.">🔍 REVERSE SEARCH (paste-ready)</button>
+    </div>`;
+}
+function wireReverseSearch() {
+  const b = $("#local-reverse");
+  if (b) b.onclick = localReverseSearch;
+}
+
 /* Deep metadata dump + embedded-preview recovery via the locally installed
    ExifTool (server-side, stays on-machine). */
 function exiftoolButton() {
@@ -1074,6 +1145,46 @@ async function exiftoolDump() {
   } catch { out.innerHTML = `<p class="nomatch">✗ local server unreachable</p>`; }
 }
 
+/* 8B.2 — turn the raw EXIF dump into findings. All local, from fields exifr
+   already parsed. Returns [{sev:'high'|'med'|'info', msg}], most severe first. */
+function analyzeExifAnomalies(ex) {
+  const out = [];
+  if (!ex) return out;
+  const D = (v) => { const t = v ? Date.parse(v instanceof Date ? v.toISOString() : v) : NaN; return isNaN(t) ? null : t; };
+
+  // 1. Editing-software signature — a strong "touched after capture" signal.
+  const sw = String(ex.Software || ex.ProcessingSoftware || "");
+  if (/photoshop|lightroom|gimp|affinity|pixelmator|paint\.net|snapseed|inkscape|imagemagick|canva/i.test(sw)) {
+    out.push({ sev: "high", msg: `Edited with ${sw.trim()} — image was processed after capture (EXIF/pixels may be altered).` });
+  }
+
+  // 2. Timestamp inconsistencies across the three EXIF dates.
+  const orig = D(ex.DateTimeOriginal), create = D(ex.CreateDate), mod = D(ex.ModifyDate);
+  if (orig && mod && mod - orig > 60 * 1000) {
+    const mins = Math.round((mod - orig) / 60000);
+    out.push({ sev: mins > 60 ? "high" : "med",
+      msg: `Modified ${mins >= 1440 ? Math.round(mins / 1440) + " day(s)" : mins + " min"} after it was taken (ModifyDate > DateTimeOriginal) — re-saved/edited.` });
+  }
+  if (orig && create && Math.abs(create - orig) > 60 * 1000) {
+    out.push({ sev: "med", msg: "DateTimeOriginal and CreateDate disagree by more than a minute — unusual for an untouched camera file." });
+  }
+
+  // 3. GPS vs stated timezone: the camera's UTC offset should roughly match the
+  //    GPS longitude (~15° per hour). A big gap suggests a spoofed time or place.
+  const off = ex.OffsetTimeOriginal || ex.OffsetTime;
+  if (off && ex.longitude != null) {
+    const m = /([+-])(\d{2}):?(\d{2})/.exec(off);
+    if (m) {
+      const statedHrs = (m[1] === "-" ? -1 : 1) * (+m[2] + (+m[3]) / 60);
+      const expectedHrs = ex.longitude / 15;
+      const gap = Math.abs(statedHrs - expectedHrs);
+      if (gap > 3) out.push({ sev: "med",
+        msg: `Timezone (${off}) is ~${gap.toFixed(1)}h off the GPS longitude's solar time — possible spoofed time or location.` });
+    }
+  }
+  return out;
+}
+
 async function loadImage(file) {
   const img = $("#img-preview");
   img.src = URL.createObjectURL(file);
@@ -1088,11 +1199,13 @@ async function loadImage(file) {
   if (!ex || Object.keys(ex).length === 0) {
     out.innerHTML = `<h3>EXIF</h3><p class="hint">No metadata found — typical for images from social media
       (Twitter/X, Facebook, Telegram strip EXIF on upload). The pixels are still searchable below.</p>
+      ${reverseSearchButton()}
       ${exiftoolButton()}`;
     const b0 = $("#exiftool-dump");
     if (b0) b0.onclick = exiftoolDump;
     const p0 = $("#exiftool-preview");
     if (p0) p0.onclick = previewExtract;
+    wireReverseSearch();
     return;
   }
   const rows = [];
@@ -1123,11 +1236,22 @@ async function loadImage(file) {
   } else {
     add("GPS", "<i>none embedded</i>", true);
   }
+  // 8B.2 — anomaly findings derived from the EXIF (edit signatures, timestamp
+  // skew, GPS/timezone mismatch). Surfaced as a compact severity-ranked panel.
+  const SEV = { high: ["⚠", "bad"], med: ["▲", "accent-2"], info: ["·", "muted"] };
+  const anomalies = analyzeExifAnomalies(ex);
+  const anomHtml = anomalies.length
+    ? `<div class="exif-anom"><h4>⚠ Anomalies (${anomalies.length})</h4>${anomalies.map((a) =>
+        `<div class="anom-row anom-${a.sev}">${SEV[a.sev][0]} ${esc(a.msg)}</div>`).join("")}</div>`
+    : `<div class="exif-anom ok">✓ No metadata anomalies detected (edit signatures, timestamp skew, GPS/timezone all consistent).</div>`;
   out.innerHTML = `<h3>EXIF</h3><table class="kv">${rows.join("")}</table>${gpsHtml}
+    ${anomHtml}
+    ${reverseSearchButton()}
     ${exiftoolButton()}
     <p class="srcnote">EXIF can be edited or spoofed — treat as a lead, not proof. Cross-check with
       sun, weather and visual features. (<a target="_blank"
       href="https://www.bellingcat.com/resources/how-tos/2017/06/30/advanced-guide-verifying-video-content/">Bellingcat verification guide</a>)</p>`;
+  wireReverseSearch();
   const bd = $("#exiftool-dump");
   if (bd) bd.onclick = exiftoolDump;
   const pv = $("#exiftool-preview");
@@ -2051,6 +2175,16 @@ function buildDossier() {
         <td>${e.ll ? `${e.ll[0].toFixed(4)}, ${e.ll[1].toFixed(4)}` : ""}</td></tr>`).join("")}
     </table>` : `<p class="muted">No dated events.</p>`;
 
+  // 8A.3 — chronolocation finding with its stated uncertainty (if the solver ran).
+  const sr = state.solverResult;
+  const chronoBlock = !sr ? "" : (sr.status === "inconsistent"
+    ? `<h2>Chronolocation finding</h2><p><b>Claim inconsistent</b> (${esc(sr.confidence)} confidence) —
+       no time on the analysed date matches the shadow at the active point, within ±${esc(String(sr.tol))}° tolerance.</p>`
+    : `<h2>Chronolocation finding</h2>
+       <p>Shadow solver matched <b>${esc(sr.windows.join(", "))}</b> local time.
+       Confidence <b>${esc(sr.confidence)}</b> — ${esc(sr.why)}; tolerance ±${esc(String(sr.tol))}°${sr.twoShadow ? ", two-shadow constraint" : ""}.</p>
+       <p class="muted">Uncertainty is driven by the measurement tolerance; a narrower window at a tighter tolerance is a stronger finding.</p>`);
+
   const css = `body{font:14px/1.5 "Segoe UI",system-ui,sans-serif;color:#1a1d24;max-width:880px;margin:24px auto;padding:0 16px}
     h1{font-size:22px;margin:0 0 2px} h2{font-size:15px;margin:22px 0 6px;border-bottom:1px solid #ddd;padding-bottom:3px}
     .muted{color:#6b7280} .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#374151;word-break:break-all}
@@ -2066,6 +2200,7 @@ function buildDossier() {
     <h1>GeOSINT case dossier</h1>
     <div class="muted">Generated ${esc(now.toISOString().replace("T", " ").slice(0, 19))} (UTC) · GeOSINT Workbench (local)</div>
     <h2>Active point</h2>${ptBlock}
+    ${chronoBlock}
     <h2>Case notes</h2>${notesBlock}
     <h2>Annotations (${annos.length})</h2>${annoBlock}
     <h2>Evidence log (${arts.length})</h2>
