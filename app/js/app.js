@@ -169,6 +169,7 @@ function setPoint(ll, opts = {}) {
   if (state.module === "tools") renderTools();
   if (state.module === "data") syncQgisButton();
   if (state.module === "weather") $("#wx-meta").textContent = `Point: ${fmtDD(state.point)} — pick a date and fetch.`;
+  markDirty();
 }
 
 /* ── elevation readout (Open-Meteo elevation API, cached per point) ── */
@@ -276,6 +277,7 @@ function renderMeasure() {
     return v;
   });
   updateMeasureTotal();
+  markDirty();
 }
 
 /* lightweight per-frame update of the running tooltip: last-leg bearing +
@@ -563,6 +565,7 @@ function openModule(name) {
   if (name === "tools") renderTools();
   if (name === "anno") renderAnnoList();
   if (name === "wiki") openWiki();
+  markDirty();
 }
 
 // Lazy-mount the docked Wiki Search the first time it's opened; re-focus thereafter.
@@ -1647,6 +1650,7 @@ function addAnno(a) {
   drawAnno(a);
   renderAnnoList();
   if (state.module === "anno") $("#anno-status").textContent = `${state.annos.length} annotation(s)`;
+  markDirty();
   return a;
 }
 
@@ -1729,6 +1733,7 @@ function clearAnnos() {
   renderAnnoList();
   $("#anno-status").textContent = "";
   status("annotations cleared");
+  markDirty();
 }
 
 function renderAnnoList() {
@@ -1858,6 +1863,7 @@ function addArtifact(a) {
   const art = { id: ++_artId, t: a.t || new Date().toISOString(), ...a };
   state.artifacts.push(art);
   renderEvidenceLog();
+  markDirty();
   return art;
 }
 
@@ -2152,6 +2158,7 @@ async function saveCase() {
   a.download = `case-${stamp}.geosint.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  clearAutosave();                                // durable copy exists; drop the snapshot
   status("case saved to your Downloads folder");
 }
 
@@ -2201,10 +2208,104 @@ function applyCase(c) {
 function loadCase(file) {
   const reader = new FileReader();
   reader.onload = () => {
-    try { applyCase(JSON.parse(reader.result)); }
+    try { applyCase(JSON.parse(reader.result)); clearAutosave(); }
     catch { status("could not parse case file", true); }
   };
   reader.readAsText(file);
+}
+
+/* ── autosave / crash recovery (7.2) ─────────────────────────────────
+   Continuously snapshot the live case to localStorage so a crash / accidental
+   close / reload never loses work since the last manual Save. 100% local —
+   localStorage is per-origin, on the user's disk; nothing is uploaded.
+   Explicit Save/Load clears the snapshot (the user then has a durable copy). */
+const AUTOSAVE_KEY = "geosint:autosave";
+let _autosaveTimer = null, _autosaveLast = null, _autosavePaused = false;
+// After an explicit Save/Load the in-memory case is "clean" — suppress autosave
+// (incl. the pagehide/interval flushes) until the user edits again, so leaving the
+// page doesn't silently re-snapshot a case the user already has a durable copy of.
+let _autosaveClean = true;
+
+function lsAvailable() {
+  try { localStorage.setItem("geosint:_t", "1"); localStorage.removeItem("geosint:_t"); return true; }
+  catch { return false; }
+}
+
+// A case is worth autosaving only once it holds real work — otherwise startup
+// (deep-link setPoint, openModule) would snapshot an empty default and pop a
+// pointless "restore" banner on the next load.
+function caseHasContent(c) {
+  return !!(c.point || (c.notes || "").trim() || (c.annos || []).length ||
+            (c.measure || []).length || (c.artifacts || []).length ||
+            (c.gbif || []).length || c.data);
+}
+
+function writeAutosave() {
+  if (_autosaveClean || _autosavePaused || !lsAvailable()) return;
+  let c;
+  try { c = serializeCase(); } catch { return; }
+  if (!caseHasContent(c)) {                       // nothing worth restoring yet
+    if (_autosaveLast !== null) clearAutosave();  // also drop a now-emptied case
+    return;
+  }
+  const snap = JSON.stringify(c);
+  if (snap === _autosaveLast) return;            // no change since last write
+  try {
+    localStorage.setItem(AUTOSAVE_KEY, snap);
+    _autosaveLast = snap;
+  } catch (e) {
+    // Quota: retry once with thumbnails stripped (keep the rest of the case).
+    try {
+      const c = serializeCase();
+      c.artifacts = (c.artifacts || []).map((a) => { const { thumb, ...rest } = a; return rest; });
+      const lean = JSON.stringify(c);
+      localStorage.setItem(AUTOSAVE_KEY, lean);
+      _autosaveLast = lean;
+    } catch {
+      _autosavePaused = true;                     // give up quietly for this session
+      status("autosave paused — case too large for browser storage", true, 3000);
+    }
+  }
+}
+
+// Debounced: most edits fire this; a coarse interval + pagehide flush back it up.
+function markDirty() {
+  _autosaveClean = false;                          // a real edit happened → re-arm autosave
+  if (_autosaveTimer) clearTimeout(_autosaveTimer);
+  _autosaveTimer = setTimeout(writeAutosave, 1500);
+}
+
+function clearAutosave() {
+  _autosaveLast = null;
+  _autosaveClean = true;                           // durable copy / no snapshot → don't re-flush
+  if (_autosaveTimer) { clearTimeout(_autosaveTimer); _autosaveTimer = null; }
+  try { localStorage.removeItem(AUTOSAVE_KEY); } catch { /* ignore */ }
+}
+
+function readAutosave() {
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    return (c && c.app === "geosint-workbench") ? c : null;
+  } catch { return null; }
+}
+
+// On startup: if a snapshot exists, offer to restore it (never auto-apply, so a
+// fresh session isn't silently overwritten).
+function maybeOfferRestore() {
+  const c = readAutosave();
+  const bar = $("#restore-bar");
+  if (!c || !bar) { if (!c) clearAutosave(); return; }
+  const when = c.saved ? c.saved.slice(0, 16).replace("T", " ") : "earlier";
+  $("#restore-when").textContent = when;
+  bar.hidden = false;
+  $("#restore-yes").onclick = () => {
+    applyCase(c);                                 // serializeCase is sync; nothing to await
+    bar.hidden = true;
+    _autosaveLast = null;                          // restored case becomes the new baseline
+  };
+  $("#restore-no").onclick = () => { clearAutosave(); bar.hidden = true; };
 }
 
 function toggleNotes(force) {
@@ -2233,6 +2334,16 @@ function initCase() {
     if (_artPending.size) { status("finalizing evidence log…", false, 1500); await Promise.all([..._artPending]); }
     exportDossier();
   });
+
+  // ── autosave wiring (7.2) ──
+  const notes = $("#case-notes");
+  if (notes) notes.addEventListener("input", markDirty);
+  setInterval(writeAutosave, 20000);             // coarse backstop in case a mutator is missed
+  // Flush synchronously when the tab is hidden/closed so the last edits survive
+  // an abrupt close (the debounce timer may not fire otherwise).
+  window.addEventListener("pagehide", writeAutosave);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) writeAutosave(); });
+  maybeOfferRestore();                            // offer to restore a prior unsaved snapshot
 }
 
 /* ═══════════════════════ wiring / keyboard ═════════════════════ */
