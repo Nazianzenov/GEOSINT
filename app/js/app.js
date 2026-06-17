@@ -581,6 +581,11 @@ function openWiki() {
       _wikiMounted = true;
       GeoSearch.mount($("#module-wiki"), {
         onPick: ({ ll }) => setPoint(L.latLng(ll[0], ll[1]), { fly: true, zoom: 13 }),
+        // 9A.2 — log a recognition card to the case as a sourced observation
+        onLog: (card) => logObservation({
+          text: card.t, source: card.page,
+          ll: card.ll ? [card.ll[0], card.ll[1]] : undefined,
+        }),
       }).then(() => GeoSearch.focus());
     } else {
       GeoSearch.focus();
@@ -1600,17 +1605,20 @@ async function runOverpass(selectors, label, minZoom = 10) {
     if (j.error) throw new Error(j.error);
     state.dataLayer.clearLayers();
     const feats = [];
+    state._plotted = [];                          // registry for "pin to case" (avoids inline-onclick injection)
     for (const el of j.elements || []) {
       const lat = el.lat ?? el.center?.lat, lon = el.lon ?? el.center?.lon;
       if (lat == null) continue;
       const name = el.tags?.name || el.tags?.operator || label;
       feats.push({ lat, lon, name, type: el.type, id: el.id, tags: el.tags || {} });
+      const idx = state._plotted.push({ lat, lon, name, type: el.type, id: el.id, tags: el.tags || {}, label }) - 1;
       const mk = L.circleMarker([lat, lon], {
         radius: 6, color: "#ffb454", fillColor: "#ffb454", fillOpacity: 0.55, weight: 1.5,
       }).bindPopup(
         `<b>${esc(name)}</b><br><span style="font-family:monospace">${lat.toFixed(5)}, ${lon.toFixed(5)}</span><br>` +
-        `<a href="https://www.openstreetmap.org/${el.type}/${el.id}" target="_blank">OSM object</a> · ` +
-        `<a href="#" onclick="setPoint(L.latLng(${lat},${lon}));return false">set active point</a>`);
+        `<a href="https://www.openstreetmap.org/${esc(el.type)}/${esc(el.id)}" target="_blank">OSM object</a> · ` +
+        `<a href="#" onclick="setPoint(L.latLng(${lat},${lon}));return false">set active point</a> · ` +
+        `<a href="#" onclick="pinFeature(${idx});return false">📌 pin to case</a>`);
       state.dataLayer.addLayer(mk);
     }
     state.lastData = { label, features: feats };
@@ -2000,6 +2008,60 @@ function addArtifact(a) {
   return art;
 }
 
+/* Pull the first "lat, lng" pair out of arbitrary text/URL (so a pasted
+   permalink like ".../@48.8584,2.2945,17z" or "view 48.8584, 2.2945" yields
+   coords). Returns [lat,lng] or null. */
+function coordsFromText(s) {
+  if (!s) return null;
+  // Require a decimal point in BOTH numbers — real GPS pairs have them, which
+  // avoids false matches on incidental integer pairs (zoom levels, versions,
+  // "1, 2"). Lat/lng must also be in range.
+  const m = String(s).match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+  if (!m) return null;
+  const lat = +m[1], lng = +m[2];
+  return (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) ? [lat, lng] : null;
+}
+
+/* Log an external/identified finding as an observation artifact (9A.1/9A.2/9A.4).
+   `source` may be a URL or free text; coords are parsed from it when not given. */
+function logObservation({ text, source, ll, t }) {
+  if (!ll && source) ll = coordsFromText(source);   // lift coords out of the pasted text/URL
+  if (!ll && text) ll = coordsFromText(text);
+  // If the only "text" is a bare URL, keep the URL in `source` (which redaction
+  // strips) and use a generic label as the text, so a redacted dossier doesn't
+  // leak the URL through the finding's text.
+  const isUrl = (v) => /^https?:\/\//i.test(String(v || ""));
+  let label = text;
+  if (!label || isUrl(label)) label = isUrl(source) || isUrl(text) ? "external finding" : (text || "observation");
+  const realSource = source || (isUrl(text) ? text : undefined);
+  const art = addArtifact({
+    kind: "obs",
+    t: t || new Date().toISOString(),
+    text: label,
+    source: realSource || undefined,
+    ll: ll || undefined,
+  });
+  status(`logged to case: ${esc(art.text).slice(0, 40)}`, false, 3000);
+  if (ll) state.imgLayer.addLayer(L.circleMarker(L.latLng(ll[0], ll[1]),
+    { radius: 6, color: "#d2a8ff", fillColor: "#d2a8ff", fillOpacity: .6 }).bindTooltip(esc(art.text)));
+  return art;
+}
+
+/* 9A.4 — pin a plotted overlay feature into the case as an observation. Called
+   from the feature popup by registry index (no attacker-controlled string in an
+   inline handler). */
+function pinFeature(idx) {
+  const f = (state._plotted || [])[idx];
+  if (!f) return;
+  const tagStr = Object.entries(f.tags || {}).slice(0, 4).map(([k, v]) => `${k}=${v}`).join(", ");
+  logObservation({
+    text: `${f.name}${tagStr ? ` (${tagStr})` : ""}`,
+    source: `OSM ${f.type}/${f.id}`,
+    ll: [f.lat, f.lon],
+  });
+}
+window.pinFeature = pinFeature;
+
 /* Evidence-log readout + chain-of-custody table in the notes drawer.
    Confirms capture is happening, originals are not stored, and gives a
    defensible, exportable provenance record. */
@@ -2029,14 +2091,38 @@ function renderCustodyTable() {
   if (!t) return;
   const arts = [...state.artifacts].sort((a, b) => String(a.t).localeCompare(String(b.t)));
   const short = (h) => h ? `<span title="${esc(h)}" style="font-family:monospace">${esc(h.slice(0, 10))}…</span>` : "—";
-  t.innerHTML = `<tr><th>observed</th><th>kind</th><th>source</th><th>sha-256</th><th>GPS</th></tr>` +
+  const nLinks = (a) => (a.links && a.links.length) ? ` <span class="muted">🔗${a.links.length}</span>` : "";
+  t.innerHTML = `<tr><th>observed</th><th>kind</th><th>source</th><th>sha-256</th><th>GPS</th><th></th></tr>` +
     arts.map((a) => `<tr>
       <td>${esc(String(a.t).replace("T", " ").slice(0, 19))}</td>
-      <td>${ART_SYM[a.kind] || "•"} ${esc(a.kind)}</td>
+      <td>${ART_SYM[a.kind] || "•"} ${esc(a.kind)}${nLinks(a)}</td>
       <td title="${esc(a.source || "")}">${esc((a.source || "—").slice(0, 28))}</td>
       <td>${short(a.sha256)}</td>
       <td>${a.ll ? `${a.ll[0].toFixed(4)}, ${a.ll[1].toFixed(4)}` : "—"}</td>
+      <td><a href="#" class="art-link" data-id="${a.id}" title="Link this artifact to another (builds the case relationship graph)">🔗</a></td>
     </tr>`).join("");
+  t.querySelectorAll(".art-link").forEach((el) =>
+    el.addEventListener("click", (e) => { e.preventDefault(); linkArtifact(+el.dataset.id); }));
+}
+
+/* 9A.3 — link one artifact to another so the case becomes a graph (rendered as a
+   Relationships section in the dossier). Lightweight prompt-based picker. */
+function linkArtifact(fromId) {
+  const arts = state.artifacts;
+  const from = arts.find((a) => a.id === fromId);
+  if (!from) return;
+  const others = arts.filter((a) => a.id !== fromId);
+  if (!others.length) return status("Need a second artifact to link to.", true);
+  const menu = others.map((a) => `${a.id}: ${(a.text || a.source || a.kind).slice(0, 40)}`).join("\n");
+  const pick = prompt(`Link "${(from.text || from.source || from.kind).slice(0, 40)}" to which artifact?\n\n${menu}\n\nEnter the id:`);
+  if (pick == null) return;
+  const toId = parseInt(pick, 10);
+  if (!others.some((a) => a.id === toId)) return status("No artifact with that id.", true);
+  from.links = from.links || [];
+  if (!from.links.includes(toId)) from.links.push(toId);
+  renderCustodyTable();
+  markDirty();
+  status("artifacts linked");
 }
 
 /* Chain-of-custody export. JSON = the raw artifacts (minus bulky thumbnails);
@@ -2130,49 +2216,89 @@ function openTimeline() {
    notes, annotations, the evidence log with inline thumbnails, the timeline,
    and a sources/provenance section. Renders from case state + v2 artifacts;
    thumbnails are already base64 so no originals are needed. 100% local. */
-function buildDossier() {
+function buildDossier(redact = false) {
   const now = new Date();
+  // 9C.3 — redaction helpers: coarsen coords, hide source URLs/filenames, keep
+  // the analytical findings + provenance hashes.
+  const coord = (lat, lng) => redact ? `${lat.toFixed(1)}, ${lng.toFixed(1)} (coarsened)` : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  const src = (s) => !s ? "" : (redact ? "[redacted]" : esc(s));
+
   const p = state.point;
-  const ptBlock = p ? `
-    <table class="kv">
+  const ptBlock = p ? (redact
+    ? `<table class="kv"><tr><td>Approx. location</td><td>${esc(coord(p.lat, p.lng))}</td></tr></table>`
+    : `<table class="kv">
       <tr><td>Decimal</td><td>${esc(fmtDD(p))}</td></tr>
       <tr><td>DMS</td><td>${esc(fmtDMS(p))}</td></tr>
       <tr><td>MGRS</td><td>${esc(fmtMGRS(p))}</td></tr>
       <tr><td>UTM</td><td>${esc(fmtUTM(p))}</td></tr>
       <tr><td>Plus Code</td><td>${esc(fmtPlus(p))}</td></tr>
-    </table>` : `<p class="muted">No active point set.</p>`;
+    </table>`) : `<p class="muted">No active point set.</p>`;
 
   const notes = (val("#case-notes") || "").trim();
-  const notesBlock = notes
-    ? `<pre>${esc(notes)}</pre>` : `<p class="muted">No notes.</p>`;
+  const notesBlock = redact ? `<p class="muted">Notes omitted from redacted export.</p>`
+    : (notes ? `<pre>${esc(notes)}</pre>` : `<p class="muted">No notes.</p>`);
 
   const annos = state.annos || [];
   const annoBlock = annos.length ? `<table class="kv">
       <tr><th>type</th><th>text</th><th>location</th></tr>
       ${annos.map((a) => `<tr><td>${esc(a.type)}</td><td>${esc(a.text)}</td>
-        <td>${a.ll[0].toFixed(5)}, ${a.ll[1].toFixed(5)}</td></tr>`).join("")}
+        <td>${esc(coord(a.ll[0], a.ll[1]))}</td></tr>`).join("")}
     </table>` : `<p class="muted">No annotations.</p>`;
 
   const arts = state.artifacts || [];
   const artBlock = arts.length ? `<div class="grid">
       ${[...arts].sort((a, b) => String(a.t).localeCompare(String(b.t))).map((a) => `
         <div class="ev">
-          ${a.thumb ? `<img src="${esc(a.thumb)}" alt="">` : `<div class="noimg">${ART_SYM[a.kind] || "•"}</div>`}
+          ${(a.thumb && !redact) ? `<img src="${esc(a.thumb)}" alt="">` : `<div class="noimg">${ART_SYM[a.kind] || "•"}</div>`}
           <div class="ev-meta">
-            <b>${esc(a.source || a.text || a.kind)}</b>
+            <b>${redact ? esc(/^https?:\/\//i.test(String(a.text || "")) ? "external finding" : (a.text || a.kind)) : esc(a.source || a.text || a.kind)}</b>
             <div class="muted">${esc(String(a.t).replace("T", " ").slice(0, 19))} · ${esc(a.kind)}</div>
-            ${a.ll ? `<div class="muted">${a.ll[0].toFixed(5)}, ${a.ll[1].toFixed(5)}</div>` : ""}
-            ${a.sha256 ? `<div class="mono">sha256 ${esc(a.sha256)}</div>` : ""}
+            ${(redact && a.source) ? `<div class="muted">source: ${src(a.source)}</div>` : ""}
+            ${a.ll ? `<div class="muted">${esc(coord(a.ll[0], a.ll[1]))}</div>` : ""}
+            ${a.sha256 ? `<div class="mono">sha256 ${esc(redact ? a.sha256.slice(0, 16) + "…" : a.sha256)}</div>` : ""}
           </div>
         </div>`).join("")}
     </div>` : `<p class="muted">No evidence artifacts.</p>`;
 
+  // 9A.3 — relationships: artifact links rendered as a graph-ish edge list.
+  const byId = Object.fromEntries(arts.map((a) => [a.id, a]));
+  const isUrl = (v) => /^https?:\/\//i.test(String(v || ""));
+  const label = (a) => {
+    const l = a.text || a.source || a.kind || `#${a.id}`;
+    return (redact && isUrl(l)) ? "external finding" : l;   // never leak a URL label in redaction
+  };
+  const edges = arts.flatMap((a) => (a.links || [])
+    .filter((id) => byId[id])
+    .map((id) => `<li>${esc(label(a))} <span class="muted">↔</span> ${esc(label(byId[id]))}</li>`));
+  const relBlock = edges.length
+    ? `<ul>${edges.join("")}</ul>` : `<p class="muted">No linked artifacts.</p>`;
+
+  // 9B.3 — bibliography: de-duped numbered list of every source/page URL the case
+  // references (artifact sources + the active point's notes are excluded; sources
+  // only). Omitted from redacted exports.
+  const cites = [...new Set(arts.map((a) => a.source).filter((s) => s && /^https?:\/\//i.test(s)))];
+  const biblioBlock = redact
+    ? `<p class="muted">Bibliography omitted from redacted export.</p>`
+    : (cites.length
+      ? `<ol>${cites.map((u) => `<li><a href="${esc(u)}">${esc(u)}</a></li>`).join("")}</ol>`
+      : `<p class="muted">No web sources cited.</p>`);
+
   const ev = timelineEvents();
+  // In a redacted export the timeline must not leak sourcing: an obs label that's
+  // a URL, or an image event whose label is the original filename + camera detail,
+  // are genericized. (timelineEvents sets label = source||text||kind.)
+  const evLabel = (e) => {
+    if (!redact) return e.label;
+    if (e.kind === "image") return "image evidence";
+    if (/^https?:\/\//i.test(String(e.label || ""))) return "external finding";
+    return e.label;
+  };
+  const evDetail = (e) => (redact && e.kind === "image") ? "" : e.detail;   // camera make/model is sourcing
   const tlBlock = ev.length ? `<table class="kv">
       <tr><th>time</th><th>event</th><th>location</th></tr>
       ${ev.map((e) => `<tr><td class="mono">${esc(String(e.t).replace("T", " ").slice(0, 16))}</td>
-        <td>${esc(e.label)}${e.detail ? ` <span class="muted">— ${esc(e.detail)}</span>` : ""}</td>
-        <td>${e.ll ? `${e.ll[0].toFixed(4)}, ${e.ll[1].toFixed(4)}` : ""}</td></tr>`).join("")}
+        <td>${esc(evLabel(e))}${evDetail(e) ? ` <span class="muted">— ${esc(evDetail(e))}</span>` : ""}</td>
+        <td>${e.ll ? esc(coord(e.ll[0], e.ll[1])) : ""}</td></tr>`).join("")}
     </table>` : `<p class="muted">No dated events.</p>`;
 
   // chronolocation finding with its stated uncertainty (if the solver ran).
@@ -2195,31 +2321,33 @@ function buildDossier() {
     .ev-meta{font-size:12px;overflow:hidden} footer{margin-top:28px;color:#6b7280;font-size:12px;border-top:1px solid #ddd;padding-top:8px}`;
 
   return `<!doctype html><html><head><meta charset="utf-8">
-    <title>GeOSINT dossier — ${esc(now.toISOString().slice(0, 16).replace("T", " "))}</title>
+    <title>GeOSINT ${redact ? "redacted " : ""}dossier — ${esc(now.toISOString().slice(0, 16).replace("T", " "))}</title>
     <style>${css}</style></head><body>
-    <h1>GeOSINT case dossier</h1>
-    <div class="muted">Generated ${esc(now.toISOString().replace("T", " ").slice(0, 19))} (UTC) · GeOSINT Workbench (local)</div>
+    <h1>GeOSINT case dossier${redact ? " <span style=\"font-size:13px;color:#b91c1c\">(REDACTED)</span>" : ""}</h1>
+    <div class="muted">Generated ${esc(now.toISOString().replace("T", " ").slice(0, 19))} (UTC) · GeOSINT Workbench (local)${redact ? " · sensitive sourcing removed for publication" : ""}</div>
     <h2>Active point</h2>${ptBlock}
     ${chronoBlock}
     <h2>Case notes</h2>${notesBlock}
     <h2>Annotations (${annos.length})</h2>${annoBlock}
     <h2>Evidence log (${arts.length})</h2>
     <p class="muted">SHA-256 of original bytes + embedded thumbnail. Originals retained on the analyst's machine.</p>${artBlock}
+    <h2>Relationships</h2>${relBlock}
     <h2>Timeline (${ev.length})</h2>${tlBlock}
+    <h2>Bibliography</h2>${biblioBlock}
     <footer>EXIF, geocoder and OSM data are leads, not proof — cross-check with sun, weather and visual features.
       Map data © OpenStreetMap contributors (ODbL). Generated entirely on-machine; nothing was uploaded.</footer>
     </body></html>`;
 }
 
-function exportDossier() {
-  const html = buildDossier();
+function exportDossier(redact = false) {
+  const html = buildDossier(redact);
   const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([html], { type: "text/html" }));
-  a.download = `dossier-${stamp}.html`;
+  a.download = `dossier-${redact ? "redacted-" : ""}${stamp}.html`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  status("dossier exported to your Downloads folder");
+  status(`${redact ? "redacted " : ""}dossier exported to your Downloads folder`);
 }
 
 /* Fire-and-forget capture that's still safe to SAVE against: the promise is
@@ -2618,11 +2746,14 @@ function initCase() {
   const tlo = $("#timeline-open"), tlc = $("#timeline-close");
   if (tlo) tlo.addEventListener("click", openTimeline);
   if (tlc) tlc.addEventListener("click", () => { $("#timeline-panel").hidden = true; });
-  const dz = $("#btn-dossier");
-  if (dz) dz.addEventListener("click", async () => {
+  const dossierExport = (redact) => async () => {
     if (_artPending.size) { status("finalizing evidence log…", false, 1500); await Promise.all([..._artPending]); }
-    exportDossier();
-  });
+    exportDossier(redact);
+  };
+  const dz = $("#btn-dossier");
+  if (dz) dz.addEventListener("click", dossierExport(false));
+  const dzr = $("#btn-dossier-redacted");
+  if (dzr) dzr.addEventListener("click", dossierExport(true));
 
   // ── autosave wiring ──
   const notes = $("#case-notes");
@@ -2858,6 +2989,15 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sp) { openModule("data"); gbifOverlay(decodeURIComponent(sp[2] || "species"), +sp[1]); }
   $$(".rail-btn[data-module]").forEach((b) => b.addEventListener("click", () => openModule(b.dataset.module)));
   $("#panel-close").addEventListener("click", closePanel);
+  // 9A.1 — log a finding pasted from an external tool as an evidence observation
+  const logFinding = () => {
+    const v = $("#finding-input").value.trim();
+    if (!v) return status("Paste a link or coordinates to log.", true);
+    logObservation({ text: v, source: v });
+    $("#finding-input").value = "";
+  };
+  $("#finding-log").addEventListener("click", logFinding);
+  $("#finding-input").addEventListener("keydown", (e) => { if (e.key === "Enter") logFinding(); });
   $("#btn-measure").addEventListener("click", () => toggleMeasure());
   $("#btn-help").addEventListener("click", () => { $("#help-overlay").hidden = false; });
   $("#btn-copy-dd").addEventListener("click", () =>

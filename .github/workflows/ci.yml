@@ -42,10 +42,10 @@ jobs:
         run: docker build -t geosint:ci .
       - name: Run + probe /api/status
         run: |
-          docker run -d --name g -p 8650:8650 geosint:ci
+          docker run -d --name geosint-ci -p 8650:8650 geosint:ci
           for i in $(seq 1 20); do
             code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8650/api/status || true)
             [ "$code" = "200" ] && break; sleep 1
           done
           curl -fsS http://localhost:8650/api/status | grep -q '"platform": "Linux"'
-          docker rm -f g
+          docker rm -f geosint-ci
