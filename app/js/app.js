@@ -1616,7 +1616,7 @@ async function runOverpass(selectors, label, minZoom = 10) {
         radius: 6, color: "#ffb454", fillColor: "#ffb454", fillOpacity: 0.55, weight: 1.5,
       }).bindPopup(
         `<b>${esc(name)}</b><br><span style="font-family:monospace">${lat.toFixed(5)}, ${lon.toFixed(5)}</span><br>` +
-        `<a href="https://www.openstreetmap.org/${el.type}/${el.id}" target="_blank">OSM object</a> · ` +
+        `<a href="https://www.openstreetmap.org/${esc(el.type)}/${esc(el.id)}" target="_blank">OSM object</a> · ` +
         `<a href="#" onclick="setPoint(L.latLng(${lat},${lon}));return false">set active point</a> · ` +
         `<a href="#" onclick="pinFeature(${idx});return false">📌 pin to case</a>`);
       state.dataLayer.addLayer(mk);
@@ -2013,7 +2013,10 @@ function addArtifact(a) {
    coords). Returns [lat,lng] or null. */
 function coordsFromText(s) {
   if (!s) return null;
-  const m = String(s).match(/(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/);
+  // Require a decimal point in BOTH numbers — real GPS pairs have them, which
+  // avoids false matches on incidental integer pairs (zoom levels, versions,
+  // "1, 2"). Lat/lng must also be in range.
+  const m = String(s).match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
   if (!m) return null;
   const lat = +m[1], lng = +m[2];
   return (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) ? [lat, lng] : null;
@@ -2040,7 +2043,7 @@ function logObservation({ text, source, ll, t }) {
   });
   status(`logged to case: ${esc(art.text).slice(0, 40)}`, false, 3000);
   if (ll) state.imgLayer.addLayer(L.circleMarker(L.latLng(ll[0], ll[1]),
-    { radius: 6, color: "#d2a8ff", fillColor: "#d2a8ff", fillOpacity: .6 }).bindTooltip(art.text));
+    { radius: 6, color: "#d2a8ff", fillColor: "#d2a8ff", fillOpacity: .6 }).bindTooltip(esc(art.text)));
   return art;
 }
 
@@ -2250,6 +2253,7 @@ function buildDossier(redact = false) {
           <div class="ev-meta">
             <b>${redact ? esc(/^https?:\/\//i.test(String(a.text || "")) ? "external finding" : (a.text || a.kind)) : esc(a.source || a.text || a.kind)}</b>
             <div class="muted">${esc(String(a.t).replace("T", " ").slice(0, 19))} · ${esc(a.kind)}</div>
+            ${(redact && a.source) ? `<div class="muted">source: ${src(a.source)}</div>` : ""}
             ${a.ll ? `<div class="muted">${esc(coord(a.ll[0], a.ll[1]))}</div>` : ""}
             ${a.sha256 ? `<div class="mono">sha256 ${esc(redact ? a.sha256.slice(0, 16) + "…" : a.sha256)}</div>` : ""}
           </div>
@@ -2280,13 +2284,20 @@ function buildDossier(redact = false) {
       : `<p class="muted">No web sources cited.</p>`);
 
   const ev = timelineEvents();
-  // In a redacted export, a timeline label that's a URL (an obs whose source is a
-  // link) must not leak — replace bare URLs with a generic label.
-  const evLabel = (e) => redact && /^https?:\/\//i.test(String(e.label || "")) ? "external finding" : e.label;
+  // In a redacted export the timeline must not leak sourcing: an obs label that's
+  // a URL, or an image event whose label is the original filename + camera detail,
+  // are genericized. (timelineEvents sets label = source||text||kind.)
+  const evLabel = (e) => {
+    if (!redact) return e.label;
+    if (e.kind === "image") return "image evidence";
+    if (/^https?:\/\//i.test(String(e.label || ""))) return "external finding";
+    return e.label;
+  };
+  const evDetail = (e) => (redact && e.kind === "image") ? "" : e.detail;   // camera make/model is sourcing
   const tlBlock = ev.length ? `<table class="kv">
       <tr><th>time</th><th>event</th><th>location</th></tr>
       ${ev.map((e) => `<tr><td class="mono">${esc(String(e.t).replace("T", " ").slice(0, 16))}</td>
-        <td>${esc(evLabel(e))}${e.detail ? ` <span class="muted">— ${esc(e.detail)}</span>` : ""}</td>
+        <td>${esc(evLabel(e))}${evDetail(e) ? ` <span class="muted">— ${esc(evDetail(e))}</span>` : ""}</td>
         <td>${e.ll ? esc(coord(e.ll[0], e.ll[1])) : ""}</td></tr>`).join("")}
     </table>` : `<p class="muted">No dated events.</p>`;
 
