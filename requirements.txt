@@ -1,1 +1,3 @@
-mkdocs-material>=9.5
+# Build-time only (builds the wiki). The serving process is pure stdlib.
+# Pinned (compatible range) for reproducible, auditable build artifacts.
+mkdocs-material>=9.5,<10

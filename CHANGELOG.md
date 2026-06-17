@@ -29,6 +29,17 @@ versioning (`server.py --version`, surfaced in `/api/status`).
   7.4 command palette (Ctrl+K); 7.5 shortcut badges; 7.6 responsive layout;
   7.7 consistent empty/disabled states; 7.8 first-run welcome + sample case.
 
+### Security (Phase 6 post-audit fixes)
+- **DNS-rebinding guard hardened (H1):** `host_ok` now matches on the Host
+  *hostname* (port stripped), not the host:port string. A rebound attacker
+  domain is rejected in every bind mode; loopback works on any port (fixes
+  Docker `-p 8665:8650` port-mapping). New `--allow-host` for trusted
+  IP/hostname access when bound off-loopback.
+- **Container hardening (H2):** the Docker image runs as a non-root user
+  (`geosint`, uid 10001); docs default to `-p 127.0.0.1:8650:8650`.
+- **Supply chain (M2):** `mkdocs-material` pinned to a compatible range; CI runs
+  `pip-audit` on the build toolchain.
+
 ### Fixed
 - Escape ExifTool error output before render (XSS); unpredictable temp file for
   the GE Pro fly-to KML; `/api/qgis` validates payload before probing for QGIS.

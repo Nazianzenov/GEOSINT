@@ -125,3 +125,45 @@ def test_venv_python_dir(os_mode):
 def test_version_constant():
     assert server.VERSION
     assert server.UA.startswith(f"GeOSINT-Workbench/{server.VERSION}")
+
+
+# ── host_ok / DNS-rebinding guard (H1 fix) ────────────────────────────────
+class _FakeHeaders(dict):
+    def get(self, k, default=None):  # case-insensitive Host lookup like real headers
+        for kk, vv in self.items():
+            if kk.lower() == k.lower():
+                return vv
+        return default
+
+
+def _host_ok(host_value):
+    """Call Handler.host_ok with a fake Host header, without a real socket."""
+    h = server.Handler.__new__(server.Handler)
+    h.headers = _FakeHeaders({"Host": host_value})
+    return server.Handler.host_ok(h)
+
+
+def test_host_ok_accepts_loopback_any_port(monkeypatch):
+    # The guard matches on hostname, not port — so loopback works on any port
+    # (incl. Docker port mapping like -p 8664:8650), but an attacker domain is
+    # rejected regardless.
+    monkeypatch.setattr(server, "ALLOWED_HOSTS", {"localhost:8650"})
+    monkeypatch.setattr(server, "ALLOWED_HOSTNAMES", {"127.0.0.1", "localhost", "[::1]", "::1"})
+    assert _host_ok("localhost:8650")          # exact
+    assert _host_ok("localhost:8664")          # different published port (Docker) — OK
+    assert _host_ok("127.0.0.1:9999")          # any loopback name/port
+    assert _host_ok("[::1]:8650")              # bracketed IPv6 loopback
+    assert not _host_ok("evil.attacker.com")        # rebound attacker domain rejected
+    assert not _host_ok("evil.attacker.com:8650")   # ...with a port too
+    assert not _host_ok("192.168.1.50:8650")        # LAN IP not allowed by default
+
+
+def test_host_ok_offloopback_adds_bind_and_allowhost(monkeypatch):
+    # Off-loopback bind adds the bind host; --allow-host adds a specific name.
+    monkeypatch.setattr(server, "ALLOWED_HOSTS", {"localhost:8650"})
+    monkeypatch.setattr(server, "ALLOWED_HOSTNAMES",
+                        {"127.0.0.1", "localhost", "[::1]", "::1", "0.0.0.0", "geosint.lan"})
+    assert _host_ok("localhost:8650")          # loopback still works
+    assert _host_ok("geosint.lan:8650")        # operator-trusted name (any port)
+    assert _host_ok("geosint.lan")
+    assert not _host_ok("evil.attacker.com")   # still rejects attacker domains
