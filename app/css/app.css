@@ -94,6 +94,9 @@ kbd { background: var(--bg-2); border: 1px solid var(--line); border-radius: 3px
   width: 420px; flex: none; display: flex; flex-direction: column;
   background: var(--bg-1); border-left: 1px solid var(--line);
 }
+/* wide mode for the docked Wiki Search (the photo grid needs room) */
+#panel.wide { width: min(880px, 70vw); }
+#panel.wide #panel-body { padding: 0; }
 .panel-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 14px; border-bottom: 1px solid var(--line); flex: none;
@@ -298,3 +301,48 @@ table.batch .batch-go { text-decoration: none; font-size: 14px; }
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ── shared Wiki Search styles (GeoSearch.mount) ──────────────────────
+   Used by both the standalone search.html page and the docked #module-wiki
+   panel, so the two render identically. Scoped under .geosearch. */
+.geosearch .s-controls { display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--bg-1); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+.geosearch .s-q { flex: 1; min-width: 0; padding: 9px 14px; border-radius: 5px; font: 14px var(--sans);
+  border: 1px solid var(--line); background: var(--bg); color: var(--txt); outline: none; }
+.geosearch .s-q:focus { border-color: var(--accent); }
+.geosearch .s-count { font: 12px var(--mono); color: var(--txt-dim); white-space: nowrap; }
+.geosearch .s-wrap { display: flex; align-items: flex-start; min-height: 0; }
+.geosearch .s-side { width: 230px; flex: none; padding: 14px; }
+.geosearch .s-side h3 { margin-top: 14px; }
+.geosearch .facet { display: block; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12.5px;
+  color: var(--txt-dim); border: 1px solid transparent; margin: 1px 0; }
+.geosearch .facet:hover { background: var(--bg-2); color: var(--txt); }
+.geosearch .facet.on { color: var(--accent); border-color: var(--line); background: var(--bg-2); }
+.geosearch .facet .n { float: right; font: 10px var(--mono); color: var(--txt-dim); }
+.geosearch .s-country { width: 100%; margin-bottom: 4px; }
+.geosearch .s-main { flex: 1; min-width: 0; padding: 14px 20px 60px; }
+.geosearch .interp { font: 12px var(--mono); color: var(--txt-dim); margin: 2px 0 14px; }
+.geosearch .interp b { color: var(--accent-2); font-weight: 600; }
+.geosearch .chip { display: inline-block; font: 11px var(--mono); border: 1px solid var(--accent);
+  color: var(--accent); border-radius: 10px; padding: 1px 9px; margin-right: 6px; cursor: pointer; }
+.geosearch .chip:hover::after { content: " ✕"; }
+.geosearch .s-group h2 { font: 600 13px var(--sans); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: 5px; margin: 26px 0 12px; }
+.geosearch .s-group h2 .n { color: var(--txt-dim); font: 11px var(--mono); margin-left: 8px; }
+.geosearch .grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.geosearch .pcard { width: 212px; background: var(--bg-1); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.geosearch .pcard img { width: 212px; height: 140px; object-fit: cover; display: block; background: #000; }
+.geosearch .pcard .cap { padding: 6px 9px; font-size: 11.5px; display: flex; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+.geosearch .pcard .cap b { color: var(--txt); font-weight: 600; }
+.geosearch .pcard .cap a { white-space: nowrap; }
+.geosearch .pcard.noimg { border-left: 3px solid var(--accent); }
+.geosearch .pcard.noimg .cap { flex-direction: column; }
+.geosearch .pcard.noimg .cap small { color: var(--txt-dim); display: block; margin: 2px 0; }
+.geosearch .fcard { background: var(--bg-1); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: 5px; padding: 9px 13px; margin: 7px 0; max-width: 880px; }
+.geosearch .fcard b { color: var(--accent-2); }
+.geosearch .fcard .src { font: 10.5px var(--mono); color: var(--txt-dim); margin-top: 3px; }
+.geosearch .fcard .src a { color: var(--txt-dim); }
+.geosearch .more { margin: 10px 0; }
+.geosearch .empty { color: var(--txt-dim); padding: 40px 0; font-size: 14px; }
+.geosearch mark { background: #4cc2ff33; color: var(--accent); border-radius: 2px; padding: 0 1px; }
