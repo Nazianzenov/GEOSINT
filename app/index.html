@@ -24,7 +24,7 @@
   <button id="btn-case-load" class="icon-btn" title="Load a previously saved .geosint.json case file">⭱ LOAD</button>
   <button id="btn-dossier" class="icon-btn" title="Export a self-contained HTML report: active point, notes, annotations, evidence thumbnails, timeline and sources — nothing leaves your machine">📄 DOSSIER</button>
   <input type="file" id="case-file" accept=".json,application/json" hidden>
-  <a class="wiki-btn" href="search.html" target="_blank" title="Wiki via smart search (browse pages from there, or the graph view)">⌘ WIKI</a>
+  <a class="wiki-btn" id="btn-wiki" href="search.html" title="Smart wiki search [5] — opens in the workbench (right-click to open the full-page version)">⌘ WIKI</a>
 </header>
 
 <div id="layout">
@@ -35,7 +35,7 @@
     <button class="rail-btn" data-module="tools"   title="External tool launcher [4]"><span>⌬</span><label>TOOLS</label></button>
     <button class="rail-btn" data-module="data"    title="Data layers — OSM features &amp; species distributions on the map [6]"><span>⛏</span><label>DATA</label></button>
     <button class="rail-btn" data-module="anno"    title="Annotations — pins, labels &amp; arrows; export GeoJSON/KML [7]"><span>✎</span><label>NOTE</label></button>
-    <a class="rail-btn" href="search.html" target="_blank" title="Smart wiki search — countries, bollards, anything [5]" style="text-decoration:none"><span>⌕</span><label>FIND</label></a>
+    <button class="rail-btn" data-module="wiki" title="Smart wiki search — countries, bollards, anything [5]"><span>⌕</span><label>FIND</label></button>
     <div class="rail-spacer"></div>
     <button class="rail-btn" id="btn-measure" title="Measure distance [M] — click to add points; right-drag a point to move; hold Shift for a range ring; Esc clears"><span>⤢</span><label>RULER</label></button>
     <button class="rail-btn" id="btn-help" title="Keyboard shortcuts"><span>?</span><label>KEYS</label></button>
@@ -49,6 +49,9 @@
       <button id="panel-close" class="icon-btn" title="Close panel [Esc]">✕</button>
     </div>
     <div id="panel-body">
+
+      <!-- ════════ WIKI SEARCH (docked) ════════ -->
+      <section id="module-wiki" class="geosearch" hidden></section>
 
       <!-- ════════ SUN ════════ -->
       <section id="module-sun" hidden>
@@ -349,6 +352,8 @@ Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
 <script src="vendor/suncalc.js"></script>
 <script src="vendor/exifr.umd.js"></script>
 <script src="vendor/geocoords.js"></script>
+<script src="vendor/minisearch.umd.js"></script>
+<script src="js/search.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

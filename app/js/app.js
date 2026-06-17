@@ -219,8 +219,14 @@ function showCtx(e) {
     // ruler armed with a drawn line → offer its elevation profile
     items.push(["⛰ Elevation profile of this line", () => elevationProfile()]);
   }
+  // While the ruler is armed, annotation actions are unavailable (they'd collide
+  // with measure's clicks). Say so explicitly instead of silently omitting them.
+  const note = state.measure.on
+    ? `<div class="ctx-note">✎ Annotations paused — ruler is armed (press M to exit)</div>`
+    : "";
   menu.innerHTML = `<div class="ctx-coords">${fmtDD(ll)}</div>` +
-    items.map((it, i) => `<div class="ctx-item" data-i="${i}">${it[0]}</div>`).join("");
+    items.map((it, i) => `<div class="ctx-item" data-i="${i}">${it[0]}</div>`).join("") +
+    note;
   menu.querySelectorAll(".ctx-item").forEach((el) =>
     el.addEventListener("click", () => { hideCtx(); items[+el.dataset.i][1](); }));
   menu.style.left = Math.min(e.originalEvent.clientX, innerWidth - 260) + "px";
@@ -541,12 +547,13 @@ function initSearch() {
 
 /* ════════════════════════ panel / modules ══════════════════════ */
 const MODULE_TITLES = { sun: "Sun & Shadow", weather: "Meteorology", image: "Image Intelligence",
-  tools: "Tool Launcher", data: "Data Layers", anno: "Annotations" };
+  tools: "Tool Launcher", data: "Data Layers", anno: "Annotations", wiki: "Wiki Search" };
 
 function openModule(name) {
   if (state.module === name) return closePanel();
   state.module = name;
   $("#panel").hidden = false;
+  $("#panel").classList.toggle("wide", name === "wiki");   // wiki needs room for the photo grid
   $("#panel-title").textContent = MODULE_TITLES[name];
   $$("#panel-body > section").forEach((s) => s.hidden = s.id !== `module-${name}`);
   $$(".rail-btn[data-module]").forEach((b) => b.classList.toggle("active", b.dataset.module === name));
@@ -555,10 +562,32 @@ function openModule(name) {
   else state.sunLayer.clearLayers();              // sun/shadow overlay only shows in its own module
   if (name === "tools") renderTools();
   if (name === "anno") renderAnnoList();
+  if (name === "wiki") openWiki();
+}
+
+// Lazy-mount the docked Wiki Search the first time it's opened; re-focus thereafter.
+// onPick jumps the active point in place — no new tab, no #ll= round-trip.
+let _wikiMounted = false;
+function openWiki() {
+  if (window.GeoSearch) {
+    if (!_wikiMounted) {
+      _wikiMounted = true;
+      GeoSearch.mount($("#module-wiki"), {
+        onPick: ({ ll }) => setPoint(L.latLng(ll[0], ll[1]), { fly: true, zoom: 13 }),
+      }).then(() => GeoSearch.focus());
+    } else {
+      GeoSearch.focus();
+    }
+  } else {
+    $("#module-wiki").innerHTML =
+      `<p class="hint" style="padding:14px">Wiki Search failed to load. Open the standalone page: `
+      + `<a href="search.html" target="_blank">search.html</a>.</p>`;
+  }
 }
 function closePanel() {
   state.module = null;
   $("#panel").hidden = true;
+  $("#panel").classList.remove("wide");
   $$(".rail-btn[data-module]").forEach((b) => b.classList.remove("active"));
   state.sunLayer.clearLayers();
   state.map.invalidateSize();
@@ -1030,7 +1059,7 @@ async function exiftoolDump() {
       body: state.lastFile,
     });
     const j = await r.json();
-    if (j.error) { out.innerHTML = `<p class="nomatch">✗ ${j.error}</p>`; return; }
+    if (j.error) { out.innerHTML = `<p class="nomatch">✗ ${esc(j.error)}</p>`; return; }
     const keys = Object.keys(j.tags);
     out.innerHTML = `<h3>ExifTool — ${keys.length} tags</h3>
       <div class="table-scroll"><table class="kv">${keys.map((k) =>
@@ -2231,7 +2260,7 @@ function initKeys() {
       s: "sun", w: "weather", i: "image", t: "tools", d: "data", a: "anno" };
     if (mods[e.key.toLowerCase()]) openModule(mods[e.key.toLowerCase()]);
     if (e.key.toLowerCase() === "m") toggleMeasure();
-    if (e.key === "5" || e.key.toLowerCase() === "f") window.open("search.html", "_blank");
+    if (e.key === "5" || e.key.toLowerCase() === "f") openModule("wiki");
   });
   // Shift toggles the measure range ring live while a vertex is being right-dragged
   document.addEventListener("keydown", (e) => {
@@ -2269,4 +2298,10 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#btn-help").addEventListener("click", () => { $("#help-overlay").hidden = false; });
   $("#btn-copy-dd").addEventListener("click", () => state.point && copyText(fmtDD(state.point)));
   $("#btn-copy-dms").addEventListener("click", () => state.point && copyText(fmtDMS(state.point)));
+  // WIKI button: plain click docks the search in-workbench; modified clicks
+  // (Ctrl/Cmd/middle) keep the native href so the standalone page still opens.
+  $("#btn-wiki").addEventListener("click", (e) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
+    e.preventDefault(); openModule("wiki");
+  });
 });

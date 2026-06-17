@@ -6,80 +6,50 @@
 <title>GeOSINT — Wiki Search</title>
 <link rel="stylesheet" href="css/app.css">
 <style>
+  /* Standalone-page chrome only. The search UI itself is styled by the shared
+     .geosearch rules in app.css (so the docked workbench panel looks identical). */
   body { overflow: auto; }
   #s-top { display:flex; align-items:center; gap:12px; padding:10px 16px; background:var(--bg-1);
            border-bottom:1px solid var(--line); position:sticky; top:0; z-index:50; }
   #s-top .brand a { color: var(--txt); text-decoration:none; }
-  #s-q { flex:1; max-width:680px; padding:9px 14px; border-radius:5px; font:14px var(--sans);
-         border:1px solid var(--line); background:var(--bg); color:var(--txt); outline:none; }
-  #s-q:focus { border-color: var(--accent); }
-  #s-count { font:12px var(--mono); color:var(--txt-dim); white-space:nowrap; }
-  #s-wrap { display:flex; align-items:flex-start; min-height:0; }
-  #s-side { width:230px; flex:none; padding:14px; position:sticky; top:54px; }
-  #s-side h3 { margin-top:14px; }
-  .facet { display:block; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12.5px;
-           color:var(--txt-dim); border:1px solid transparent; margin:1px 0; }
-  .facet:hover { background:var(--bg-2); color:var(--txt); }
-  .facet.on { color:var(--accent); border-color:var(--line); background:var(--bg-2); }
-  .facet .n { float:right; font:10px var(--mono); color:var(--txt-dim); }
-  #s-country { width:100%; margin-bottom:4px; }
-  #s-main { flex:1; min-width:0; padding:14px 20px 60px; }
-  .interp { font:12px var(--mono); color:var(--txt-dim); margin:2px 0 14px; }
-  .interp b { color: var(--accent-2); font-weight:600; }
-  .chip { display:inline-block; font:11px var(--mono); border:1px solid var(--accent);
-          color:var(--accent); border-radius:10px; padding:1px 9px; margin-right:6px; cursor:pointer; }
-  .chip:hover::after { content:" ✕"; }
-  .s-group h2 { font:600 13px var(--sans); letter-spacing:.12em; text-transform:uppercase;
-                color:var(--accent); border-bottom:1px solid var(--line);
-                padding-bottom:5px; margin:26px 0 12px; }
-  .s-group h2 .n { color:var(--txt-dim); font:11px var(--mono); margin-left:8px; }
-  .grid { display:flex; flex-wrap:wrap; gap:12px; }
-  .pcard { width:212px; background:var(--bg-1); border:1px solid var(--line); border-radius:6px;
-           overflow:hidden; }
-  .pcard img { width:212px; height:140px; object-fit:cover; display:block; background:#000; }
-  .pcard .cap { padding:6px 9px; font-size:11.5px; display:flex; justify-content:space-between; gap:6px; flex-wrap:wrap; }
-  .pcard .cap b { color:var(--txt); font-weight:600; }
-  .pcard .cap a { white-space:nowrap; }
-  /* image-less card (e.g. flag look-alike tips) — text tile, no black box */
-  .pcard.noimg { border-left:3px solid var(--accent); }
-  .pcard.noimg .cap { flex-direction:column; }
-  .pcard.noimg .cap small { color:var(--txt-dim); display:block; margin:2px 0; }
-  .fcard { background:var(--bg-1); border:1px solid var(--line); border-left:3px solid var(--accent);
-           border-radius:5px; padding:9px 13px; margin:7px 0; max-width:880px; }
-  .fcard b { color:var(--accent-2); }
-  .fcard .src { font:10.5px var(--mono); color:var(--txt-dim); margin-top:3px; }
-  .fcard .src a { color:var(--txt-dim); }
-  .more { margin:10px 0; }
-  .empty { color:var(--txt-dim); padding:40px 0; font-size:14px; }
-  mark { background:#4cc2ff33; color:var(--accent); border-radius:2px; padding:0 1px; }
+  #s-top .s-q { flex:1; max-width:680px; }
+  #geosearch { display:block; }
+  /* on the full-width page, let the search sidebar stick under the top bar */
+  #geosearch .s-side { position:sticky; top:54px; }
 </style>
 </head>
 <body>
 <div id="s-top">
   <div class="brand"><a href="index.html" title="Back to Workbench">◢ Ge<span class="brand-o">OSINT</span></a>
     <span class="brand-sub">WIKI SEARCH</span></div>
-  <input id="s-q" type="text" spellcheck="false" autocomplete="off"
-         placeholder='Try: "asian bollards" · "japan" · "yellow plates" · "ger mongolia" — press /'>
-  <span id="s-count"></span>
   <a class="wiki-btn" href="graph.html">▦ MATRIX</a>
   <a class="wiki-btn" href="/wiki/" target="_blank">⌘ WIKI</a>
 </div>
-<div id="s-wrap">
-  <aside id="s-side">
-    <h3>Country</h3>
-    <input id="s-country" class="mono" list="s-countries" placeholder="type a country…">
-    <datalist id="s-countries"></datalist>
-    <div id="s-chips"></div>
-    <h3>Continent</h3>
-    <div id="s-continents"></div>
-    <h3>Category</h3>
-    <div id="s-cats"></div>
-    <h3>Display</h3>
-    <label class="facet" id="s-photos">photos only</label>
-  </aside>
-  <main id="s-main"><div class="empty">loading index…</div></main>
-</div>
+<div id="geosearch" class="geosearch"></div>
 <script src="vendor/minisearch.umd.js"></script>
 <script src="js/search.js"></script>
+<script>
+  // Standalone page: mount with no onPick, so result cards use the #ll= deep link
+  // (open the workbench in a new tab at the coordinate). Read q/country/etc. from
+  // the URL after mount for shareable links.
+  GeoSearch.mount(document.getElementById("geosearch")).then((ui) => {
+    const p = new URLSearchParams(location.search);
+    if (p.get("q")) { ui.$(".s-q").value = p.get("q"); }
+    if (p.get("country")) ui.state.country = p.get("country");
+    if (p.get("continent")) ui.state.continent = p.get("continent");
+    if (p.get("cat")) ui.state.cats.add(p.get("cat"));
+    ui.run();
+    ui.$(".s-q").focus();
+    // keep ?q= in the URL for sharable searches
+    ui.$(".s-q").addEventListener("input", () => {
+      const url = new URL(location); const v = ui.$(".s-q").value.trim();
+      v ? url.searchParams.set("q", v) : url.searchParams.delete("q");
+      history.replaceState(null, "", url);
+    });
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "/" && document.activeElement.tagName !== "INPUT") { e.preventDefault(); GeoSearch.focus(); }
+  });
+</script>
 </body>
 </html>

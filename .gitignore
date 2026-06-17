@@ -18,5 +18,9 @@ cache/
 # local-only: gallery scraping/parsing stays off the repo
 tools/import_geohints.py
 
-# local-only planning doc
+# local-only planning docs
 ROADMAP.md
+docs/scoping/
+
+# local-only training/CTF exercises (link-only; not for redistribution)
+challenges/
