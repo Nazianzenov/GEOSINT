@@ -339,10 +339,11 @@ Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
   <div class="help-card">
     <h2>Keyboard</h2>
     <table class="kv">
+      <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>command palette — jump to anything</td></tr>
       <tr><td><kbd>/</kbd></td><td>focus search</td></tr>
       <tr><td><kbd>1–4</kbd></td><td>Sun · Weather · Image · Tools</td></tr>
       <tr><td><kbd>6</kbd> / <kbd>7</kbd></td><td>Data layers · Annotations</td></tr>
-      <tr><td><kbd>5</kbd> / <kbd>F</kbd></td><td>smart wiki search (new tab)</td></tr>
+      <tr><td><kbd>5</kbd> / <kbd>F</kbd></td><td>smart wiki search (docked)</td></tr>
       <tr><td><kbd>M</kbd></td><td>measure: click to add points (each leg shows distance + bearing) · right-drag a point to move · hold <kbd>Shift</kbd> for a range ring · right-click for the line's elevation profile · Esc clears</td></tr>
       <tr><td><kbd>N</kbd></td><td>case notes</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>save case file</td></tr>
@@ -351,6 +352,14 @@ Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
       <tr><td>search box</td><td>paste DD, DMS, MGRS or a Plus Code to jump there</td></tr>
     </table>
     <button class="btn" onclick="document.getElementById('help-overlay').hidden=true">close</button>
+  </div>
+</div>
+
+<div id="cmd-palette" hidden>
+  <div class="cmd-box" role="dialog" aria-modal="true" aria-label="Command palette">
+    <input id="cmd-input" type="text" spellcheck="false" autocomplete="off"
+           placeholder="Jump to a module, tool, or action…  (Esc to close)" aria-controls="cmd-list">
+    <ul id="cmd-list" role="listbox"></ul>
   </div>
 </div>
 
