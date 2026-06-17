@@ -61,6 +61,7 @@ class SearchUI {
   constructor(root, opts) {
     this.root = root;
     this.onPick = opts && opts.onPick;          // (card) => void; falls back to #ll= link
+    this.onLog = opts && opts.onLog;            // (card) => void; log a card to the case (workbench only)
     this.DATA = null; this.MS = null;
     this.state = { country: null, continent: null, cats: new Set(), photos: false };
     this.$ = (sel) => root.querySelector(sel);
@@ -300,19 +301,25 @@ class SearchUI {
           mapLink = ` · <a href="/app/index.html#ll=${c.ll[0]},${c.ll[1]}" target="_blank">⌖ open on map</a>`;
         }
       }
+      // 9A.2 — in the workbench, a card can be logged to the case as a sourced observation
+      const logLink = this.onLog ? ` · <a href="#" class="s-log">＋ log to case</a>` : "";
       const div = document.createElement("div");
       div.className = "fcard";
       div.innerHTML =
         `<b>${esc(c.t)}</b>${where && where !== c.t ? ` <span class="muted">(${esc(where)})</span>` : ""}
          ${c.img ? `<br><img src="${esc(c.img)}" loading="lazy" style="max-width:300px;border-radius:4px;margin:6px 0">` : ""}
          <div>${hl(esc(c.x || ""))}</div>
-         <div class="src"><a href="${esc(c.page || "#")}" target="_blank">source page</a>${mapLink}</div>`;
+         <div class="src"><a href="${esc(c.page || "#")}" target="_blank">source page</a>${mapLink}${logLink}</div>`;
       if (this.onPick && c.ll) {
         const a = div.querySelector(".s-pick");
         if (a) a.addEventListener("click", (ev) => {
           ev.preventDefault();
           this.onPick({ ll: [+a.dataset.lat, +a.dataset.lng], card: c });
         });
+      }
+      if (this.onLog) {
+        const a = div.querySelector(".s-log");
+        if (a) a.addEventListener("click", (ev) => { ev.preventDefault(); this.onLog(c); });
       }
       wrap.appendChild(div);
     });

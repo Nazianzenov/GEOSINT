@@ -27,6 +27,7 @@
   </div>
   <button id="btn-case-load" class="icon-btn" title="Load a previously saved .geosint.json case file">⭱ LOAD</button>
   <button id="btn-dossier" class="icon-btn" title="Export a self-contained HTML report: active point, notes, annotations, evidence thumbnails, timeline and sources — nothing leaves your machine">📄 DOSSIER</button>
+  <button id="btn-dossier-redacted" class="icon-btn" title="Export a publication-safe dossier: exact coordinates coarsened, source URLs/filenames and notes removed — keeps findings and provenance hashes">📄 REDACTED</button>
   <input type="file" id="case-file" accept=".json,application/json" hidden>
   <a class="wiki-btn" id="btn-wiki" href="search.html" title="Smart wiki search [5] — opens in the workbench (right-click to open the full-page version)">⌘ WIKI</a>
 </header>
@@ -195,6 +196,14 @@
       <section id="module-tools" hidden>
         <p class="hint">Every tool opens centred on the <b>active point</b> (click the map to set it).
            Desktop tools launch locally.</p>
+        <div class="field-row" style="margin-bottom:10px">
+          <div class="field grow">
+            <label for="finding-input">Log a finding from a tool</label>
+            <input type="text" id="finding-input" spellcheck="false"
+                   placeholder="paste a Mapillary/Flightradar permalink or coords…">
+          </div>
+          <button class="btn accent" id="finding-log" title="Record what you found in an external tool as an evidence observation (coords auto-parsed if present)">＋ LOG</button>
+        </div>
         <div id="tools-list"></div>
       </section>
 
@@ -235,11 +244,12 @@
         <p class="srcnote" id="cables-attrib">Cable data: <a href="https://www.submarinecablemap.com/"
            target="_blank">© TeleGeography</a> · CC BY-NC-SA 3.0.</p>
 
-        <h3>Species distribution overlay <span class="muted">(GBIF)</span></h3>
+        <h3>Species distribution overlay <span class="muted">(GBIF)</span>
+            <span class="tag caution" title="Density tiles are fetched live from api.gbif.org — won't work offline, and reveals your viewing extent to GBIF">ONLINE-ONLY</span></h3>
         <p class="hint">Live occurrence-density tiles for any species — e.g. <i>Betula pendula</i>
            (silver birch) to compare a scene's vegetation against the real range.
            See the wiki's <a href="/wiki/flora/" target="_blank">botanical reference</a> for
-           one-click species maps.</p>
+           one-click species maps. <b>Online-only</b> (unlike the prefetchable base map).</p>
         <div class="field-row">
           <div class="field grow">
             <label>Species (common or scientific name)</label>

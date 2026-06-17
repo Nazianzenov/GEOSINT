@@ -58,6 +58,33 @@ prints the version; it's also in `/api/status`.
 - The wiki/site and search index are generated; rebuild them before packaging so
   the bundle matches the current `wiki/docs/`.
 
+## Offline capability (fieldwork)
+
+The workbench is usable offline for a meaningful subset of work, but not
+everything — be honest with yourself about what you'll have in the field.
+
+**Works fully offline:**
+- The **wiki** and **smart search / knowledge graph** (built into the install).
+- **Local EXIF** parsing, the **ExifTool** dump and **embedded-preview** recovery.
+- **Sun & Shadow** chronolocation + the shadow solver (pure local math).
+- **Case files** — save/load/dossier are all client-side.
+- **Map tiles for areas you prefetched** (Data module → *cache this area*), and any
+  area you've already visited (30-day tile cache).
+
+**Needs the network (no cached fallback unless noted):**
+- Map tiles for **un-cached** areas; **geocoding** (Nominatim).
+- **Weather** (Open-Meteo) and the **elevation** readout/profile.
+- **Data layers** (Overpass) for areas not already cached (Overpass results are
+  cached 7 days + served stale on error).
+- **GBIF species overlay** — density tiles are fetched live from `api.gbif.org`
+  and are **online-only** (flagged as such in the Data module). This is the one
+  overlay that also reveals your viewing extent to a third party.
+- Identification **photo galleries** are hotlinked (not bundled), so the images
+  need the network even though the surrounding wiki text is offline.
+
+Tip: before going offline, prefetch tiles for your area of interest and run any
+Overpass presets you'll need so they're cached.
+
 ## Security posture (unchanged across all paths)
 Loopback bind by default; `--host 0.0.0.0` is an explicit opt-in for containers.
 No telemetry, no required cloud, no AI geolocation. See the README OPSEC section.
