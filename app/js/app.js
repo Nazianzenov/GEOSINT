@@ -107,6 +107,10 @@ function status(msg, isErr = false, ms = 4000) {
   if (ms) status._t = setTimeout(() => { el.textContent = ""; }, ms);
 }
 
+// Shared feedback for actions that need an active point (so they explain
+// themselves instead of silently no-op'ing).
+const NO_POINT_MSG = "Set an active point first — click the map.";
+
 async function copyText(t) {
   try { await navigator.clipboard.writeText(t); status(`copied: ${t}`); }
   catch { status("clipboard blocked by browser", true); }
@@ -1256,7 +1260,8 @@ function renderTools() {
       const idx = TOOLS.indexOf(t);
       const needsPt = !!t.url && t.url.length > 0;
       const dis = (needsPt || t.desktop) && !p;
-      return `<div class="tool-item ${dis ? "disabled" : ""}" data-idx="${idx}">
+      return `<div class="tool-item ${dis ? "disabled" : ""}" data-idx="${idx}"${
+        dis ? ` title="Set an active point first — click the map"` : ""}>
         <span class="t-name">${t.name}</span>
         ${t.desktop ? `<span class="tag desktop">DESKTOP</span>` : ""}
         ${t.caution ? `<span class="tag caution">UPLOADS</span>` : ""}
@@ -1264,6 +1269,10 @@ function renderTools() {
     }).join("")}</div>`).join("");
   wrap.querySelectorAll(".tool-item:not(.disabled)[data-idx]").forEach((el) => {
     el.addEventListener("click", () => launchTool(TOOLS[+el.dataset.idx]));
+  });
+  // a disabled tool row explains why instead of doing nothing
+  wrap.querySelectorAll(".tool-item.disabled[data-idx]").forEach((el) => {
+    el.addEventListener("click", () => status(NO_POINT_MSG, true));
   });
   wrap.querySelectorAll("[data-local]").forEach((el) => {
     const key = el.dataset.local;
@@ -1285,7 +1294,7 @@ async function launchLocal(key) {
 async function launchTool(t) {
   const p = state.point, z = state.map.getZoom();
   if (t.desktop) {
-    if (!p) return;
+    if (!p) return status(NO_POINT_MSG, true);
     try {
       const r = await fetch("/api/flyto", {
         method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
@@ -1299,7 +1308,7 @@ async function launchTool(t) {
   }
   if (!t.url) return;
   const needsPt = t.url.length > 0;
-  if (needsPt && !p) return;
+  if (needsPt && !p) return status(NO_POINT_MSG, true);
   window.open(needsPt ? t.url(p.lat.toFixed(5), p.lng.toFixed(5), z) : t.url(), "_blank");
 }
 
@@ -2386,12 +2395,9 @@ function buildCommands() {
     C("Coords", "Open Google Earth here", () => window.open(`https://earth.google.com/web/@${p.lat},${p.lng},0a,2000d,35y,0h,0t,0r`));
   }
 
-  // every tool (point-dependent ones no-op with a status if no point — same as launchTool)
+  // every tool (launchTool self-explains with a status if no active point)
   (typeof TOOLS !== "undefined" ? TOOLS : []).forEach((t) =>
-    C("Tool", `Open ${t.name}`, () => {
-      if ((t.url && t.url.length > 0 || t.desktop) && !state.point) return status("set an active point first", true);
-      launchTool(t);
-    }, t.desc ? "" : ""));
+    C("Tool", `Open ${t.name}`, () => launchTool(t)));
 
   return cmds;
 }
@@ -2564,8 +2570,10 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#panel-close").addEventListener("click", closePanel);
   $("#btn-measure").addEventListener("click", () => toggleMeasure());
   $("#btn-help").addEventListener("click", () => { $("#help-overlay").hidden = false; });
-  $("#btn-copy-dd").addEventListener("click", () => state.point && copyText(fmtDD(state.point)));
-  $("#btn-copy-dms").addEventListener("click", () => state.point && copyText(fmtDMS(state.point)));
+  $("#btn-copy-dd").addEventListener("click", () =>
+    state.point ? copyText(fmtDD(state.point)) : status(NO_POINT_MSG, true));
+  $("#btn-copy-dms").addEventListener("click", () =>
+    state.point ? copyText(fmtDMS(state.point)) : status(NO_POINT_MSG, true));
   // WIKI button: plain click docks the search in-workbench; modified clicks
   // (Ctrl/Cmd/middle) keep the native href so the standalone page still opens.
   $("#btn-wiki").addEventListener("click", (e) => {
