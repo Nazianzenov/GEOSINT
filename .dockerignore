@@ -1,0 +1,14 @@
+.venv/
+build/
+dist/
+cache/
+__pycache__/
+*.pyc
+.git/
+.github/
+docs/scoping/
+challenges/
+import/
+wiki/site/
+*.spec
+ROADMAP.md

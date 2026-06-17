@@ -29,10 +29,19 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-ROOT = Path(__file__).resolve().parent
+# ROOT = read-only bundled assets (app/, wiki/site/, data/). When frozen by
+# PyInstaller these live in the extracted bundle dir (sys._MEIPASS); otherwise
+# next to this file. DATA_ROOT = writable runtime dir (cache/): next to the
+# executable when frozen (the bundle dir is wiped on exit), else the repo root.
+if getattr(sys, "frozen", False):
+    ROOT = Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
+    DATA_ROOT = Path(sys.executable).resolve().parent
+else:
+    ROOT = Path(__file__).resolve().parent
+    DATA_ROOT = ROOT
 APP_DIR = ROOT / "app"
 WIKI_SITE = ROOT / "wiki" / "site"
-CACHE = ROOT / "cache"
+CACHE = DATA_ROOT / "cache"
 OVERPASS_CACHE = CACHE / "overpass"
 TILE_CACHE = CACHE / "tiles"
 PGET_CACHE = CACHE / "pget"
@@ -72,8 +81,17 @@ PGET_ALLOW = [
     ("https://nominatim.openstreetmap.org/search?", 30 * 86400),
     ("https://api.gbif.org/v1/species/match?", 30 * 86400),
 ]
-UA = "GeOSINT-Workbench/1.0 (local personal OSINT tool; non-commercial)"
+VERSION = "1.0.0"
+UA = f"GeOSINT-Workbench/{VERSION} (local personal OSINT tool; non-commercial)"
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")
+
+# Platform flags — the detection + launch layers branch on these so the workbench
+# runs on Windows, macOS and Linux (the server itself is pure stdlib everywhere).
+import platform as _platform
+PLATFORM = _platform.system()           # 'Windows' | 'Darwin' | 'Linux'
+IS_WIN = PLATFORM == "Windows"
+IS_MAC = PLATFORM == "Darwin"
+IS_LINUX = not IS_WIN and not IS_MAC     # treat *BSD etc. like Linux
 
 # Temp-file extensions ExifTool is allowed to see. The suffix steers ExifTool's
 # format handler and is attacker-controlled via X-Filename, so a hostile client
@@ -119,45 +137,88 @@ def _first_existing(paths):
     return None
 
 
+def _venv_python_dir():
+    """Where a venv keeps its interpreter: Scripts on Windows, bin elsewhere."""
+    return "Scripts" if IS_WIN else "bin"
+
+
 def find_exiftool():
+    # exiftool is a CLI; PATH is the common case on every OS (winget/brew/apt).
     w = shutil.which("exiftool")
     if w:
         return Path(w)
-    return _first_existing([
-        Path(LOCALAPPDATA) / "Programs" / "ExifTool" / "exiftool.exe",
-        r"C:\Program Files\exiftool\exiftool.exe",
-        r"C:\Program Files\exiftool\exiftool(-k).exe",
-    ])
+    if IS_WIN:
+        return _first_existing([
+            Path(LOCALAPPDATA) / "Programs" / "ExifTool" / "exiftool.exe",
+            r"C:\Program Files\exiftool\exiftool.exe",
+            r"C:\Program Files\exiftool\exiftool(-k).exe",
+        ])
+    if IS_MAC:
+        return _first_existing([
+            "/opt/homebrew/bin/exiftool", "/usr/local/bin/exiftool",
+        ])
+    return _first_existing(["/usr/bin/exiftool", "/usr/local/bin/exiftool"])
 
 
 def find_google_earth_pro():
+    w = shutil.which("google-earth-pro") or shutil.which("googleearth")
+    if w:
+        return Path(w)
+    if IS_WIN:
+        return _first_existing([
+            r"C:\Program Files\Google\Google Earth Pro\client\googleearth.exe",
+            r"C:\Program Files (x86)\Google\Google Earth Pro\client\googleearth.exe",
+        ])
+    if IS_MAC:
+        # the .app bundle; launched via `open -a` (handled in api_launch/api_flyto)
+        return _first_existing([
+            "/Applications/Google Earth Pro.app",
+            str(Path.home() / "Applications" / "Google Earth Pro.app"),
+        ])
     return _first_existing([
-        r"C:\Program Files\Google\Google Earth Pro\client\googleearth.exe",
-        r"C:\Program Files (x86)\Google\Google Earth Pro\client\googleearth.exe",
+        "/usr/bin/google-earth-pro", "/opt/google/earth/pro/googleearth",
     ])
 
 
 def find_qgis():
-    # Prefer the .bat launcher: it sets up the Qt/GDAL/Python environment the
-    # qgis-*-bin.exe needs. Launching the bare exe usually fails on missing DLLs.
-    return _first_existing([
-        r"C:\Program Files\QGIS*\bin\qgis-ltr.bat",
-        r"C:\Program Files\QGIS*\bin\qgis.bat",
-        r"C:\OSGeo4W\bin\qgis-ltr.bat",
-        r"C:\OSGeo4W\bin\qgis.bat",
-        r"C:\Program Files\QGIS*\bin\qgis-ltr-bin.exe",
-        r"C:\Program Files\QGIS*\bin\qgis-bin.exe",
-    ])
+    if IS_WIN:
+        # Prefer the .bat launcher: it sets up the Qt/GDAL/Python environment the
+        # qgis-*-bin.exe needs. Launching the bare exe usually fails on missing DLLs.
+        return _first_existing([
+            r"C:\Program Files\QGIS*\bin\qgis-ltr.bat",
+            r"C:\Program Files\QGIS*\bin\qgis.bat",
+            r"C:\OSGeo4W\bin\qgis-ltr.bat",
+            r"C:\OSGeo4W\bin\qgis.bat",
+            r"C:\Program Files\QGIS*\bin\qgis-ltr-bin.exe",
+            r"C:\Program Files\QGIS*\bin\qgis-bin.exe",
+        ])
+    if IS_MAC:
+        return _first_existing([
+            "/Applications/QGIS-LTR.app", "/Applications/QGIS.app",
+        ])
+    w = shutil.which("qgis") or shutil.which("qgis-ltr")
+    if w:
+        return Path(w)
+    return _first_existing(["/usr/bin/qgis", "/usr/local/bin/qgis"])
 
 
 def find_sherloq():
     # expected layout: tools/sherloq (git clone) with its own venv
     base = ROOT / "tools" / "sherloq"
-    py = base / ".venv" / "Scripts" / "python.exe"
+    py = base / ".venv" / _venv_python_dir() / ("python.exe" if IS_WIN else "python")
     gui = base / "gui" / "sherloq.py"
     if py.is_file() and gui.is_file():
         return py  # launched as: python gui/sherloq.py
     return None
+
+
+def _install_hint(per_os):
+    """Pick the install instruction for the current OS (falls back to linux)."""
+    if IS_WIN:
+        return per_os["win"]
+    if IS_MAC:
+        return per_os["mac"]
+    return per_os["linux"]
 
 
 TOOLS = {
@@ -165,28 +226,70 @@ TOOLS = {
         "label": "ExifTool",
         "find": find_exiftool,
         "kind": "cli",
-        "install": "winget install OliverBetz.ExifTool",
+        "install": _install_hint({
+            "win": "winget install OliverBetz.ExifTool",
+            "mac": "brew install exiftool",
+            "linux": "sudo apt install libimage-exiftool-perl  (or your distro's package)",
+        }),
     },
     "google_earth_pro": {
         "label": "Google Earth Pro",
         "find": find_google_earth_pro,
         "kind": "gui",
-        "install": "https://www.google.com/earth/about/versions/#earth-pro",
+        "install": _install_hint({
+            "win": "https://www.google.com/earth/about/versions/#earth-pro",
+            "mac": "https://www.google.com/earth/about/versions/#earth-pro  (or: brew install --cask google-earth-pro)",
+            "linux": "https://www.google.com/earth/about/versions/#earth-pro  (.deb/.rpm)",
+        }),
     },
     "qgis": {
         "label": "QGIS",
         "find": find_qgis,
         "kind": "gui",
-        "install": "winget install OSGeo.QGIS.LTR  (~2 GB)",
+        "install": _install_hint({
+            "win": "winget install OSGeo.QGIS.LTR  (~2 GB)",
+            "mac": "brew install --cask qgis  (or https://qgis.org/download/)",
+            "linux": "sudo apt install qgis  (or https://qgis.org/download/)",
+        }),
     },
     "sherloq": {
         "label": "Sherloq (image forensics)",
         "find": find_sherloq,
         "kind": "gui",
-        "install": "git clone https://github.com/GuidoBartoli/sherloq tools\\sherloq, "
-                   "then create tools\\sherloq\\.venv and pip install -r gui/requirements.txt",
+        "install": "git clone https://github.com/GuidoBartoli/sherloq tools/sherloq, "
+                   "then create tools/sherloq/.venv and pip install -r gui/requirements.txt",
     },
 }
+
+# Hide the transient console window when spawning a Windows .bat launcher.
+_NO_WINDOW = {"creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0)} if IS_WIN else {}
+
+
+def _launch_app(path: Path, args=None, cwd=None):
+    """Open a detected app cross-platform, no shell. Returns the Popen.
+      - Windows .bat  -> `cmd /c <bat> [args]` (sets up the tool's env), no console.
+      - macOS .app    -> `open -a <bundle> [--args ...]`.
+      - everything else (exe / unix binary) -> direct argv Popen.
+    Files to *hand to* the app (KML, GeoJSON) are passed as args."""
+    args = [str(a) for a in (args or [])]
+    p = str(path)
+    if IS_WIN and path.suffix.lower() == ".bat":
+        return subprocess.Popen(["cmd", "/c", p, *args], cwd=cwd, **_NO_WINDOW)
+    if IS_MAC and path.suffix.lower() == ".app":
+        cmd = ["open", "-a", p] + (["--args", *args] if args else [])
+        return subprocess.Popen(cmd, cwd=cwd)
+    return subprocess.Popen([p, *args], cwd=cwd)
+
+
+def _open_document_with(app: Path, doc: Path):
+    """Open a document (e.g. a KML) *with* a specific detected app, cross-platform.
+      - Windows .bat -> cmd /c <bat> <doc>; exe -> <exe> <doc>.
+      - macOS .app   -> `open -a <bundle> <doc>` (document-open form).
+      - Linux binary -> <binary> <doc>.
+    Used for the Google Earth Pro fly-to."""
+    if IS_MAC and app.suffix.lower() == ".app":
+        return subprocess.Popen(["open", "-a", str(app), str(doc)])
+    return _launch_app(app, [doc])
 
 
 def tool_status():
@@ -416,6 +519,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.redirect("/wiki/")
         if path == "/api/status":
             return self.send_json({
+                "version": VERSION,
+                "platform": PLATFORM,
                 "tools": tool_status(),
                 "wiki_built": (WIKI_SITE / "index.html").is_file(),
             })
@@ -499,11 +604,7 @@ class Handler(BaseHTTPRequestHandler):
         f = out / f"{name}.geojson"
         f.write_text(json.dumps(fc), encoding="utf-8")
         try:
-            if qgis.suffix.lower() == ".bat":
-                subprocess.Popen(["cmd", "/c", str(qgis), str(f)],
-                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-            else:
-                subprocess.Popen([str(qgis), str(f)])
+            _launch_app(qgis, [f])           # hands the layer file to QGIS, cross-platform
             return self.send_json({"ok": True, "file": str(f), "features": len(feats)})
         except OSError as e:
             return self.send_json({"error": str(e)}, 500)
@@ -686,15 +787,11 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"error": f"{t['label']} not found. Install: {t['install']}"}, 409)
         try:
             if key == "sherloq":
+                # path is sherloq's own venv python; run its GUI script directly
                 gui = ROOT / "tools" / "sherloq" / "gui" / "sherloq.py"
                 subprocess.Popen([str(path), str(gui)], cwd=str(gui.parent))
-            elif path.suffix.lower() == ".bat":
-                # run the launcher .bat via a hidden cmd so it sets up its
-                # environment and no console window lingers
-                subprocess.Popen(["cmd", "/c", str(path)],
-                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             else:
-                subprocess.Popen([str(path)])
+                _launch_app(path)            # .bat/.app/exe/binary handled per-OS
             return self.send_json({"ok": True, "launched": str(path)})
         except OSError as e:
             return self.send_json({"error": str(e)}, 500)
@@ -731,7 +828,7 @@ class Handler(BaseHTTPRequestHandler):
                                          mode="w", encoding="utf-8", delete=False) as f:
             f.write(kml)
             kml_path = Path(f.name)
-        subprocess.Popen([str(gep), str(kml_path)])
+        _open_document_with(gep, kml_path)       # opens the KML in GE Pro, cross-platform
         return self.send_json({"ok": True, "kml": str(kml_path)})
 
 
@@ -739,6 +836,13 @@ def main():
     ap = argparse.ArgumentParser(description="GeOSINT Workbench server")
     ap.add_argument("--port", type=int, default=8650)
     ap.add_argument("--no-browser", action="store_true")
+    ap.add_argument("--version", action="version", version=f"GeOSINT Workbench {VERSION}")
+    # Bind address. Default is loopback only (the security posture). 0.0.0.0 is an
+    # explicit opt-in for containers (Docker) — the Host-header allowlist + the
+    # X-GeOSINT CSRF guard still apply, but you are responsible for not exposing
+    # the port to an untrusted network.
+    ap.add_argument("--host", default="127.0.0.1",
+                    help="bind address (default 127.0.0.1; use 0.0.0.0 only inside a container)")
     args = ap.parse_args()
 
     # Lock the Host allowlist to this run's loopback bind (DNS-rebinding guard).
@@ -747,15 +851,21 @@ def main():
         f"127.0.0.1:{args.port}", f"localhost:{args.port}", f"[::1]:{args.port}",
         "127.0.0.1", "localhost", "[::1]",
     }
+    if args.host not in ("127.0.0.1", "localhost", "::1"):
+        # Non-loopback bind: allow the container/host name through the Host check,
+        # and make the relaxed posture explicit in the log.
+        ALLOWED_HOSTS |= {f"{args.host}:{args.port}", args.host}
+        print(f"[geosint] WARNING: binding to {args.host} (not loopback) — do not expose "
+              f"this port to an untrusted network.")
 
     try:
-        srv = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+        srv = ThreadingHTTPServer((args.host, args.port), Handler)
     except OSError:
         print(f"Port {args.port} is already in use — the Workbench is probably already "
               f"running at http://127.0.0.1:{args.port}/app/ (or pass --port to use another).")
         sys.exit(1)
     url = f"http://127.0.0.1:{args.port}/app/"
-    print(f"GeOSINT Workbench  ->  {url}")
+    print(f"GeOSINT Workbench {VERSION}  ->  {url}")
     print(f"Wiki               ->  http://127.0.0.1:{args.port}/wiki/"
           + ("" if (WIKI_SITE / 'index.html').is_file() else "   (NOT BUILT YET)"))
     for key, st in tool_status().items():

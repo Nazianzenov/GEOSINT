@@ -3,6 +3,11 @@
 __pycache__/
 *.pyc
 
+# PyInstaller build output (built per-OS on demand; never committed)
+build/
+dist/
+*.manifest
+
 # generated build artifacts (rebuilt by run.ps1)
 wiki/site/
 app/data/search-index.json

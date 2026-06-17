@@ -1,0 +1,5 @@
+# Build/dev toolchain (NOT needed to run the server — it is pure stdlib).
+# Pinned for reproducible artifacts; install with:
+#   pip install -r requirements-build.txt
+pyinstaller==6.21.0
+playwright==1.60.0        # browser-driven UI tests
