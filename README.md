@@ -133,3 +133,35 @@ wiki/site/         built wiki (generated)
   engine and hand it the image.
 - Nominatim/Open-Meteo queries necessarily reveal the coordinates you're investigating to
   those services; for sensitive casework, route the browser through your usual opsec setup.
+
+## License
+
+The **GeOSINT Workbench code** is licensed under the **GNU Affero General Public License
+v3.0** (AGPL-3.0) — see [LICENSE](LICENSE). In short: you may use, study, modify and
+redistribute it, and anyone you give it to (or run it for over a network) is entitled to the
+corresponding source under the same terms. This keeps the tool — and any fork — open and
+auditable, which matters for software handling sensitive casework.
+
+**Bundled data and vendored assets keep their own upstream licenses** (they are not AGPL):
+
+| Component | License |
+|---|---|
+| UNESCO / parks / castles / botanical (Wikidata, GBIF) | CC0 / public domain |
+| Airports (OurAirports) | public domain |
+| Wikipedia-derived botanical text | CC BY-SA |
+| OSM / Overpass features | ODbL © OpenStreetMap contributors |
+| Submarine cables & landing points (TeleGeography) | **CC BY-NC-SA 3.0 (NonCommercial)** |
+| Wikimedia Commons images | per-file (CC0 / CC BY / CC BY-SA) |
+| Vendored libraries (Leaflet, SunCalc, exifr, MiniSearch) | their own MIT/BSD licenses |
+
+Because some bundled data is **NonCommercial** (TeleGeography) or **share-alike** (CC BY-SA,
+ODbL), redistributing the repository *as a whole* inherits those obligations even though the
+code is AGPL. The code license and the data licenses are independent; honour both.
+
+## Contributing & governance
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the card schema,
+sourcing bar, and workflow. Report security issues privately per [SECURITY.md](SECURITY.md).
+The project is maintained on a best-effort basis; issues and pull requests are triaged on
+GitHub. The guiding doctrine (local-first, no telemetry, no required cloud, no AI
+geolocation) is non-negotiable for merged contributions.
