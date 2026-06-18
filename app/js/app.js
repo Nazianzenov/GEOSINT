@@ -63,6 +63,15 @@ function fetchT(url, opts = {}, ms = FETCH_TIMEOUT) {
    historical weather, elevation — is cached effectively forever). */
 const cachedFetch = (url) => fetchT("/api/pget?u=" + encodeURIComponent(url));
 
+/* The proxy reports cache provenance via X-Cache: hit | miss | stale. `stale`
+   means the upstream was unreachable and we served an EXPIRED copy — the analyst
+   must know the data may be out of date (stale OSINT is a hazard), so surface it.
+   hit/miss are both "fresh enough", so they add no note. */
+const cacheNote = (r) =>
+  (r && r.headers && r.headers.get("X-Cache") === "stale")
+    ? " · ⚠ cached copy (upstream unreachable — may be out of date)"
+    : "";
+
 /* ════════════════════════ formatting ═══════════════════════════ */
 const fmtDD = (ll, p = 5) => `${ll.lat.toFixed(p)}, ${ll.lng.toFixed(p)}`;
 
@@ -924,14 +933,14 @@ async function fetchWeather() {
     const r = await cachedFetch(url);
     const j = await r.json();
     if (j.error) throw new Error(j.reason);
-    renderWeather(j, date, ageDays > 6);
+    renderWeather(j, date, ageDays > 6, cacheNote(r));
   } catch (err) {
     $("#wx-meta").textContent = "";
     $("#wx-cards").innerHTML = `<p class="nomatch">✗ ${err.message || "Open-Meteo unreachable (offline?)"}</p>`;
   }
 }
 
-function renderWeather(j, date, isArchive) {
+function renderWeather(j, date, isArchive, note = "") {
   const h = j.hourly;
   const n = h.time.length;
   const nums = (a) => a.filter((x) => x != null);
@@ -942,7 +951,7 @@ function renderWeather(j, date, isArchive) {
   const windMax = Math.max(...nums(h.wind_speed_10m));
   $("#wx-meta").textContent =
     `${date} · ${j.timezone} (UTC${j.utc_offset_seconds >= 0 ? "+" : ""}${j.utc_offset_seconds / 3600}) · ` +
-    `${isArchive ? "ERA5 reanalysis archive" : "forecast model (recent date)"} · elevation ${j.elevation} m`;
+    `${isArchive ? "ERA5 reanalysis archive" : "forecast model (recent date)"} · elevation ${j.elevation} m` + note;
   $("#wx-cards").innerHTML = `
     <div class="card"><div class="v">${tmin.toFixed(0)}…${tmax.toFixed(0)}°C</div><div class="k">temperature</div></div>
     <div class="card"><div class="v">${precip.toFixed(1)} mm</div><div class="k">precipitation</div></div>
@@ -1712,7 +1721,7 @@ async function runOverpass(selectors, label, minZoom = 10) {
     }
     state.lastData = { label, features: feats };
     $("#data-status").textContent =
-      `${label}: ${feats.length} features in view · ${Math.round((Date.now() - t0) / 1000)}s (cached 7 days; 600 max)`;
+      `${label}: ${feats.length} features in view · ${Math.round((Date.now() - t0) / 1000)}s (cached 7 days; 600 max)` + cacheNote(r);
     status(`${feats.length} × ${label} plotted`);
     syncQgisButton();
   } catch (err) {
@@ -1795,12 +1804,12 @@ async function cablesToQgis() {
 async function gbifOverlay(name, knownKey) {
   if (!name && !knownKey) return;
   try {
-    let key = knownKey, shown = name;
+    let key = knownKey, shown = name, note = "";
     if (!key) {
       const r = await cachedFetch("https://api.gbif.org/v1/species/match?name=" + encodeURIComponent(name));
       const j = await r.json();
       if (!j.usageKey) return status(`GBIF: no match for "${name}"`, true);
-      key = j.usageKey; shown = j.canonicalName || name;
+      key = j.usageKey; shown = j.canonicalName || name; note = cacheNote(r);
     }
     if (state.gbifLayers[key]) return status("overlay already active");
     const tl = L.tileLayer(
@@ -1814,7 +1823,7 @@ async function gbifOverlay(name, knownKey) {
     chip.textContent = `● ${shown} ✕`;
     chip.onclick = () => { state.map.removeLayer(tl); delete state.gbifLayers[key]; chip.remove(); };
     $("#gbif-active").appendChild(chip);
-    status(`GBIF distribution overlay: ${shown}`);
+    status(`GBIF distribution overlay: ${shown}${note}`);
   } catch { status("GBIF unreachable", true); }
 }
 

@@ -299,3 +299,24 @@ def test_fetcht_respects_caller_cancel(page):
         }"""
     )
     assert res["name"] == "AbortError"                     # cancel, not timeout
+
+
+# ── cacheNote: surface stale-cache provenance (#34) ─────────────────────────
+def test_cachenote_behavior(page):
+    # cacheNote reads the proxy's X-Cache header; only `stale` (an expired copy
+    # served because upstream was unreachable) warrants a warning to the analyst.
+    res = page.evaluate(
+        """() => {
+            const mk = (v) => ({ headers: { get: (k) => k === 'X-Cache' ? v : null } });
+            return {
+                stale: cacheNote(mk('stale')),
+                hit: cacheNote(mk('hit')),
+                miss: cacheNote(mk('miss')),
+                none: cacheNote(mk(null)),
+                noHeaders: cacheNote({}),
+            };
+        }"""
+    )
+    assert "cached copy" in res["stale"] and "out of date" in res["stale"]
+    assert res["hit"] == "" and res["miss"] == ""            # fresh -> no note
+    assert res["none"] == "" and res["noHeaders"] == ""      # robust to missing header
