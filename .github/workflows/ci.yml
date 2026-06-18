@@ -36,6 +36,18 @@ jobs:
       - name: Browser-driven tests for app.js core logic (esc, parseCoords, dossier escaping)
         run: python -m pytest tests/test_js.py -q
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install ESLint (dev tooling only — the workbench needs no Node)
+        run: npm ci
+      - name: Lint app/js
+        run: npm run lint
+
   audit:
     runs-on: ubuntu-latest
     steps:

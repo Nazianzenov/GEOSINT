@@ -3,6 +3,9 @@
 __pycache__/
 *.pyc
 
+# node — dev/CI lint tooling only (eslint); the workbench needs no Node at runtime
+node_modules/
+
 # PyInstaller build output (built per-OS on demand; never committed)
 build/
 dist/
