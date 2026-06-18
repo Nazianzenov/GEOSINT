@@ -571,7 +571,12 @@ function openModule(name) {
   $$("#panel-body > section").forEach((s) => s.hidden = s.id !== `module-${name}`);
   $$(".rail-btn[data-module]").forEach((b) => b.classList.toggle("active", b.dataset.module === name));
   state.map.invalidateSize();
-  if (name === "sun") renderSun();
+  if (name === "sun") {
+    renderSun();
+    // carry the active point into the Studio so it opens already positioned
+    const sl = $("#sun-studio-link");
+    if (sl) sl.href = state.point ? `sun.html#ll=${state.point.lat.toFixed(5)},${state.point.lng.toFixed(5)}` : "sun.html";
+  }
   else state.sunLayer.clearLayers();              // sun/shadow overlay only shows in its own module
   if (name === "tools") renderTools();
   if (name === "anno") { renderAnnoList(); syncAnnoRulerWarn(); }
@@ -1651,11 +1656,7 @@ async function runOverpass(selectors, label, minZoom = 10) {
       const idx = state._plotted.push({ lat, lon, name, type: el.type, id: el.id, tags: el.tags || {}, label }) - 1;
       const mk = L.circleMarker([lat, lon], {
         radius: 6, color: "#ffb454", fillColor: "#ffb454", fillOpacity: 0.55, weight: 1.5,
-      }).bindPopup(
-        `<b>${esc(name)}</b><br><span style="font-family:monospace">${lat.toFixed(5)}, ${lon.toFixed(5)}</span><br>` +
-        `<a href="https://www.openstreetmap.org/${esc(el.type)}/${esc(el.id)}" target="_blank">OSM object</a> · ` +
-        `<a href="#" onclick="setPoint(L.latLng(${lat},${lon}));return false">set active point</a> · ` +
-        `<a href="#" onclick="pinFeature(${idx});return false">📌 pin to case</a>`);
+      }).bindPopup(() => featurePopup({ lat, lon, name, type: el.type, id: el.id, idx }));
       state.dataLayer.addLayer(mk);
     }
     state.lastData = { label, features: feats };
@@ -1708,12 +1709,10 @@ async function toggleCables() {
     // landing points
     for (const lp of d.landings.features) {
       const [lng, lat] = lp.geometry.coordinates;
+      const lname = lp.properties.name || "landing point";
       L.circleMarker([lat, lng], {
         radius: 1.5, color: "#ffd23e", fillColor: "#ffd23e", fillOpacity: 0.9, weight: 1,
-      }).bindPopup(
-        `<b>${esc(lp.properties.name || "landing point")}</b><br>cable landing point` +
-        `<br><span style="font-family:monospace">${lat.toFixed(5)}, ${lng.toFixed(5)}</span>` +
-        `<br><a href="#" onclick="setPoint(L.latLng(${lat},${lng}));return false">set active point</a>`)
+      }).bindPopup(() => setPointPopup(lname, "cable landing point", lat, lng))
         .addTo(state.cableLayer);
     }
     state.cablesShown = true;
@@ -2102,6 +2101,37 @@ function pinFeature(idx) {
 }
 window.pinFeature = pinFeature;
 
+/* Build a plotted-feature popup as a DOM element with wired listeners — no inline
+   onclick (which needed window.setPoint, that was never exported, so the "set
+   active point" link silently did nothing) and no string-injection surface. */
+function featurePopup({ lat, lon, name, type, id, idx }) {
+  const el = document.createElement("div");
+  el.innerHTML =
+    `<b>${esc(name)}</b><br><span class="mono">${lat.toFixed(5)}, ${lon.toFixed(5)}</span><br>` +
+    `<a href="https://www.openstreetmap.org/${esc(type)}/${esc(id)}" target="_blank" rel="noopener">OSM object</a> · ` +
+    `<a href="#" class="fp-set">set active point</a> · ` +
+    `<a href="#" class="fp-pin">📌 pin to case</a>`;
+  el.querySelector(".fp-set").addEventListener("click", (e) => {
+    e.preventDefault(); setPoint(L.latLng(lat, lon), { fly: true });
+  });
+  el.querySelector(".fp-pin").addEventListener("click", (e) => {
+    e.preventDefault(); pinFeature(idx);
+  });
+  return el;
+}
+
+/* Minimal popup: a title, a subtitle, coords, and a wired "set active point". */
+function setPointPopup(title, subtitle, lat, lng) {
+  const el = document.createElement("div");
+  el.innerHTML = `<b>${esc(title)}</b><br>${esc(subtitle)}` +
+    `<br><span class="mono">${lat.toFixed(5)}, ${lng.toFixed(5)}</span>` +
+    `<br><a href="#" class="fp-set">set active point</a>`;
+  el.querySelector(".fp-set").addEventListener("click", (e) => {
+    e.preventDefault(); setPoint(L.latLng(lat, lng), { fly: true });
+  });
+  return el;
+}
+
 /* Pick up a chronolocation finding sent from the Sun & Shadow Studio (separate
    tab) via a shared localStorage key. Called on load + when the workbench regains
    focus. Logs it as a sourced observation, sets the active point, and adopts the
@@ -2116,15 +2146,21 @@ function ingestStudioFinding() {
     r = JSON.parse(raw);
   } catch { return; }
   if (!r || !r.loc) return;
+  // Validate the (possibly tampered/malformed) handoff before it reaches setPoint/
+  // .toFixed()/.join() downstream — a NaN coord or non-array windows would throw
+  // and break the custody/timeline/dossier renders.
+  const lat = +r.loc.lat, lng = +r.loc.lng;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+  const windows = Array.isArray(r.windows) ? r.windows.map(String) : [];
   state.solverResult = {              // shape the dossier/buildDossier already reads
     status: r.status, confidence: r.confidence, why: r.why, tol: r.tol,
-    windows: r.windows || [], twoShadow: false,
+    windows, twoShadow: false,
   };
   const summary = r.status === "inconsistent"
     ? `Chronolocation: claim inconsistent (${r.confidence} confidence)`
-    : `Chronolocation: ${(r.windows || []).join(", ")} local (${r.confidence} confidence)`;
-  logObservation({ text: summary, ll: [r.loc.lat, r.loc.lng], source: "Sun & Shadow Studio" });
-  setPoint(L.latLng(r.loc.lat, r.loc.lng), { fly: true, zoom: 14 });
+    : `Chronolocation: ${windows.join(", ")} local (${r.confidence} confidence)`;
+  logObservation({ text: summary, ll: [lat, lng], source: "Sun & Shadow Studio" });
+  setPoint(L.latLng(lat, lng), { fly: true, zoom: 14 });
   status("chronolocation finding received from the Studio — logged to the case", false, 6000);
 }
 
