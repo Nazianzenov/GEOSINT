@@ -2654,15 +2654,42 @@ function loadSampleCase() {
 }
 
 const SEEN_KEY = "geosint:seen";
+/* ── modal overlay a11y: focus the first control on open, trap Tab inside, and
+   restore focus to the opener on close. Used by the welcome + help overlays. */
+let _modalReturnFocus = null;
+function openModalOverlay(sel) {
+  const el = $(sel);
+  if (!el) return;
+  _modalReturnFocus = document.activeElement;
+  el.hidden = false;
+  const focusables = el.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (focusables.length) focusables[0].focus();
+  el._trap = (e) => {
+    if (e.key !== "Tab" || !focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  };
+  el.addEventListener("keydown", el._trap);
+}
+function closeModalOverlay(sel) {
+  const el = $(sel);
+  if (!el || el.hidden) return;
+  el.hidden = true;
+  if (el._trap) { el.removeEventListener("keydown", el._trap); el._trap = null; }
+  if (_modalReturnFocus && _modalReturnFocus.focus) _modalReturnFocus.focus();
+  _modalReturnFocus = null;
+}
+
 function maybeWelcome() {
   // Don't double-prompt: if an autosave restore is being offered, skip the welcome.
   let seen = true;
   try { seen = !!localStorage.getItem(SEEN_KEY); } catch { seen = true; }
   if (seen || !$("#restore-bar").hidden) return;
-  $("#welcome-overlay").hidden = false;
+  openModalOverlay("#welcome-overlay");
 }
 function dismissWelcome() {
-  $("#welcome-overlay").hidden = true;
+  closeModalOverlay("#welcome-overlay");
   try { localStorage.setItem(SEEN_KEY, "1"); } catch { /* ignore */ }
 }
 
@@ -2807,7 +2834,7 @@ function initCase() {
 
   // first-run welcome + sample case
   $("#welcome-sample").addEventListener("click", () => { dismissWelcome(); loadSampleCase(); });
-  $("#welcome-keys").addEventListener("click", () => { dismissWelcome(); $("#help-overlay").hidden = false; });
+  $("#welcome-keys").addEventListener("click", () => { dismissWelcome(); openModalOverlay("#help-overlay"); });
   $("#welcome-start").addEventListener("click", dismissWelcome);
   maybeWelcome();                                 // show on first visit (after restore check)
 }
@@ -2984,7 +3011,7 @@ function initKeys() {
       if (!$("#timeline-panel").hidden) { $("#timeline-panel").hidden = true; return; }
       if (!$("#notes-drawer").hidden) return toggleNotes(false);
       if (!$("#elev-panel").hidden) { $("#elev-panel").hidden = true; return; }
-      $("#help-overlay").hidden = true;
+      if (!$("#help-overlay").hidden) { closeModalOverlay("#help-overlay"); return; }
       if (!inField) closePanel();
       return;
     }
@@ -3039,7 +3066,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#finding-log").addEventListener("click", logFinding);
   $("#finding-input").addEventListener("keydown", (e) => { if (e.key === "Enter") logFinding(); });
   $("#btn-measure").addEventListener("click", () => toggleMeasure());
-  $("#btn-help").addEventListener("click", () => { $("#help-overlay").hidden = false; });
+  $("#btn-help").addEventListener("click", () => openModalOverlay("#help-overlay"));
+  $("#help-close").addEventListener("click", () => closeModalOverlay("#help-overlay"));
   $("#btn-copy-dd").addEventListener("click", () =>
     state.point ? copyText(fmtDD(state.point)) : status(NO_POINT_MSG, true));
   $("#btn-copy-dms").addEventListener("click", () =>
