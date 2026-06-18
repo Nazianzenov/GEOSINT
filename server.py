@@ -108,6 +108,15 @@ EXIF_SUFFIXES = {
     ".raf", ".orf", ".rw2", ".pef", ".srw", ".mp4", ".mov", ".jxl",
 }
 
+# Request-body caps. EXIF_MAX_BYTES is the upload ceiling for the two ExifTool
+# endpoints (raw image bytes — RAW/video can be large); JSON_MAX_BYTES is for
+# every other POST (small JSON). do_POST picks the cap by route and each exif
+# handler re-checks EXIF_MAX_BYTES — naming them once means those two checks can
+# never silently diverge. EXIF_TOOL_TIMEOUT bounds each ExifTool subprocess.
+EXIF_MAX_BYTES = 200 * 1024 * 1024
+JSON_MAX_BYTES = 2 * 1024 * 1024
+EXIF_TOOL_TIMEOUT = 30          # seconds per ExifTool invocation
+
 # Host header allowlist (set in main() once the port is known). Defends against
 # DNS rebinding: a remote page that rebinds its hostname to 127.0.0.1 sends
 # same-origin requests (carrying our X-GeOSINT header), defeating the CORS/CSRF
@@ -661,7 +670,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"error": "bad content-length"}, 400)
         # The ExifTool endpoints take raw image bytes (bounded to 200 MB inside
         # the handler); every other POST is small JSON. Cap the read accordingly.
-        cap = 200 * 1024 * 1024 if path in ("/api/exif", "/api/exif-preview") else 2 * 1024 * 1024
+        cap = EXIF_MAX_BYTES if path in ("/api/exif", "/api/exif-preview") else JSON_MAX_BYTES
         if length < 0 or length > cap:
             return self.send_json({"error": "request too large"}, 413)
         raw = self.rfile.read(length) if length else b""
@@ -777,7 +786,7 @@ class Handler(BaseHTTPRequestHandler):
         # bad request reports the bad request, not "tool missing".
         if not raw:
             return self.send_json({"error": "empty body"}, 400)
-        if len(raw) > 200 * 1024 * 1024:
+        if len(raw) > EXIF_MAX_BYTES:
             return self.send_json({"error": "file too large"}, 413)
         exiftool = find_exiftool()
         if exiftool is None:
@@ -787,7 +796,7 @@ class Handler(BaseHTTPRequestHandler):
             tmp = self._write_exif_temp(raw)
             proc = subprocess.run(
                 [str(exiftool), "-json", "-a", "-G1", "-api", "largefilesupport=1", str(tmp)],
-                capture_output=True, timeout=30,
+                capture_output=True, timeout=EXIF_TOOL_TIMEOUT,
             )
             if proc.returncode not in (0, 1):  # 1 = minor warnings
                 err = proc.stderr.decode("utf-8", "replace")[:500]
@@ -838,7 +847,7 @@ class Handler(BaseHTTPRequestHandler):
     def api_exif_preview(self, raw: bytes):
         if not raw:
             return self.send_json({"error": "empty body"}, 400)
-        if len(raw) > 200 * 1024 * 1024:
+        if len(raw) > EXIF_MAX_BYTES:
             return self.send_json({"error": "file too large"}, 413)
         exiftool = find_exiftool()
         if exiftool is None:
@@ -851,7 +860,7 @@ class Handler(BaseHTTPRequestHandler):
             for tag in self.PREVIEW_TAGS:
                 try:
                     p = subprocess.run([str(exiftool), "-b", "-" + tag, str(tmp)],
-                                       capture_output=True, timeout=30, stdin=subprocess.DEVNULL)
+                                       capture_output=True, timeout=EXIF_TOOL_TIMEOUT, stdin=subprocess.DEVNULL)
                 except subprocess.TimeoutExpired as e:
                     self._warn("/api/exif-preview", "exiftool", e)
                     return self.send_json({"error": "exiftool timed out"}, 504)
