@@ -151,15 +151,16 @@ def test_redacted_dossier_hides_url_notes_and_precise_coords(page):
     assert "coarsened" in html                              # coarsening marker present
 
 
-@pytest.mark.xfail(reason="bug #35: redacted dossier leaks image-artifact filename "
-                          "(only URLs are genericized in the artifact label)",
-                   strict=True)
 def test_redacted_dossier_hides_image_artifact_filename(page):
+    # #35: an image artifact's label is its original filename — must be
+    # genericized to "image evidence" in a publication-safe export, like the
+    # timeline already did. Shared redLabel() rule now covers all three blocks.
     art = {"id": 1, "kind": "image", "t": "2024-01-01T00:00:00",
            "text": "secret-photo-original.jpg",
            "source": "https://tracker.example.com/leak"}
     html = _build_dossier_with(page, redact=True, artifact=art)
-    assert "secret-photo-original.jpg" not in html          # filename must be genericized
+    assert "secret-photo-original.jpg" not in html          # filename genericized
+    assert "image evidence" in html                         # to the generic label
 
 
 # ── dossier embeds only local data: thumbnails (#25) ────────────────────────

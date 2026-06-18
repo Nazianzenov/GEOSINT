@@ -2331,6 +2331,17 @@ function buildDossier(redact = false) {
   // the analytical findings + provenance hashes.
   const coord = (lat, lng) => redact ? `${lat.toFixed(1)}, ${lng.toFixed(1)} (coarsened)` : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
   const src = (s) => !s ? "" : (redact ? "[redacted]" : esc(s));
+  // Single redaction-label rule, shared by the artifact, relationship and
+  // timeline blocks so they can't drift (they did: only the timeline used to
+  // genericize image filenames). An image artifact's label is its original
+  // filename + camera detail (sourcing), and any label that's a URL is a source
+  // — both must be hidden from a publication-safe export.
+  const redLabel = (kind, label) => {
+    if (!redact) return label;
+    if (kind === "image") return "image evidence";
+    if (/^https?:\/\//i.test(String(label || ""))) return "external finding";
+    return label;
+  };
 
   const p = state.point;
   const ptBlock = p ? (redact
@@ -2360,7 +2371,7 @@ function buildDossier(redact = false) {
         <div class="ev">
           ${(!redact && dataThumb(a.thumb)) ? `<img src="${esc(dataThumb(a.thumb))}" alt="">` : `<div class="noimg">${ART_SYM[a.kind] || "•"}</div>`}
           <div class="ev-meta">
-            <b>${redact ? esc(/^https?:\/\//i.test(String(a.text || "")) ? "external finding" : (a.text || a.kind)) : esc(a.source || a.text || a.kind)}</b>
+            <b>${redact ? esc(redLabel(a.kind, a.text || a.kind)) : esc(a.source || a.text || a.kind)}</b>
             <div class="muted">${esc(String(a.t).replace("T", " ").slice(0, 19))} · ${esc(a.kind)}</div>
             ${(redact && a.source) ? `<div class="muted">source: ${src(a.source)}</div>` : ""}
             ${a.ll ? `<div class="muted">${esc(coord(a.ll[0], a.ll[1]))}</div>` : ""}
@@ -2371,11 +2382,7 @@ function buildDossier(redact = false) {
 
   // 9A.3 — relationships: artifact links rendered as a graph-ish edge list.
   const byId = Object.fromEntries(arts.map((a) => [a.id, a]));
-  const isUrl = (v) => /^https?:\/\//i.test(String(v || ""));
-  const label = (a) => {
-    const l = a.text || a.source || a.kind || `#${a.id}`;
-    return (redact && isUrl(l)) ? "external finding" : l;   // never leak a URL label in redaction
-  };
+  const label = (a) => redLabel(a.kind, a.text || a.source || a.kind || `#${a.id}`);
   const edges = arts.flatMap((a) => (a.links || [])
     .filter((id) => byId[id])
     .map((id) => `<li>${esc(label(a))} <span class="muted">↔</span> ${esc(label(byId[id]))}</li>`));
@@ -2393,15 +2400,10 @@ function buildDossier(redact = false) {
       : `<p class="muted">No web sources cited.</p>`);
 
   const ev = timelineEvents();
-  // In a redacted export the timeline must not leak sourcing: an obs label that's
-  // a URL, or an image event whose label is the original filename + camera detail,
-  // are genericized. (timelineEvents sets label = source||text||kind.)
-  const evLabel = (e) => {
-    if (!redact) return e.label;
-    if (e.kind === "image") return "image evidence";
-    if (/^https?:\/\//i.test(String(e.label || ""))) return "external finding";
-    return e.label;
-  };
+  // Timeline labels go through the same shared redaction rule as the artifact /
+  // relationship blocks (redLabel): image events -> "image evidence", URL labels
+  // -> "external finding". (timelineEvents sets label = source||text||kind.)
+  const evLabel = (e) => redLabel(e.kind, e.label);
   const evDetail = (e) => (redact && e.kind === "image") ? "" : e.detail;   // camera make/model is sourcing
   const tlBlock = ev.length ? `<table class="kv">
       <tr><th>time</th><th>event</th><th>location</th></tr>
