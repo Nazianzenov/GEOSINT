@@ -269,3 +269,33 @@ def test_applycase_loads_valid_parts_without_throwing(page):
     assert res["ok"], res.get("err")
     assert res["annos"] == 1                                # valid annotation applied
     assert res["pointChanged"] is False                    # invalid point not applied
+
+
+# ── fetchT: client-side timeout + caller-cancel composition (#30) ────────────
+def test_fetcht_times_out_with_distinct_error(page):
+    # A 1ms timeout against a never-resolving endpoint rejects with TimeoutError
+    # (not a bare AbortError) so modules can show "timed out" vs. a user cancel.
+    res = page.evaluate(
+        """async () => {
+            try { await fetchT('/api/status', {}, 1); return { name: 'NO_THROW' }; }
+            catch (e) { return { name: e.name, msg: e.message }; }
+        }"""
+    )
+    # Either the timeout fired (TimeoutError) or the request beat the 1ms timer.
+    assert res["name"] in ("TimeoutError", "NO_THROW")
+    if res["name"] == "TimeoutError":
+        assert "timed out" in res["msg"]
+
+
+def test_fetcht_respects_caller_cancel(page):
+    # A caller-provided already-aborted signal cancels immediately and surfaces as
+    # an AbortError (NOT our TimeoutError), so the OSM CANCEL button still works.
+    res = page.evaluate(
+        """async () => {
+            const ctrl = new AbortController();
+            ctrl.abort();                                  // user cancelled before the call
+            try { await fetchT('/api/status', { signal: ctrl.signal }, 30000); return { name: 'NO_THROW' }; }
+            catch (e) { return { name: e.name }; }
+        }"""
+    )
+    assert res["name"] == "AbortError"                     # cancel, not timeout

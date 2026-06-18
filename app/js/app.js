@@ -29,9 +29,39 @@ const esc = (s) => String(s).replace(/[&<>"']/g,
    external host on open (and deanonymize the analyst). Returns the safe value
    or "" so callers fall back to the no-image placeholder. */
 const dataThumb = (s) => /^data:image\//i.test(String(s || "")) ? s : "";
+/* fetch with a client-side timeout. The browser default is effectively
+   unbounded, so a hung server thread or a stalled connection would leave a
+   module spinner forever. AbortController caps every call; on timeout the
+   rejection is a DOMException("AbortError") which the caller's catch turns into
+   a concrete, retryable error (never an infinite spinner). */
+const FETCH_TIMEOUT = 30000;
+const UPLOAD_TIMEOUT = 120000;   // exif endpoints accept large RAW uploads (up to 200 MB)
+function fetchT(url, opts = {}, ms = FETCH_TIMEOUT) {
+  const ctl = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, ms);
+  // Respect a caller-provided signal (e.g. the OSM query's CANCEL button): abort
+  // when either the timeout OR the caller's signal fires, so the wrapper never
+  // clobbers an existing manual-cancel controller.
+  const caller = opts.signal;
+  if (caller) {
+    if (caller.aborted) ctl.abort();
+    else caller.addEventListener("abort", () => ctl.abort(), { once: true });
+  }
+  return fetch(url, { ...opts, signal: ctl.signal })
+    .catch((e) => {
+      // Distinguish our timeout from a caller cancel, so modules can show a
+      // "timed out — retry" message instead of silently treating it as a cancel.
+      if (timedOut && e && e.name === "AbortError") {
+        const t = new Error("request timed out"); t.name = "TimeoutError"; throw t;
+      }
+      throw e;
+    })
+    .finally(() => clearTimeout(timer));
+}
 /* All point-API calls go through the server's cached proxy (immutable data —
    historical weather, elevation — is cached effectively forever). */
-const cachedFetch = (url) => fetch("/api/pget?u=" + encodeURIComponent(url));
+const cachedFetch = (url) => fetchT("/api/pget?u=" + encodeURIComponent(url));
 
 /* ════════════════════════ formatting ═══════════════════════════ */
 const fmtDD = (ll, p = 5) => `${ll.lat.toFixed(p)}, ${ll.lng.toFixed(p)}`;
@@ -1112,12 +1142,12 @@ async function previewExtract() {
   const out = $("#exiftool-out");
   out.innerHTML = `<p class="hint">extracting embedded preview locally…</p>`;
   try {
-    const r = await fetch("/api/exif-preview", {
+    const r = await fetchT("/api/exif-preview", {
       method: "POST",
       headers: { "Content-Type": "application/octet-stream", "X-GeOSINT": "1",
                  "X-Filename": encodeURIComponent(state.lastFile.name) },
       body: state.lastFile,
-    });
+    }, UPLOAD_TIMEOUT);
     // a JSON body means "no preview" or an error; image bytes mean success
     if ((r.headers.get("Content-Type") || "").startsWith("application/json")) {
       const j = await r.json();
@@ -1154,12 +1184,12 @@ async function exiftoolDump() {
   const out = $("#exiftool-out");
   out.innerHTML = `<p class="hint">running ExifTool locally…</p>`;
   try {
-    const r = await fetch("/api/exif", {
+    const r = await fetchT("/api/exif", {
       method: "POST",
       headers: { "Content-Type": "application/octet-stream", "X-GeOSINT": "1",
                  "X-Filename": encodeURIComponent(state.lastFile.name) },
       body: state.lastFile,
-    });
+    }, UPLOAD_TIMEOUT);
     const j = await r.json();
     if (j.error) { out.innerHTML = `<p class="nomatch">✗ ${esc(j.error)}</p>`; return; }
     const keys = Object.keys(j.tags);
@@ -1430,7 +1460,7 @@ function renderTools() {
 
 async function launchLocal(key) {
   try {
-    const r = await fetch("/api/launch", {
+    const r = await fetchT("/api/launch", {
       method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
       body: JSON.stringify({ tool: key }),
     });
@@ -1444,7 +1474,7 @@ async function launchTool(t) {
   if (t.desktop) {
     if (!p) return status(NO_POINT_MSG, true);
     try {
-      const r = await fetch("/api/flyto", {
+      const r = await fetchT("/api/flyto", {
         method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
         body: JSON.stringify({ lat: p.lat, lng: p.lng, name: fmtDD(p) }),
       });
@@ -1556,10 +1586,10 @@ async function prefetchTiles() {
   let fetched = 0, failed = 0, total = 0;
   try {
     for (let round = 0; round < 40; round++) {       // safety bound on resume rounds
-      const r = await fetch("/api/prefetch", {
+      const r = await fetchT("/api/prefetch", {        // 35s: just above the server's per-request budget
         method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
         body: JSON.stringify(body),
-      });
+      }, 35000);
       const j = await r.json();
       if (j.error) { $("#pf-status").textContent = `✗ ${j.error}`; return; }
       fetched += j.fetched; failed += j.failed; total = j.tiles;
@@ -1607,7 +1637,7 @@ async function openInQgis() {
   if (!features.length) return status("plot a dataset or set the active point first", true);
   const label = (state.lastData && state.lastData.label) || "active-point";
   try {
-    const r = await fetch("/api/qgis", {
+    const r = await fetchT("/api/qgis", {
       method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
       body: JSON.stringify({ geojson: { type: "FeatureCollection", features }, name: label }),
     });
@@ -1657,7 +1687,7 @@ async function runOverpass(selectors, label, minZoom = 10) {
   setOverpassLoading(true);
   $("#data-status").textContent = `querying OSM for ${label}…`;
   try {
-    const r = await fetch("/api/overpass", {
+    const r = await fetchT("/api/overpass", {
       method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
       body: JSON.stringify({ q }), signal: ctrl.signal,
     });
@@ -1700,7 +1730,7 @@ async function runOverpass(selectors, label, minZoom = 10) {
    Toggled on/off; the data is fetched once and cached on state. */
 async function loadCables() {
   if (state.cables) return state.cables;
-  const r = await fetch("/app/data/submarine-cables.json");
+  const r = await fetchT("/app/data/submarine-cables.json");
   if (!r.ok) throw new Error("cable data not built — run the dataset fetcher + index build");
   state.cables = await r.json();
   return state.cables;
@@ -1753,7 +1783,7 @@ async function cablesToQgis() {
   try {
     const d = await loadCables();
     const features = [...d.cables.features, ...d.landings.features];
-    const r = await fetch("/api/qgis", {
+    const r = await fetchT("/api/qgis", {
       method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
       body: JSON.stringify({ geojson: { type: "FeatureCollection", features }, name: "submarine-cables" }),
     });
@@ -2003,7 +2033,7 @@ async function annoToQgis() {
   if (!(state.tools && state.tools.qgis && state.tools.qgis.found))
     return status("QGIS not detected", true);
   try {
-    const r = await fetch("/api/qgis", {
+    const r = await fetchT("/api/qgis", {
       method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
       body: JSON.stringify({ geojson: annoFeatureCollection(), name: "annotations" }),
     });
@@ -3189,7 +3219,7 @@ function initKeys() {
 
 async function initStatus() {
   try {
-    const r = await fetch("/api/status");
+    const r = await fetchT("/api/status");
     const j = await r.json();
     state.tools = j.tools;
     const found = Object.values(j.tools).filter((t) => t.found).length;
