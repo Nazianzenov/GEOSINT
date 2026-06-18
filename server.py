@@ -379,6 +379,21 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(data)))
         self.send_header("X-Content-Type-Options", "nosniff")
+        # Defense-in-depth headers on HTML documents (the SPA + wiki). Scripts are
+        # all locally vendored (no CDN), so a CSP that pins script/style to 'self'
+        # — plus 'unsafe-inline' (the app uses some inline handlers/styles) and the
+        # external img/connect origins it legitimately needs — backstops any missed
+        # XSS sink and blocks framing/clickjacking.
+        if ctype == "text/html":
+            self.send_header("Content-Security-Policy",
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: blob: https:; "
+                "connect-src 'self' https:; "
+                "frame-ancestors 'none'; base-uri 'self'")
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("Referrer-Policy", "no-referrer")
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(data)
@@ -403,6 +418,37 @@ class Handler(BaseHTTPRequestHandler):
             hostname = host.rsplit(":", 1)[0] if host.count(":") == 1 else host
         return hostname in ALLOWED_HOSTNAMES
 
+    # Known routes per method, for 405 (path exists but wrong verb) vs 404.
+    GET_PATHS = {"/", "/index.html", "/api/pget", "/wiki", "/api/status"}
+    POST_PATHS = {"/api/exif", "/api/exif-preview", "/api/flyto", "/api/launch",
+                  "/api/overpass", "/api/qgis", "/api/prefetch"}
+
+    def send_405(self, allow):
+        self.send_response(405)
+        self.send_header("Allow", allow)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def _not_found_or_405(self, path, this_method):
+        """Emit 405+Allow when the path is valid under another verb, else 404."""
+        if this_method != "GET" and (path in self.GET_PATHS or path.startswith("/app")
+                                     or path.startswith("/wiki") or path.startswith("/tiles/")):
+            return self.send_405("GET, HEAD")
+        if this_method != "POST" and path in self.POST_PATHS:
+            return self.send_405("POST")
+        return self.send_json({"error": "not found"}, 404)
+
+    # Reject other verbs with a clean JSON-ish 405 (not the stdlib HTML 501).
+    def do_PUT(self):    self._reject_verb()
+    def do_DELETE(self): self._reject_verb()
+    def do_PATCH(self):  self._reject_verb()
+    def do_OPTIONS(self): self._reject_verb()
+    def _reject_verb(self):
+        if not self.host_ok():
+            return self.send_json({"error": "bad host"}, 403)
+        self.send_405("GET, HEAD, POST")
+
     def do_HEAD(self):
         self.do_GET()
 
@@ -423,15 +469,17 @@ class Handler(BaseHTTPRequestHandler):
             target = target / "index.html"
         if target.is_file():
             return self.send_file(target)
-        self.send_json({"error": "not found", "path": rel}, 404)
+        self.send_json({"error": "not found"}, 404)   # don't echo the caller-supplied path
 
     def send_cached_body(self, body: bytes, ctype: str, hit: str, browser_ttl=0):
         self.send_response(200)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Cache", hit)
-        if browser_ttl:
-            self.send_header("Cache-Control", f"public, max-age={browser_ttl}")
+        # Always emit a Cache-Control directive so proxies/browsers don't apply
+        # heuristic caching to proxied data (stale OSINT data is a hazard).
+        self.send_header("Cache-Control", f"public, max-age={browser_ttl}" if browser_ttl else "no-store")
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(body)
@@ -505,6 +553,8 @@ class Handler(BaseHTTPRequestHandler):
     # ---- generic cached GET proxy: /api/pget?u=<allowlisted url> ---------
     def api_pget(self, query):
         url = urllib.parse.parse_qs(query).get("u", [""])[0]
+        if not url:                               # missing required param is a bad request, not "forbidden"
+            return self.send_json({"error": "missing 'u' parameter"}, 400)
         ttl = next((t for prefix, t in PGET_ALLOW if url.startswith(prefix)), None)
         if ttl is None:
             return self.send_json({"error": "url not allowlisted"}, 403)
@@ -558,7 +608,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(body)
                 return
             return self.serve_static(WIKI_SITE, path[len("/wiki"):].lstrip("/"))
-        self.send_json({"error": "not found"}, 404)
+        self._not_found_or_405(path, "GET")
 
     def do_POST(self):
         if not self.host_ok():
@@ -602,7 +652,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.api_qgis(payload)
         if path == "/api/prefetch":
             return self.api_prefetch(payload)
-        self.send_json({"error": "not found"}, 404)
+        self._not_found_or_405(path, "POST")
 
     # ---- API: hand off GeoJSON to QGIS ----------------------------------
     def api_qgis(self, payload):
