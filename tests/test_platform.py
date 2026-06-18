@@ -127,6 +127,32 @@ def test_version_constant():
     assert server.UA.startswith(f"GeOSINT-Workbench/{server.VERSION}")
 
 
+# ── upstream failure logging (#28) — OPSEC: host only, never coords ──────────
+def test_host_of_strips_query_and_path():
+    # pget/overpass URLs embed coordinates in the query — only the host is safe
+    # to log. _host_of must never return the query/path.
+    u = "https://archive-api.open-meteo.com/v1/archive?latitude=48.85&longitude=2.29"
+    assert server._host_of(u) == "archive-api.open-meteo.com"
+    assert "48.85" not in server._host_of(u)
+    assert server._host_of("not a url") == "?"
+
+
+def test_warn_logs_host_not_url(monkeypatch, capsys):
+    h = server.Handler.__new__(server.Handler)
+    h._warn("/api/pget", "archive-api.open-meteo.com", ValueError("boom 48.85,2.29"))
+    err = capsys.readouterr().err
+    assert "[geosint] WARN /api/pget archive-api.open-meteo.com ValueError" in err
+    assert "boom" in err            # the exception message is logged
+    # the host arg carries no coords; the caller is responsible for passing a host
+
+
+def test_warn_truncates_long_message(capsys):
+    h = server.Handler.__new__(server.Handler)
+    h._warn("/api/overpass", "overpass-api.de", RuntimeError("x" * 1000))
+    line = capsys.readouterr().err
+    assert "x" * 200 in line and "x" * 300 not in line   # message capped at 200
+
+
 # ── host_ok / DNS-rebinding guard (H1 fix) ────────────────────────────────
 class _FakeHeaders(dict):
     def get(self, k, default=None):  # case-insensitive Host lookup like real headers

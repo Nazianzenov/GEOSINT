@@ -354,11 +354,30 @@ def upstream_get(url: str, timeout=30) -> bytes:
         return r.read(MAX_UPSTREAM_BYTES + 1)[:MAX_UPSTREAM_BYTES]
 
 
+def _host_of(url: str) -> str:
+    """Just the host of a URL — safe to log. The full URL (pget/overpass/tile)
+    can embed coordinates or a query, which we never write to the log."""
+    try:
+        return urlparse(url).netloc or "?"
+    except ValueError:
+        return "?"
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
     def log_message(self, fmt, *args):
         sys.stderr.write("[geosint] %s\n" % (fmt % args))
+
+    def _warn(self, endpoint, where, exc):
+        """Log an upstream/tool failure so a degraded run is visible to the
+        operator (otherwise these are swallowed into a client JSON error and the
+        app just looks broken). OPSEC: `where` must be a host or mirror, never a
+        full URL/query — pget/overpass URLs carry coordinates. We log only the
+        exception class + message, not request bodies, file paths or coords."""
+        cls = type(exc).__name__ if isinstance(exc, BaseException) else "error"
+        msg = str(exc)[:200]
+        sys.stderr.write(f"[geosint] WARN {endpoint} {where} {cls}: {msg}\n")
 
     # ---- helpers -------------------------------------------------------
     def send_json(self, obj, status=200):
@@ -509,7 +528,8 @@ class Handler(BaseHTTPRequestHandler):
             f.parent.mkdir(parents=True, exist_ok=True)
             f.write_bytes(body)
             return self.send_cached_body(body, "image/png", "miss", TILE_TTL)
-        except Exception:
+        except Exception as e:
+            self._warn("/tiles", _host_of(url), e)
             if f.is_file():                          # stale beats nothing
                 return self.send_cached_body(f.read_bytes(), "image/png", "stale", 3600)
             return self.send_json({"error": "tile upstream unreachable"}, 502)
@@ -568,6 +588,7 @@ class Handler(BaseHTTPRequestHandler):
             f.write_bytes(body)
             return self.send_cached_body(body, "application/json; charset=utf-8", "miss")
         except Exception as e:
+            self._warn("/api/pget", _host_of(url), e)
             if f.is_file():
                 return self.send_cached_body(f.read_bytes(), "application/json; charset=utf-8", "stale")
             return self.send_json({"error": f"upstream failed: {str(e)[:160]}"}, 502)
@@ -714,6 +735,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.send_cached_body(body, "application/json; charset=utf-8", "miss")
             except Exception as e:
                 last_err = str(e)[:200]
+                self._warn("/api/overpass", _host_of(mirror), e)   # show the failover chain
         if cached.is_file():                # expired cache beats an error
             return self.send_cached_body(cached.read_bytes(),
                                          "application/json; charset=utf-8", "stale")
@@ -751,16 +773,20 @@ class Handler(BaseHTTPRequestHandler):
                 capture_output=True, timeout=30,
             )
             if proc.returncode not in (0, 1):  # 1 = minor warnings
-                return self.send_json({"error": proc.stderr.decode("utf-8", "replace")[:500]}, 500)
+                err = proc.stderr.decode("utf-8", "replace")[:500]
+                self._warn("/api/exif", "exiftool", f"exit {proc.returncode}: {err}")
+                return self.send_json({"error": err}, 500)
             data = json.loads(proc.stdout.decode("utf-8", "replace"))
             tags = data[0] if data else {}
             tags.pop("SourceFile", None)
             # System group leaks the temp file's path/name — drop it entirely
             tags = {k: v for k, v in tags.items() if not k.startswith("System:")}
             return self.send_json({"ok": True, "exiftool": str(exiftool), "tags": tags})
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
+            self._warn("/api/exif", "exiftool", e)
             return self.send_json({"error": "exiftool timed out"}, 504)
         except (OSError, json.JSONDecodeError, ValueError) as e:
+            self._warn("/api/exif", "exiftool", e)
             return self.send_json({"error": str(e)[:500]}, 500)
         finally:
             if tmp:
@@ -809,7 +835,8 @@ class Handler(BaseHTTPRequestHandler):
                 try:
                     p = subprocess.run([str(exiftool), "-b", "-" + tag, str(tmp)],
                                        capture_output=True, timeout=30, stdin=subprocess.DEVNULL)
-                except subprocess.TimeoutExpired:
+                except subprocess.TimeoutExpired as e:
+                    self._warn("/api/exif-preview", "exiftool", e)
                     return self.send_json({"error": "exiftool timed out"}, 504)
                 if p.returncode in (0, 1) and p.stdout:
                     chosen, body = tag, p.stdout
@@ -849,6 +876,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.command != "HEAD":
                 self.wfile.write(body)
         except (OSError, ValueError) as e:
+            self._warn("/api/exif-preview", "exiftool", e)
             return self.send_json({"error": str(e)[:500]}, 500)
         finally:
             for t in (tmp, prev_tmp):
