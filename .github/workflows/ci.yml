@@ -19,8 +19,22 @@ jobs:
           python-version: "3.12"
       - name: Install pytest
         run: python -m pip install pytest
-      - name: Run unit tests (server is pure stdlib)
-        run: python -m pytest tests/ -q
+      - name: Run unit tests (server is pure stdlib; browser tests run in the js-tests job)
+        run: python -m pytest tests/ -q --ignore=tests/test_js.py
+
+  js-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Playwright + Chromium
+        run: |
+          python -m pip install pytest playwright
+          python -m playwright install --with-deps chromium
+      - name: Browser-driven tests for app.js core logic (esc, parseCoords, dossier escaping)
+        run: python -m pytest tests/test_js.py -q
 
   audit:
     runs-on: ubuntu-latest
