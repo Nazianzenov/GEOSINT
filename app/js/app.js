@@ -17,124 +17,14 @@ const state = {
   artifacts: [],          // case v2 evidence log — see ARTIFACTS section
 };
 
-const $  = (s) => document.querySelector(s);
-const $$ = (s) => document.querySelectorAll(s);
-/* HTML-escape untrusted strings (EXIF fields, geocoder responses) before innerHTML */
-const esc = (s) => String(s).replace(/[&<>"']/g,
-  (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
-/* Only ever render an evidence thumbnail that is a LOCAL base64 data URI.
-   Thumbnails we generate are always `data:image/...` (see makeThumbnail), but a
-   loaded/tampered case file could set `thumb` to an http(s) URL — which would
-   make the "self-contained, nothing leaves your machine" dossier beacon to an
-   external host on open (and deanonymize the analyst). Returns the safe value
-   or "" so callers fall back to the no-image placeholder. */
-const dataThumb = (s) => /^data:image\//i.test(String(s || "")) ? s : "";
-/* fetch with a client-side timeout. The browser default is effectively
-   unbounded, so a hung server thread or a stalled connection would leave a
-   module spinner forever. AbortController caps every call; on timeout the
-   rejection is a DOMException("AbortError") which the caller's catch turns into
-   a concrete, retryable error (never an infinite spinner). */
-const FETCH_TIMEOUT = 30000;
-const UPLOAD_TIMEOUT = 120000;   // exif endpoints accept large RAW uploads (up to 200 MB)
-function fetchT(url, opts = {}, ms = FETCH_TIMEOUT) {
-  const ctl = new AbortController();
-  let timedOut = false;
-  const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, ms);
-  // Respect a caller-provided signal (e.g. the OSM query's CANCEL button): abort
-  // when either the timeout OR the caller's signal fires, so the wrapper never
-  // clobbers an existing manual-cancel controller.
-  const caller = opts.signal;
-  if (caller) {
-    if (caller.aborted) ctl.abort();
-    else caller.addEventListener("abort", () => ctl.abort(), { once: true });
-  }
-  return fetch(url, { ...opts, signal: ctl.signal })
-    .catch((e) => {
-      // Distinguish our timeout from a caller cancel, so modules can show a
-      // "timed out — retry" message instead of silently treating it as a cancel.
-      if (timedOut && e && e.name === "AbortError") {
-        const t = new Error("request timed out"); t.name = "TimeoutError"; throw t;
-      }
-      throw e;
-    })
-    .finally(() => clearTimeout(timer));
-}
-/* All point-API calls go through the server's cached proxy (immutable data —
-   historical weather, elevation — is cached effectively forever). */
-const cachedFetch = (url) => fetchT("/api/pget?u=" + encodeURIComponent(url));
+/* Shared helpers — $, $$, esc, dataThumb, fetchT/cachedFetch/cacheNote,
+   fmtDD, toDMS, fmtDMS, compassAz, cardinal, parseCoords, project, drawSunChart
+   — now live in app/js/common.js (loaded before this script). */
 
-/* The proxy reports cache provenance via X-Cache: hit | miss | stale. `stale`
-   means the upstream was unreachable and we served an EXPIRED copy — the analyst
-   must know the data may be out of date (stale OSINT is a hazard), so surface it.
-   hit/miss are both "fresh enough", so they add no note. */
-const cacheNote = (r) =>
-  (r && r.headers && r.headers.get("X-Cache") === "stale")
-    ? " · ⚠ cached copy (upstream unreachable — may be out of date)"
-    : "";
-
-/* ════════════════════════ formatting ═══════════════════════════ */
-const fmtDD = (ll, p = 5) => `${ll.lat.toFixed(p)}, ${ll.lng.toFixed(p)}`;
-
-function toDMS(deg, isLat) {
-  const dir = deg >= 0 ? (isLat ? "N" : "E") : (isLat ? "S" : "W");
-  const a = Math.abs(deg);
-  const d = Math.floor(a), m = Math.floor((a - d) * 60);
-  const s = ((a - d) * 3600 - m * 60).toFixed(1);
-  return `${d}°${String(m).padStart(2, "0")}'${s}"${dir}`;
-}
-const fmtDMS = (ll) => `${toDMS(ll.lat, true)} ${toDMS(ll.lng, false)}`;
-/* alternative grid formats (offline, via vendor/geocoords.js) */
+/* alternative grid formats (offline, via vendor/geocoords.js) — workbench-only */
 const fmtUTM   = (ll) => GeoCoords.toUTM(ll.lat, ll.lng).str;
 const fmtMGRS  = (ll) => GeoCoords.toMGRS(ll.lat, ll.lng, 5);
 const fmtPlus  = (ll) => GeoCoords.toPlusCode(ll.lat, ll.lng, 11);
-
-/* Parse "48.85, 2.35", "48.85 2.35", DMS like 48°51'30"N 2°17'40"E, or N48.85 E2.35 */
-function parseCoords(txt) {
-  txt = txt.trim();
-  let m = txt.match(/^(-?\d{1,2}(?:\.\d+)?)[ ,;\t]+(-?\d{1,3}(?:\.\d+)?)$/);
-  if (m) {
-    const lat = +m[1], lng = +m[2];
-    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return L.latLng(lat, lng);
-  }
-  const dms = /(\d{1,3})[°\s]+(\d{1,2})['′\s]+([\d.]+)?["″\s]*([NSEW])/gi;
-  const parts = [...txt.matchAll(dms)];
-  if (parts.length === 2) {
-    const val = (p) => {
-      let v = (+p[1]) + (+p[2]) / 60 + (+(p[3] || 0)) / 3600;
-      if (/[SW]/i.test(p[4])) v = -v;
-      return v;
-    };
-    const a = val(parts[0]), b = val(parts[1]);
-    const latFirst = /[NS]/i.test(parts[0][4]);
-    const lat = latFirst ? a : b, lng = latFirst ? b : a;
-    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return L.latLng(lat, lng);
-  }
-  m = txt.match(/^[NS]\s*([\d.]+)[ ,;]+[EW]\s*([\d.]+)$/i);
-  if (m) {
-    let lat = +m[1] * (/^s/i.test(txt) ? -1 : 1);
-    let lng = +m[2] * (/[w]\s*[\d.]+$/i.test(txt) ? -1 : 1);
-    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return L.latLng(lat, lng);
-  }
-  // MGRS, e.g. "31U DQ 48251 11932" / "31UDQ4825111932"
-  if (window.GeoCoords && /^\d{1,2}[C-HJ-NP-X]/i.test(txt)) {
-    const g = GeoCoords.fromMGRS(txt);
-    if (g) return L.latLng(g.lat, g.lng);
-  }
-  // Plus Code (Open Location Code), e.g. "8FW4V75V+8Q"
-  if (window.GeoCoords && /\+[23456789CFGHJMPQRVWX]{2,}$/i.test(txt)) {
-    const g = GeoCoords.fromPlusCode(txt);
-    if (g) return L.latLng(g.lat, g.lng);
-  }
-  return null;
-}
-
-/* Destination point ~accurate enough for drawing short lines */
-function project(ll, bearingDeg, distM) {
-  const br = bearingDeg * Math.PI / 180;
-  const dLat = (distM * Math.cos(br)) / 111320;
-  const dLng = (distM * Math.sin(br)) / (111320 * Math.cos(ll.lat * Math.PI / 180));
-  return L.latLng(ll.lat + dLat, ll.lng + dLng);
-}
 
 function haversine(a, b) {
   const R = 6371000, toR = Math.PI / 180;
@@ -693,14 +583,12 @@ function sunDate() {
   const [h, mi] = tm.split(":").map(Number);
   return { date: new Date(Date.UTC(Y, M - 1, D, h, mi) - off * 3600e3), off, Y, M, D };
 }
-const compassAz = (rad) => (rad * 180 / Math.PI + 180) % 360;   // SunCalc az: 0=S → compass 0=N
 const fmtClock = (date, off) => {
   if (!date || isNaN(date)) return "—";
   const t = new Date(date.getTime() + off * 3600e3);
   return t.toISOString().slice(11, 16);
 };
-const cardinal = (deg) =>
-  ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(deg / 22.5) % 16];
+/* compassAz + cardinal are in common.js */
 
 function renderSun() {
   state.sunLayer.clearLayers();
@@ -764,36 +652,7 @@ function renderSun() {
     <a class="btn" target="_blank" href="https://www.peakfinder.com/?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}">PeakFinder horizon ⇗</a>`;
 }
 
-function drawSunChart(sd, lat, lng) {
-  const cv = $("#sun-chart"), ctx = cv.getContext("2d");
-  const W = cv.width, H = cv.height;
-  ctx.clearRect(0, 0, W, H);
-  const y0 = H * 0.72;                                  // horizon line
-  ctx.strokeStyle = "#232a3b"; ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke();
-  ctx.fillStyle = "#8a93a6"; ctx.font = "9px monospace";
-  for (let h = 0; h <= 24; h += 6) {
-    const x = (h / 24) * W;
-    ctx.fillText(String(h).padStart(2, "0"), Math.min(x, W - 14), H - 3);
-    ctx.strokeStyle = "#161b28"; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H - 12); ctx.stroke();
-  }
-  ctx.strokeStyle = "#ffd23e"; ctx.lineWidth = 1.6; ctx.beginPath();
-  let started = false;
-  for (let m = 0; m <= 1440; m += 8) {
-    const d = new Date(Date.UTC(sd.Y, sd.M - 1, sd.D, 0, m) - sd.off * 3600e3);
-    const a = SunCalc.getPosition(d, lat, lng).altitude * 180 / Math.PI;
-    const x = (m / 1440) * W, y = y0 - (a / 90) * (H * 0.66);
-    started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true);
-  }
-  ctx.stroke();
-  // marker for chosen time
-  const v = $("#sun-dt").value.split("T")[1].split(":");
-  const mNow = (+v[0]) * 60 + (+v[1]);
-  const aNow = SunCalc.getPosition(sd.date, lat, lng).altitude * 180 / Math.PI;
-  ctx.fillStyle = "#4cc2ff";
-  ctx.beginPath();
-  ctx.arc((mNow / 1440) * W, y0 - (aNow / 90) * (H * 0.66), 4, 0, 7);
-  ctx.fill();
-}
+/* drawSunChart is in common.js (shared with the Sun Studio) */
 
 /* shadow azimuth + length ratio of the sun at minute-of-day m (local to the
    chosen UTC offset) for the active point; null when the sun is at/below horizon */
@@ -2378,6 +2237,18 @@ function openTimeline() {
    notes, annotations, the evidence log with inline thumbnails, the timeline,
    and a sources/provenance section. Renders from case state + v2 artifacts;
    thumbnails are already base64 so no originals are needed. 100% local. */
+
+/* Dossier stylesheet — a module-level constant, not an inline string buried in
+   buildDossier (where a typo failed silently). */
+const DOSSIER_CSS = `body{font:14px/1.5 "Segoe UI",system-ui,sans-serif;color:#1a1d24;max-width:880px;margin:24px auto;padding:0 16px}
+  h1{font-size:22px;margin:0 0 2px} h2{font-size:15px;margin:22px 0 6px;border-bottom:1px solid #ddd;padding-bottom:3px}
+  .muted{color:#6b7280} .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#374151;word-break:break-all}
+  table.kv{border-collapse:collapse;width:100%} table.kv td,table.kv th{border:1px solid #e5e7eb;padding:4px 7px;text-align:left;vertical-align:top;font-size:13px}
+  table.kv th{background:#f3f4f6} pre{white-space:pre-wrap;background:#f9fafb;border:1px solid #e5e7eb;padding:8px;border-radius:4px}
+  .grid{display:flex;flex-wrap:wrap;gap:10px} .ev{display:flex;gap:8px;border:1px solid #e5e7eb;border-radius:5px;padding:6px;width:260px}
+  .ev img{width:80px;height:80px;object-fit:cover;border-radius:3px} .ev .noimg{width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#f3f4f6;border-radius:3px}
+  .ev-meta{font-size:12px;overflow:hidden} footer{margin-top:28px;color:#6b7280;font-size:12px;border-top:1px solid #ddd;padding-top:8px}`;
+
 function buildDossier(redact = false) {
   const now = new Date();
   // 9C.3 — redaction helpers: coarsen coords, hide source URLs/filenames, keep
@@ -2475,18 +2346,9 @@ function buildDossier(redact = false) {
        Confidence <b>${esc(sr.confidence)}</b> — ${esc(sr.why)}; tolerance ±${esc(String(sr.tol))}°${sr.twoShadow ? ", two-shadow constraint" : ""}.</p>
        <p class="muted">Uncertainty is driven by the measurement tolerance; a narrower window at a tighter tolerance is a stronger finding.</p>`);
 
-  const css = `body{font:14px/1.5 "Segoe UI",system-ui,sans-serif;color:#1a1d24;max-width:880px;margin:24px auto;padding:0 16px}
-    h1{font-size:22px;margin:0 0 2px} h2{font-size:15px;margin:22px 0 6px;border-bottom:1px solid #ddd;padding-bottom:3px}
-    .muted{color:#6b7280} .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:#374151;word-break:break-all}
-    table.kv{border-collapse:collapse;width:100%} table.kv td,table.kv th{border:1px solid #e5e7eb;padding:4px 7px;text-align:left;vertical-align:top;font-size:13px}
-    table.kv th{background:#f3f4f6} pre{white-space:pre-wrap;background:#f9fafb;border:1px solid #e5e7eb;padding:8px;border-radius:4px}
-    .grid{display:flex;flex-wrap:wrap;gap:10px} .ev{display:flex;gap:8px;border:1px solid #e5e7eb;border-radius:5px;padding:6px;width:260px}
-    .ev img{width:80px;height:80px;object-fit:cover;border-radius:3px} .ev .noimg{width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#f3f4f6;border-radius:3px}
-    .ev-meta{font-size:12px;overflow:hidden} footer{margin-top:28px;color:#6b7280;font-size:12px;border-top:1px solid #ddd;padding-top:8px}`;
-
   return `<!doctype html><html><head><meta charset="utf-8">
     <title>GeOSINT ${redact ? "redacted " : ""}dossier — ${esc(now.toISOString().slice(0, 16).replace("T", " "))}</title>
-    <style>${css}</style></head><body>
+    <style>${DOSSIER_CSS}</style></head><body>
     <h1>GeOSINT case dossier${redact ? " <span style=\"font-size:13px;color:#b91c1c\">(REDACTED)</span>" : ""}</h1>
     <div class="muted">Generated ${esc(now.toISOString().replace("T", " ").slice(0, 19))} (UTC) · GeOSINT Workbench (local)${redact ? " · sensitive sourcing removed for publication" : ""}</div>
     <h2>Active point</h2>${ptBlock}
