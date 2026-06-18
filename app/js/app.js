@@ -2102,6 +2102,32 @@ function pinFeature(idx) {
 }
 window.pinFeature = pinFeature;
 
+/* Pick up a chronolocation finding sent from the Sun & Shadow Studio (separate
+   tab) via a shared localStorage key. Called on load + when the workbench regains
+   focus. Logs it as a sourced observation, sets the active point, and adopts the
+   solver result so the dossier's "Chronolocation finding" reflects the Studio. */
+const STUDIO_HANDOFF_KEY = "geosint:studio-finding";
+function ingestStudioFinding() {
+  let r;
+  try {
+    const raw = localStorage.getItem(STUDIO_HANDOFF_KEY);
+    if (!raw) return;
+    localStorage.removeItem(STUDIO_HANDOFF_KEY);   // consume once
+    r = JSON.parse(raw);
+  } catch { return; }
+  if (!r || !r.loc) return;
+  state.solverResult = {              // shape the dossier/buildDossier already reads
+    status: r.status, confidence: r.confidence, why: r.why, tol: r.tol,
+    windows: r.windows || [], twoShadow: false,
+  };
+  const summary = r.status === "inconsistent"
+    ? `Chronolocation: claim inconsistent (${r.confidence} confidence)`
+    : `Chronolocation: ${(r.windows || []).join(", ")} local (${r.confidence} confidence)`;
+  logObservation({ text: summary, ll: [r.loc.lat, r.loc.lng], source: "Sun & Shadow Studio" });
+  setPoint(L.latLng(r.loc.lat, r.loc.lng), { fly: true, zoom: 14 });
+  status("chronolocation finding received from the Studio — logged to the case", false, 6000);
+}
+
 /* Evidence-log readout + chain-of-custody table in the notes drawer.
    Confirms capture is happening, originals are not stored, and gives a
    defensible, exportable provenance record. */
@@ -2837,6 +2863,10 @@ function initCase() {
   $("#welcome-keys").addEventListener("click", () => { dismissWelcome(); openModalOverlay("#help-overlay"); });
   $("#welcome-start").addEventListener("click", dismissWelcome);
   maybeWelcome();                                 // show on first visit (after restore check)
+
+  // pick up a finding handed off from the Sun & Shadow Studio tab
+  ingestStudioFinding();
+  window.addEventListener("focus", ingestStudioFinding);
 }
 
 /* ═══════════════════════ command palette ═════════════════════

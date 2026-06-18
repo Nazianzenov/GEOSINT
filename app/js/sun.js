@@ -281,8 +281,12 @@ function runSolver() {
     if (ok) matches.push({ m, shAz, ratio, err });
   }
   if (!matches.length) {
-    out.innerHTML = `<p class="nomatch">✗ No time on this date matches at this location — the claimed
-      place/date is inconsistent with the shadow, or your measurements need a wider tolerance.</p>`;
+    const conf = tol <= 5 ? "high" : tol <= 12 ? "moderate" : "low";
+    out.innerHTML = `<p class="nomatch">✗ <b>Claim inconsistent (${conf} confidence)</b> — no time on this
+      date matches at this location, within ±${tol}° tolerance.</p>` + sendToCaseBtn();
+    state.solverResult = { status: "inconsistent", confidence: conf, tol, windows: [],
+      loc: { lat, lng }, dt: $("#sun-dt").value };
+    wireSendToCase();
     return;
   }
   const groups = []; let g = [matches[0]];
@@ -292,11 +296,53 @@ function runSolver() {
   }
   groups.push(g);
   const hm = (mins) => `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+
+  // Confidence: matched-window width × tolerance (mirrors the main workbench solver).
+  const totalWidth = groups.reduce((s, gr) => s + (gr[gr.length - 1].m - gr[0].m + 2), 0);
+  let conf, why;
+  if (totalWidth <= 30 && tol <= 8 && groups.length === 1) { conf = "high"; why = "single narrow window, tight tolerance"; }
+  else if (totalWidth <= 90 && groups.length <= 2) { conf = "moderate"; why = `${groups.length} window(s), ~${totalWidth} min total`; }
+  else { conf = "low"; why = `${groups.length} windows spanning ~${totalWidth} min — ambiguous`; }
+
   out.innerHTML = groups.map((gr) => {
     const best = gr.reduce((a, b) => (a.err < b.err ? a : b));
     return `<div class="match">✓ ${hm(gr[0].m)}–${hm(gr[gr.length - 1].m)} local
       (best ${hm(best.m)} · shadow→${best.shAz.toFixed(0)}° · ${best.ratio.toFixed(2)}×)</div>`;
-  }).join("");
+  }).join("") +
+    `<div class="solver-conf conf-${conf}">Confidence: <b>${conf}</b> — ${why} (tolerance ±${tol}°).</div>` +
+    sendToCaseBtn();
+  state.solverResult = {
+    status: "match", confidence: conf, why, tol,
+    windows: groups.map((gr) => `${hm(gr[0].m)}–${hm(gr[gr.length - 1].m)}`),
+    loc: { lat, lng }, dt: $("#sun-dt").value,
+  };
+  wireSendToCase();
+}
+
+/* Hand the Studio's chronolocation finding back to the main workbench case via a
+   shared localStorage key (the Studio is a separate tab/document). The workbench
+   picks it up on focus/load and logs it as an artifact + sets state.solverResult.
+   100% local — same-origin localStorage, nothing uploaded. */
+const STUDIO_HANDOFF_KEY = "geosint:studio-finding";
+function sendToCaseBtn() {
+  return `<button class="btn accent" id="send-to-case" style="margin-top:8px"
+    title="Send this chronolocation result + location to the main workbench case">＋ Send to case</button>
+    <span id="send-to-case-msg" class="muted" style="margin-left:8px"></span>`;
+}
+function wireSendToCase() {
+  const b = document.getElementById("send-to-case");
+  if (!b) return;
+  b.onclick = () => {
+    const r = state.solverResult;
+    if (!r) return;
+    try {
+      localStorage.setItem(STUDIO_HANDOFF_KEY, JSON.stringify({ ...r, sent: new Date().toISOString() }));
+      document.getElementById("send-to-case-msg").textContent =
+        "✓ sent — switch to the workbench tab to log it";
+    } catch {
+      document.getElementById("send-to-case-msg").textContent = "✗ browser storage unavailable";
+    }
+  };
 }
 
 function initSolver() {
