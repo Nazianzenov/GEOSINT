@@ -452,10 +452,23 @@ class Handler(BaseHTTPRequestHandler):
             hostname = host.rsplit(":", 1)[0] if host.count(":") == 1 else host
         return hostname in ALLOWED_HOSTNAMES
 
+    # JSON POST routes: path -> handler-method name. do_POST dispatches the
+    # uniform JSON endpoints from this one table, and POST_PATHS is derived from
+    # it (plus the two raw-bytes exif routes), so a new endpoint is registered in
+    # exactly one place — no GET_PATHS/POST_PATHS set to forget and let drift.
+    POST_JSON_ROUTES = {
+        "/api/flyto": "api_flyto",
+        "/api/launch": "api_launch",
+        "/api/overpass": "api_overpass",
+        "/api/qgis": "api_qgis",
+        "/api/prefetch": "api_prefetch",
+    }
+    # Raw-bytes POST routes (handled before JSON parsing — they take image bytes).
+    POST_RAW_PATHS = {"/api/exif", "/api/exif-preview"}
+
     # Known routes per method, for 405 (path exists but wrong verb) vs 404.
     GET_PATHS = {"/", "/index.html", "/api/pget", "/wiki", "/api/status"}
-    POST_PATHS = {"/api/exif", "/api/exif-preview", "/api/flyto", "/api/launch",
-                  "/api/overpass", "/api/qgis", "/api/prefetch"}
+    POST_PATHS = POST_RAW_PATHS | POST_JSON_ROUTES.keys()
 
     def send_405(self, allow):
         self.send_response(405)
@@ -688,21 +701,14 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/exif-preview":
             return self.api_exif_preview(raw)
 
+        handler = self.POST_JSON_ROUTES.get(path)
+        if handler is None:
+            return self._not_found_or_405(path, "POST")
         try:
             payload = json.loads(raw or b"{}")
         except json.JSONDecodeError:
             return self.send_json({"error": "bad json"}, 400)
-        if path == "/api/flyto":
-            return self.api_flyto(payload)
-        if path == "/api/launch":
-            return self.api_launch(payload)
-        if path == "/api/overpass":
-            return self.api_overpass(payload)
-        if path == "/api/qgis":
-            return self.api_qgis(payload)
-        if path == "/api/prefetch":
-            return self.api_prefetch(payload)
-        self._not_found_or_405(path, "POST")
+        return getattr(self, handler)(payload)
 
     # ---- API: hand off GeoJSON to QGIS ----------------------------------
     def api_qgis(self, payload):
