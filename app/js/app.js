@@ -456,7 +456,7 @@ async function elevationProfile() {
     if (!Array.isArray(elevs) || elevs.length !== samples.length) throw new Error("bad elevation response");
     _elevProfile = { dists: samples.map((s) => s.d), elevs, total: samples[samples.length - 1].d };
     drawElevProfile();
-  } catch (e) {
+  } catch {
     $("#elev-stats").textContent = "";
     $("#elev-readout").textContent = "✗ elevation service unreachable (offline?)";
   }
@@ -2912,11 +2912,11 @@ function writeAutosave() {
   try {
     localStorage.setItem(AUTOSAVE_KEY, snap);
     _autosaveLast = snap;
-  } catch (e) {
+  } catch {
     // Quota: retry once with thumbnails stripped (keep the rest of the case).
     try {
       const c = serializeCase();
-      c.artifacts = (c.artifacts || []).map((a) => { const { thumb, ...rest } = a; return rest; });
+      c.artifacts = (c.artifacts || []).map(({ thumb, ...rest }) => rest);
       const lean = JSON.stringify(c);
       localStorage.setItem(AUTOSAVE_KEY, lean);
       _autosaveLast = lean;
@@ -3158,7 +3158,7 @@ function closePalette() {
 function runPalette(i) {
   const cmd = _palette.items[i != null ? i : _palette.sel];
   closePalette();
-  if (cmd) try { cmd.run(); } catch (e) { status("command failed", true); }
+  if (cmd) try { cmd.run(); } catch { status("command failed", true); }
 }
 
 function initPalette() {

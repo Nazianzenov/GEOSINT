@@ -62,6 +62,8 @@ a new catalogue.
 - Cross-platform: no Windows-only assumptions in detection/launch (`server.py`
   branches on `IS_WIN`/`IS_MAC`/`IS_LINUX`).
 - Run the tests: `python -m pytest tests/ -q`.
+- Optional (lints `app/js`): `npm ci && npm run lint`. Node is **dev/CI tooling
+  only** — the workbench itself runs with no Node. CI enforces this lint.
 - The case file is a documented exchange format — see
   [docs/CASE-FORMAT.md](docs/CASE-FORMAT.md); don't break it without bumping
   `CASE_VERSION` and handling back-compat in `applyCase`.

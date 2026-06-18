@@ -1,0 +1,13 @@
+{
+  "name": "geosint-workbench",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev/CI tooling only — the workbench runs with no Node (pure-stdlib server + vanilla JS). This exists solely to lint app/js.",
+  "scripts": {
+    "lint": "eslint app/js"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0"
+  }
+}
