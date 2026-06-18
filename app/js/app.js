@@ -1549,18 +1549,32 @@ async function prefetchTiles() {
     bbox: [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()],
     zmin: z, zmax: Math.min(19, z + depth),
   };
+  // Each /api/prefetch call is wall-clock bounded server-side; on a large area it
+  // returns done:false with a `remaining` count. Auto-resume by re-issuing until
+  // done — cached tiles are skipped, so resuming is cheap — showing live progress.
   $("#pf-status").textContent = `caching ${layer} z${body.zmin}–${body.zmax} for this view…`;
+  let fetched = 0, failed = 0, total = 0;
   try {
-    const r = await fetch("/api/prefetch", {
-      method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
-      body: JSON.stringify(body),
-    });
-    const j = await r.json();
-    if (j.error) { $("#pf-status").textContent = `✗ ${j.error}`; return; }
+    for (let round = 0; round < 40; round++) {       // safety bound on resume rounds
+      const r = await fetch("/api/prefetch", {
+        method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json();
+      if (j.error) { $("#pf-status").textContent = `✗ ${j.error}`; return; }
+      fetched += j.fetched; failed += j.failed; total = j.tiles;
+      if (j.done) {
+        $("#pf-status").textContent =
+          `✓ ${total} tiles for ${layer}: ${fetched} downloaded`
+          + (failed ? `, ${failed} failed` : "") + " — area available offline.";
+        status(`prefetched ${fetched} tiles`);
+        return;
+      }
+      $("#pf-status").textContent =
+        `caching ${layer}… ${fetched} downloaded, ${j.remaining} to go (resuming)`;
+    }
     $("#pf-status").textContent =
-      `✓ ${j.tiles} tiles for ${j.layer}: ${j.fetched} downloaded, ${j.cached} already cached`
-      + (j.failed ? `, ${j.failed} failed` : "") + " — area available offline.";
-    status(`prefetched ${j.fetched} tiles`);
+      `partly cached ${layer}: ${fetched} downloaded so far — press CACHE VIEW again to finish.`;
   } catch { $("#pf-status").textContent = "✗ local server unreachable"; }
 }
 
