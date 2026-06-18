@@ -176,6 +176,33 @@ def test_prefetch_tile_cap_413():
     assert st == 413
 
 
+def test_prefetch_contract_done_when_complete(monkeypatch, tmp_path):
+    # #29: a small bbox that finishes within the budget reports the full contract
+    # with done:true / remaining:0. Stub the upstream so no real network is hit,
+    # and redirect the tile cache to a temp dir so the test leaves no artifacts.
+    monkeypatch.setattr(server, "upstream_get", lambda url, timeout=20: b"\x89PNG\r\n")
+    monkeypatch.setattr(server, "TILE_CACHE", tmp_path / "tiles")
+    st, _, body = jpost("/api/prefetch", {"layer": "osm", "bbox": [0, 0, 0.01, 0.01],
+                                          "zmin": 1, "zmax": 1})
+    assert st == 200
+    j = json.loads(body)
+    assert {"ok", "layer", "tiles", "fetched", "cached", "failed", "remaining", "done"} <= set(j)
+    assert j["done"] is True and j["remaining"] == 0
+    assert j["fetched"] + j["cached"] + j["failed"] == j["tiles"]
+
+
+def test_prefetch_budget_stops_with_remaining(monkeypatch):
+    # A zero budget stops before any tile is processed -> done:false, remaining=all.
+    monkeypatch.setattr(server, "PREFETCH_BUDGET", 0)
+    st, _, body = jpost("/api/prefetch", {"layer": "osm", "bbox": [0, 0, 1, 1],
+                                          "zmin": 5, "zmax": 6})
+    assert st == 200
+    j = json.loads(body)
+    assert j["done"] is False
+    assert j["remaining"] == j["tiles"] and j["tiles"] > 0
+    assert j["fetched"] == 0
+
+
 # ── verb / 404 / 405 handling ───────────────────────────────────────────────
 def test_wrong_verb_returns_405_with_allow():
     st, h, _ = jpost("/api/status", {})           # status is GET-only

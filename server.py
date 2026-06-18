@@ -71,6 +71,12 @@ TILE_LAYERS = {
     "opentopo": "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
 }
 TILE_TTL = 30 * 86400
+# Offline tile prefetch (/api/prefetch). MAX_TILES is the politeness/disk cap on
+# one request's bbox; BUDGET bounds its wall-clock so the request can't hold a
+# server thread for minutes — when it runs out, the response reports `remaining`
+# and the client resumes (cached tiles are skipped, so resuming is cheap).
+PREFETCH_MAX_TILES = 6000
+PREFETCH_BUDGET = 25            # seconds of wall-clock per prefetch request
 
 # /api/pget?u=<url> — generic cached GET proxy, allowlisted prefixes only.
 # Historical weather and elevation never change -> effectively permanent.
@@ -549,12 +555,21 @@ class Handler(BaseHTTPRequestHandler):
         if not (0 <= zmin <= zmax <= 19):
             return self.send_json({"error": "need 0 <= zmin <= zmax <= 19"}, 400)
         tiles = list(tiles_in_bbox(s, w, n, e, zmin, zmax))
-        MAX_TILES = 6000                          # ~politeness/disk guard
-        if len(tiles) > MAX_TILES:
-            return self.send_json({"error": f"{len(tiles)} tiles exceeds the {MAX_TILES} "
+        if len(tiles) > PREFETCH_MAX_TILES:
+            return self.send_json({"error": f"{len(tiles)} tiles exceeds the {PREFETCH_MAX_TILES} "
                                             f"cap — narrow the area or lower max zoom"}, 413)
+        # Bound the request's wall-clock so it can't hold a server thread + the
+        # client connection for minutes on a cold cache / slow mirror. When the
+        # budget runs out we stop and report `remaining` (+ done:false); the
+        # client re-issues to resume — already-cached tiles are skipped, so a
+        # resume is cheap. A run is `done` only when every tile was processed.
         fetched = cached = failed = 0
+        deadline = time.monotonic() + PREFETCH_BUDGET
+        processed = 0
         for z, x, y in tiles:
+            if time.monotonic() >= deadline:
+                break
+            processed += 1
             f = TILE_CACHE / layer / str(z) / str(x) / f"{y}.png"
             if cache_fresh(f, TILE_TTL):
                 cached += 1
@@ -566,9 +581,11 @@ class Handler(BaseHTTPRequestHandler):
                 fetched += 1
                 time.sleep(0.05)                  # gentle on the tile server
             except Exception:
-                failed += 1
+                failed += 1                       # surfaced in the `failed` count
+        remaining = len(tiles) - processed
         return self.send_json({"ok": True, "layer": layer, "tiles": len(tiles),
-                               "fetched": fetched, "cached": cached, "failed": failed})
+                               "fetched": fetched, "cached": cached, "failed": failed,
+                               "remaining": remaining, "done": remaining == 0})
 
     # ---- generic cached GET proxy: /api/pget?u=<allowlisted url> ---------
     def api_pget(self, query):
