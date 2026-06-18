@@ -127,6 +127,16 @@ def test_version_constant():
     assert server.UA.startswith(f"GeOSINT-Workbench/{server.VERSION}")
 
 
+# ── route table (#33) — one source of truth for POST dispatch + 405 ─────────
+def test_post_routes_single_source_of_truth():
+    H = server.Handler
+    # every JSON route maps to a real handler method
+    for path, name in H.POST_JSON_ROUTES.items():
+        assert callable(getattr(H, name, None)), f"{path} -> missing handler {name}"
+    # POST_PATHS (used for 404-vs-405) is exactly raw + json routes, no drift
+    assert H.POST_PATHS == H.POST_RAW_PATHS | set(H.POST_JSON_ROUTES)
+
+
 # ── named request-body caps (#32) — single source of truth ──────────────────
 def test_body_caps_are_named_constants():
     # The EXIF cap is enforced in do_POST and re-checked in each exif handler;
