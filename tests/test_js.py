@@ -162,6 +162,24 @@ def test_redacted_dossier_hides_image_artifact_filename(page):
     assert "secret-photo-original.jpg" not in html          # filename must be genericized
 
 
+# ── dossier embeds only local data: thumbnails (#25) ────────────────────────
+def test_dossier_embeds_data_uri_thumbnail(page):
+    art = {"id": 1, "kind": "image", "t": "2024-01-01T00:00:00", "text": "ok",
+           "thumb": "data:image/jpeg;base64,/9j/AAAA"}
+    html = _build_dossier_with(page, redact=False, artifact=art)
+    assert "data:image/jpeg;base64,/9j/AAAA" in html      # local thumb is kept
+
+
+def test_dossier_drops_external_url_thumbnail(page):
+    # a tampered case file pointing thumb at a remote host must NOT be embedded
+    # (would beacon on open) — falls back to the no-image placeholder.
+    art = {"id": 1, "kind": "image", "t": "2024-01-01T00:00:00", "text": "ok",
+           "thumb": "https://tracker.example.com/beacon.gif"}
+    html = _build_dossier_with(page, redact=False, artifact=art)
+    assert "tracker.example.com" not in html
+    assert "noimg" in html                                 # placeholder used instead
+
+
 # ── case round-trip: serializeCase -> applyCase -> serializeCase ─────────────
 def test_case_round_trip_is_lossless(page):
     """Apply a case, re-serialize, and confirm the meaningful fields survive."""
