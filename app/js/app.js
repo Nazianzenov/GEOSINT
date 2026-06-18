@@ -22,6 +22,13 @@ const $$ = (s) => document.querySelectorAll(s);
 /* HTML-escape untrusted strings (EXIF fields, geocoder responses) before innerHTML */
 const esc = (s) => String(s).replace(/[&<>"']/g,
   (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+/* Only ever render an evidence thumbnail that is a LOCAL base64 data URI.
+   Thumbnails we generate are always `data:image/...` (see makeThumbnail), but a
+   loaded/tampered case file could set `thumb` to an http(s) URL — which would
+   make the "self-contained, nothing leaves your machine" dossier beacon to an
+   external host on open (and deanonymize the analyst). Returns the safe value
+   or "" so callers fall back to the no-image placeholder. */
+const dataThumb = (s) => /^data:image\//i.test(String(s || "")) ? s : "";
 /* All point-API calls go through the server's cached proxy (immutable data —
    historical weather, elevation — is cached effectively forever). */
 const cachedFetch = (url) => fetch("/api/pget?u=" + encodeURIComponent(url));
@@ -2299,7 +2306,7 @@ function openTimeline() {
         <div class="tl-dot">${e.sym}</div>
         <div class="tl-card">
           <div class="tl-label"><b>${esc(e.label)}</b>${e.detail ? ` <span class="muted">· ${esc(e.detail)}</span>` : ""}</div>
-          ${e.thumb ? `<img src="${esc(e.thumb)}" style="max-width:120px;border-radius:3px;margin:4px 0">` : ""}
+          ${dataThumb(e.thumb) ? `<img src="${esc(dataThumb(e.thumb))}" style="max-width:120px;border-radius:3px;margin:4px 0">` : ""}
           ${e.sha ? `<div class="muted" style="font-family:monospace;font-size:11px">sha256 ${esc(e.sha.slice(0, 16))}…</div>` : ""}
           ${e.ll ? `<a href="#" class="tl-go" data-i="${i}">⌖ ${e.ll[0].toFixed(4)}, ${e.ll[1].toFixed(4)}</a>` : ""}
         </div>
@@ -2351,7 +2358,7 @@ function buildDossier(redact = false) {
   const artBlock = arts.length ? `<div class="grid">
       ${[...arts].sort((a, b) => String(a.t).localeCompare(String(b.t))).map((a) => `
         <div class="ev">
-          ${(a.thumb && !redact) ? `<img src="${esc(a.thumb)}" alt="">` : `<div class="noimg">${ART_SYM[a.kind] || "•"}</div>`}
+          ${(!redact && dataThumb(a.thumb)) ? `<img src="${esc(dataThumb(a.thumb))}" alt="">` : `<div class="noimg">${ART_SYM[a.kind] || "•"}</div>`}
           <div class="ev-meta">
             <b>${redact ? esc(/^https?:\/\//i.test(String(a.text || "")) ? "external finding" : (a.text || a.kind)) : esc(a.source || a.text || a.kind)}</b>
             <div class="muted">${esc(String(a.t).replace("T", " ").slice(0, 19))} · ${esc(a.kind)}</div>
