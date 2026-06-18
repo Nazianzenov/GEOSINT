@@ -16,8 +16,7 @@
 window.GeoSearch = (function () {
 
 const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-const esc = (s) => String(s).replace(/[&<>"']/g,
-  (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+/* esc is shared from app/js/common.js (loaded before this script) */
 
 /* display order + which categories render as photo grids */
 const GROUP_ORDER = ["country-facts", "recognition", "landmarks", "unesco", "castles",

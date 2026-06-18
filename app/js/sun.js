@@ -3,65 +3,15 @@
    object/shadow lengths on an uploaded photo. No dependency on the OSM data layers. */
 "use strict";
 
-const $  = (s) => document.querySelector(s);
-const $$ = (s) => document.querySelectorAll(s);
-const esc = (s) => String(s).replace(/[&<>"']/g,
-  (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const cachedFetch = (url) => fetch("/api/pget?u=" + encodeURIComponent(url));
+/* $, $$, esc, cachedFetch, fmtDD, toDMS, fmtDMS, cardinal, compassAz,
+   parseCoords, project, drawSunChart are shared from app/js/common.js
+   (loaded before this script). */
 
 const state = {
   loc: null,            // L.LatLng — the photo's location
   map: null, marker: null, sunLayer: null,
   img: { natW: 0, natH: 0, object: [], shadow: [], mode: "object" },
 };
-
-/* ════════════════════════ formatting / geo ═════════════════════ */
-const fmtDD = (ll, p = 5) => `${ll.lat.toFixed(p)}, ${ll.lng.toFixed(p)}`;
-function toDMS(deg, isLat) {
-  const dir = deg >= 0 ? (isLat ? "N" : "E") : (isLat ? "S" : "W");
-  const a = Math.abs(deg), d = Math.floor(a), m = Math.floor((a - d) * 60);
-  const s = ((a - d) * 3600 - m * 60).toFixed(1);
-  return `${d}°${String(m).padStart(2, "0")}'${s}"${dir}`;
-}
-const fmtDMS = (ll) => `${toDMS(ll.lat, true)} ${toDMS(ll.lng, false)}`;
-const cardinal = (deg) =>
-  ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(deg / 22.5) % 16];
-
-/* "48.85, 2.35", "48.85 2.35", DMS 48°51'30"N 2°17'40"E, or N48.85 E2.35 */
-function parseCoords(txt) {
-  txt = txt.trim();
-  let m = txt.match(/^(-?\d{1,2}(?:\.\d+)?)[ ,;\t]+(-?\d{1,3}(?:\.\d+)?)$/);
-  if (m) {
-    const lat = +m[1], lng = +m[2];
-    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return L.latLng(lat, lng);
-  }
-  const dms = /(\d{1,3})[°\s]+(\d{1,2})['′\s]+([\d.]+)?["″\s]*([NSEW])/gi;
-  const parts = [...txt.matchAll(dms)];
-  if (parts.length === 2) {
-    const val = (p) => {
-      let v = (+p[1]) + (+p[2]) / 60 + (+(p[3] || 0)) / 3600;
-      if (/[SW]/i.test(p[4])) v = -v;
-      return v;
-    };
-    const a = val(parts[0]), b = val(parts[1]);
-    const latFirst = /[NS]/i.test(parts[0][4]);
-    const lat = latFirst ? a : b, lng = latFirst ? b : a;
-    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return L.latLng(lat, lng);
-  }
-  m = txt.match(/^[NS]\s*([\d.]+)[ ,;]+[EW]\s*([\d.]+)$/i);
-  if (m) {
-    let lat = +m[1] * (/^s/i.test(txt) ? -1 : 1);
-    let lng = +m[2] * (/[w]\s*[\d.]+$/i.test(txt) ? -1 : 1);
-    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return L.latLng(lat, lng);
-  }
-  return null;
-}
-function project(ll, bearingDeg, distM) {
-  const br = bearingDeg * Math.PI / 180;
-  const dLat = (distM * Math.cos(br)) / 111320;
-  const dLng = (distM * Math.sin(br)) / (111320 * Math.cos(ll.lat * Math.PI / 180));
-  return L.latLng(ll.lat + dLat, ll.lng + dLng);
-}
 
 function status(msg, isErr = false, ms = 4000) {
   const el = $("#status-msg");
@@ -167,7 +117,7 @@ function sunDate() {
   const [h, mi] = tm.split(":").map(Number);
   return { date: new Date(Date.UTC(Y, M - 1, D, h, mi) - off * 3600e3), off, Y, M, D };
 }
-const compassAz = (rad) => (rad * 180 / Math.PI + 180) % 360;
+/* compassAz is in common.js */
 const fmtClock = (date, off) => {
   if (!date || isNaN(date)) return "—";
   return new Date(date.getTime() + off * 3600e3).toISOString().slice(11, 16);
@@ -225,33 +175,7 @@ function renderGeometry() {
     <a class="btn" target="_blank" href="https://www.peakfinder.com/?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}">PeakFinder horizon ⇗</a>`;
 }
 
-function drawSunChart(sd, lat, lng) {
-  const cv = $("#sun-chart"), ctx = cv.getContext("2d");
-  const W = cv.width, H = cv.height;
-  ctx.clearRect(0, 0, W, H);
-  const y0 = H * 0.72;
-  ctx.strokeStyle = "#232a3b"; ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke();
-  ctx.fillStyle = "#8a93a6"; ctx.font = "9px monospace";
-  for (let h = 0; h <= 24; h += 6) {
-    const x = (h / 24) * W;
-    ctx.fillText(String(h).padStart(2, "0"), Math.min(x, W - 14), H - 3);
-    ctx.strokeStyle = "#161b28"; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H - 12); ctx.stroke();
-  }
-  ctx.strokeStyle = "#ffd23e"; ctx.lineWidth = 1.6; ctx.beginPath();
-  let started = false;
-  for (let m = 0; m <= 1440; m += 8) {
-    const d = new Date(Date.UTC(sd.Y, sd.M - 1, sd.D, 0, m) - sd.off * 3600e3);
-    const a = SunCalc.getPosition(d, lat, lng).altitude * 180 / Math.PI;
-    const x = (m / 1440) * W, y = y0 - (a / 90) * (H * 0.66);
-    started ? ctx.lineTo(x, y) : (ctx.moveTo(x, y), started = true);
-  }
-  ctx.stroke();
-  const v = $("#sun-dt").value.split("T")[1].split(":");
-  const mNow = (+v[0]) * 60 + (+v[1]);
-  const aNow = SunCalc.getPosition(sd.date, lat, lng).altitude * 180 / Math.PI;
-  ctx.fillStyle = "#4cc2ff";
-  ctx.beginPath(); ctx.arc((mNow / 1440) * W, y0 - (aNow / 90) * (H * 0.66), 4, 0, 7); ctx.fill();
-}
+/* drawSunChart is in common.js (shared with the workbench Sun module) */
 
 /* ════════════════════════════ solver ═══════════════════════════ */
 function runSolver() {
