@@ -6,6 +6,88 @@ versioning (`server.py --version`, surfaced in `/api/status`).
 
 ## [Unreleased]
 
+### Production-readiness pass (security, data integrity, resilience, hygiene)
+
+A staff-level review cycle to bring the workbench to production quality,
+sequenced as Phase A (production blockers), B (resilience), C (elegance). The
+items below have shipped; remaining Phase C refactors (de-dup/split `app.js`,
+route table, cache-state UX) are tracked as open issues.
+
+#### Security & data integrity
+- **Dossier no longer beacons (#25):** the dossier/redacted-dossier embeds an
+  evidence thumbnail only when it's a local `data:` image. A tampered/shared
+  `.geosint.json` could otherwise point `thumb` at an `http(s)` URL, making the
+  "self-contained, nothing leaves your machine" export call out to a remote host
+  on open (analyst deanonymization). New `dataThumb()` guard at both sinks.
+- **Case files are validated on load (#26):** `applyCase` now runs every section
+  of an untrusted case file through `sanitizeCase` — coordinates range-checked
+  (lat/lng/zoom), malformed annotations/measure/gbif entries dropped and counted,
+  `null`/`""` no longer coerced to a bogus `0,0`. A bad file is rejected cleanly
+  (with a "skipped N…" message) instead of half-applying and leaving `NaN` state.
+- **Redacted dossier closes a sourcing leak (#35):** image-artifact filenames are
+  now genericized to "image evidence" in the publication-safe export (previously
+  only URLs were). One shared `redLabel()` rule drives the artifact, relationship
+  and timeline blocks so they can't drift apart again.
+
+#### Resilience & observability
+- **Server-side failure logging (#28):** the tile/pget/overpass proxies and the
+  ExifTool handlers now log upstream/tool failures (`[geosint] WARN <endpoint>
+  <host> <Error>: …`), so a degraded run is visible to the operator instead of
+  looking like a silent app bug. OPSEC: only the upstream host is logged, never
+  the full URL (pget/overpass URLs embed coordinates).
+- **Bounded, resumable tile prefetch (#29):** `/api/prefetch` is capped to a
+  wall-clock budget so it can't hold a server thread for minutes; it reports
+  `remaining`/`done` and the client auto-resumes (cached tiles are skipped), with
+  live progress, instead of an unbounded request behind an endless spinner.
+- **Client fetch timeouts (#30):** all frontend API calls go through a `fetchT`
+  wrapper with an `AbortController` timeout (30 s data / 120 s exif uploads /
+  35 s per prefetch round). A stall now yields a definite, retryable error in the
+  module's status area instead of an infinite spinner. The wrapper composes a
+  caller's cancel signal (the OSM CANCEL button still works) and raises a distinct
+  `TimeoutError` so a timeout isn't mistaken for a user cancel.
+
+#### Testing, tooling & hygiene
+- **Browser-driven JS tests (#27):** first automated coverage of the frontend's
+  security-relevant logic — `esc`, `parseCoords`, the dossier escaping invariant,
+  redaction safety, thumbnail guarding, and the case round-trip — via Playwright
+  driving the real `/app/` page (new `js-tests` CI job). The server suite grew
+  alongside it.
+- **ESLint lint gate (#39):** `app/js` is now linted in CI (`npm run lint`).
+  Node is **dev/CI tooling only** — the workbench still runs with no Node.
+- **Named server caps (#32):** the 200 MB EXIF cap (previously a literal in three
+  places that could silently diverge), the JSON cap and the ExifTool timeout are
+  now single module constants.
+- **CI/governance:** `main` is branch-protected (all checks required, linear
+  history, no force-push); the unit/`js-tests`/`lint` jobs run per push/PR.
+
+### Security & correctness — re-audit cycle (api / ux / pen-tester batches)
+
+Hardening and fixes from a full multi-agent audit re-run (predates the
+production-readiness pass; batches 1–5 + follow-ups).
+
+- **Proxy/parse correctness (batch 1):** `/tiles` strict-integer `z/x/y` parse
+  (negative coords were silently accepted) + in-range-for-zoom check;
+  `/api/overpass` requires a real `\bout\b` statement (so "timeout"/"output" no
+  longer bypass the guard); exif endpoints validate input (400/413) before
+  probing for the tool; OSM POI loading gained a cancel (`AbortController`) and no
+  longer leaks its progress-tick interval on concurrent runs.
+- **HTTP & security-header hygiene (batch 2):** CSP + `X-Frame-Options` +
+  `Referrer-Policy` on HTML; `X-Content-Type-Options: nosniff` and explicit
+  `Cache-Control` on proxied bodies; correct `405 + Allow` (vs a misleading 404)
+  for known paths hit with the wrong verb; `/api/pget` with no `u` returns 400;
+  the static 404 no longer echoes the caller-supplied path.
+- **Accessibility (batch 3):** global `:focus-visible` ring; skip-link;
+  `aria-label`s on the 17 unlabeled inputs/selects; the side panel is a named
+  `region`; Welcome/Help overlays are proper modal dialogs with focus management;
+  live-region coordinate readout. Map-scale fix.
+- **End-to-end API test suite (batch 4):** the offline-runnable `tests/test_api.py`
+  asserting routing, the Host/CSRF guards, allowlists, validation and headers
+  (incl. the negative-zoom and `out`-substring regressions).
+- **Sun Studio ↔ case integration (batch 5 + follow-ups):** the shadow solver
+  reports confidence (high/moderate/low); findings round-trip into the case;
+  the Studio handoff via `localStorage` is validated/range-checked on ingest; the
+  503 "wiki not built" page carries the same security headers.
+
 ### Added — Phase 6 (Reach: run everywhere, install in one step)
 - **Cross-platform tool detection (6.1):** ExifTool, Google Earth Pro, QGIS and
   Sherloq are now detected on Windows, macOS and Linux (PATH + per-OS install
