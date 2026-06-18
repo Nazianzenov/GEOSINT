@@ -127,6 +127,16 @@ def test_version_constant():
     assert server.UA.startswith(f"GeOSINT-Workbench/{server.VERSION}")
 
 
+# ── named request-body caps (#32) — single source of truth ──────────────────
+def test_body_caps_are_named_constants():
+    # The EXIF cap is enforced in do_POST and re-checked in each exif handler;
+    # naming it once means those checks can't silently diverge.
+    assert server.EXIF_MAX_BYTES == 200 * 1024 * 1024
+    assert server.JSON_MAX_BYTES == 2 * 1024 * 1024
+    assert server.EXIF_MAX_BYTES > server.JSON_MAX_BYTES
+    assert server.EXIF_TOOL_TIMEOUT > 0
+
+
 # ── upstream failure logging (#28) — OPSEC: host only, never coords ──────────
 def test_host_of_strips_query_and_path():
     # pget/overpass URLs embed coordinates in the query — only the host is safe
