@@ -2546,16 +2546,80 @@ async function saveCase() {
   status("case saved to your Downloads folder");
 }
 
-function applyCase(c) {
-  if (!c || c.app !== "geosint-workbench") return status("not a GeOSINT case file", true);
+/* Validate + coerce an untrusted case object (hand-edited, truncated, or from a
+   different version) into one applyCase can apply without producing NaN/half-
+   applied state. A case file is the one place untrusted structured data enters
+   the app, so every geometry field is range-checked here; malformed sections are
+   dropped (not fatal — we load the valid parts) and counted so the user is told.
+   Returns { case: cleaned, dropped: [reasons] }, or null if it isn't a case. */
+function sanitizeCase(c) {
+  if (!c || typeof c !== "object" || c.app !== "geosint-workbench") return null;
+  const dropped = [];
+  // Coerce only real numbers / non-empty numeric strings. Critically, reject
+  // null/""/[]/booleans — unary + turns those into 0, which would sneak a bogus
+  // 0,0 coordinate past the range checks below.
+  const num = (v) => {
+    if (typeof v === "number") return v;
+    if (typeof v === "string" && v.trim() !== "") { const n = +v; return Number.isNaN(n) ? NaN : n; }
+    return NaN;
+  };
+  const lat = (v) => { const n = num(v); return Number.isFinite(n) && Math.abs(n) <= 90 ? n : null; };
+  const lng = (v) => { const n = num(v); return Number.isFinite(n) && Math.abs(n) <= 180 ? n : null; };
+  const ll  = (a) => Array.isArray(a) && lat(a[0]) !== null && lng(a[1]) !== null ? [lat(a[0]), lng(a[1])] : null;
+
+  const out = {
+    app: c.app, version: c.version,
+    saved: typeof c.saved === "string" ? c.saved : null,
+    notes: typeof c.notes === "string" ? c.notes : "",
+    module: typeof c.module === "string" ? c.module : null,
+    inputs: (c.inputs && typeof c.inputs === "object") ? c.inputs : {},
+    artifacts: Array.isArray(c.artifacts) ? c.artifacts : [],
+  };
+
+  // active point
+  if (c.point != null) {
+    const la = lat(c.point.lat), lo = lng(c.point.lng);
+    if (la !== null && lo !== null) out.point = { lat: la, lng: lo };
+    else dropped.push("active point (out of range)");
+  }
+  // map view (zoom 0–24; default if absent/bad)
+  if (c.view != null) {
+    const la = lat(c.view.lat), lo = lng(c.view.lng), z = num(c.view.zoom);
+    if (la !== null && lo !== null) out.view = { lat: la, lng: lo, zoom: Number.isFinite(z) ? Math.max(0, Math.min(24, z)) : 13 };
+    else dropped.push("map view (out of range)");
+  }
+  // measure points — keep only valid [lat,lng] pairs
+  if (Array.isArray(c.measure)) {
+    out.measure = c.measure.map(ll).filter(Boolean);
+    if (out.measure.length !== c.measure.length) dropped.push(`${c.measure.length - out.measure.length} measure point(s)`);
+  } else out.measure = [];
+  // annotations — need a valid ll, and arrows also a valid ll2
+  if (Array.isArray(c.annos)) {
+    const before = c.annos.length;
+    out.annos = c.annos.filter((a) => a && ll(a.ll) && (a.type !== "arrow" || ll(a.ll2)))
+      .map((a) => ({ type: a.type, ll: ll(a.ll), ll2: ll(a.ll2), text: typeof a.text === "string" ? a.text : "" }));
+    if (out.annos.length !== before) dropped.push(`${before - out.annos.length} annotation(s)`);
+  } else out.annos = [];
+  // gbif overlays — keyed by a numeric taxon key (name is cosmetic, may be "")
+  out.gbif = Array.isArray(c.gbif)
+    ? c.gbif.filter((g) => g && Number.isFinite(num(g.key))).map((g) => ({ key: num(g.key), name: String(g.name || "") }))
+    : [];
+
+  return { case: out, dropped };
+}
+
+function applyCase(raw) {
+  const v = sanitizeCase(raw);
+  if (!v) return status("not a GeOSINT case file", true);
+  const c = v.case;
   // notes + every field first (so module renders pick them up)
   setVal("#case-notes", c.notes || "");
   // evidence log (v2). Rehydrate _artId past the loaded max so new artifacts
   // don't collide with restored ids.
-  state.artifacts = Array.isArray(c.artifacts) ? c.artifacts : [];
-  _artId = state.artifacts.reduce((m, a) => Math.max(m, a.id || 0), 0);
+  state.artifacts = c.artifacts;
+  _artId = state.artifacts.reduce((m, a) => Math.max(m, (a && a.id) || 0), 0);
   renderEvidenceLog();
-  const f = c.inputs || {};
+  const f = c.inputs;
   setVal("#sun-dt", f.sunDt); setVal("#sun-offset", f.sunOffset);
   setVal("#solver-az", f.solverAz); setVal("#solver-ratio", f.solverRatio); setVal("#solver-tol", f.solverTol);
   setVal("#solver-az2", f.solverAz2); setVal("#solver-ratio2", f.solverRatio2); setVal("#solver-dt2", f.solverDt2);
@@ -2563,13 +2627,13 @@ function applyCase(c) {
   setVal("#data-preset", f.dataPreset); setVal("#data-custom", f.dataCustom); setVal("#gbif-name", f.gbifName);
   renderUrlButtons();
 
-  // map view + active point
+  // map view + active point (validated above — never NaN)
   if (c.view) state.map.setView([c.view.lat, c.view.lng], c.view.zoom);
   if (c.point) setPoint(L.latLng(c.point.lat, c.point.lng));
 
   // measure shapes
   clearMeasure();
-  if (Array.isArray(c.measure) && c.measure.length) {
+  if (c.measure.length) {
     toggleMeasure(true);
     state.measure.pts = c.measure.map(([lat, lng]) => L.latLng(lat, lng));
     renderMeasure();
@@ -2577,16 +2641,17 @@ function applyCase(c) {
 
   // annotations (rebuild from stored geometry + text)
   clearAnnos();
-  (c.annos || []).forEach((a) => addAnno({ type: a.type, ll: a.ll, ll2: a.ll2, text: a.text }));
+  c.annos.forEach((a) => addAnno({ type: a.type, ll: a.ll, ll2: a.ll2, text: a.text }));
 
   // GBIF overlays (re-add by stored taxon key + name)
   Object.values(state.gbifLayers).forEach((tl) => state.map.removeLayer(tl));
   state.gbifLayers = {};
   $("#gbif-active").innerHTML = "";
-  (c.gbif || []).forEach((g) => gbifOverlay(g.name, g.key));
+  c.gbif.forEach((g) => gbifOverlay(g.name, g.key));
 
   if (c.module) openModule(c.module);
-  status(`case loaded${c.saved ? " (saved " + c.saved.slice(0, 16).replace("T", " ") + ")" : ""}`);
+  const drop = v.dropped.length ? ` — skipped ${v.dropped.join(", ")}` : "";
+  status(`case loaded${c.saved ? " (saved " + c.saved.slice(0, 16).replace("T", " ") + ")" : ""}${drop}`, v.dropped.length > 0);
 }
 
 function loadCase(file) {

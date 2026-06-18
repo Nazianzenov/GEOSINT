@@ -207,3 +207,64 @@ def test_case_round_trip_is_lossless(page):
     assert again["notes"] == "round trip notes"
     assert again["annos"] == [{"type": "pin", "ll": [-33.85, 151.21], "ll2": None, "text": "a pin"}]
     assert again["artifacts"][0]["id"] == 7
+
+
+# ── applyCase validates untrusted structure (#26) ───────────────────────────
+def test_sanitizecase_rejects_non_case(page):
+    assert page.evaluate("() => sanitizeCase({foo: 1})") is None
+    assert page.evaluate("() => sanitizeCase(null)") is None
+    assert page.evaluate("() => sanitizeCase({app: 'something-else'})") is None
+
+
+def test_sanitizecase_drops_malformed_point_and_view(page):
+    res = page.evaluate(
+        """() => sanitizeCase({
+            app: 'geosint-workbench',
+            point: { lat: 999, lng: 0 },
+            view: { lat: 'x', lng: 2, zoom: 5 },
+        })"""
+    )
+    assert "point" not in res["case"]                      # out-of-range point dropped
+    assert "view" not in res["case"]                       # non-numeric view dropped
+    assert any("active point" in d for d in res["dropped"])
+    assert any("map view" in d for d in res["dropped"])
+
+
+def test_sanitizecase_filters_bad_annotations_and_measure(page):
+    res = page.evaluate(
+        """() => sanitizeCase({
+            app: 'geosint-workbench',
+            measure: [[10, 20], [null, 5], ['x', 'y']],
+            annos: [
+                { type: 'pin', ll: [1, 2], text: 'ok' },
+                { type: 'pin', ll: [200, 2], text: 'bad lat' },
+                { type: 'arrow', ll: [1, 2], ll2: null, text: 'arrow missing ll2' },
+            ],
+        })"""
+    )
+    assert res["case"]["measure"] == [[10, 20]]            # only the valid pair kept
+    assert len(res["case"]["annos"]) == 1                  # only the valid pin kept
+    assert res["case"]["annos"][0]["text"] == "ok"
+
+
+def test_applycase_loads_valid_parts_without_throwing(page):
+    """A case with a bad point but a valid annotation applies the annotation and
+    does not corrupt the session (no exception, point left unset)."""
+    res = page.evaluate(
+        """() => {
+            clearAnnos();
+            const before = state.point;
+            try {
+                applyCase({
+                    app: 'geosint-workbench',
+                    point: { lat: 999, lng: 999 },              // invalid -> dropped
+                    annos: [{ type: 'pin', ll: [12, 34], text: 'kept' }],
+                    measure: [], gbif: [], artifacts: [], inputs: {},
+                });
+                return { ok: true, annos: state.annos.length, pointChanged: state.point !== before };
+            } catch (e) { return { ok: false, err: String(e) }; }
+        }"""
+    )
+    assert res["ok"], res.get("err")
+    assert res["annos"] == 1                                # valid annotation applied
+    assert res["pointChanged"] is False                    # invalid point not applied
