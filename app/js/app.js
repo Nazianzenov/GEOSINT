@@ -252,6 +252,13 @@ function toggleMeasure(force) {
   state.map.getContainer().style.cursor = m.on ? "crosshair" : "";
   if (!m.on) clearMeasure();
   else status("measure: left-click to add points (each leg shows distance + bearing) · right-drag a point to move · hold Shift for a range ring · Esc clears", false, 7000);
+  syncAnnoRulerWarn();                  // surface the ruler↔annotation conflict in the anno panel
+}
+
+// Show/hide the "ruler armed — annotations paused" banner in the annotations panel.
+function syncAnnoRulerWarn() {
+  const w = $("#anno-ruler-warn");
+  if (w) w.hidden = !state.measure.on;
 }
 
 function clearMeasure() {
@@ -567,7 +574,7 @@ function openModule(name) {
   if (name === "sun") renderSun();
   else state.sunLayer.clearLayers();              // sun/shadow overlay only shows in its own module
   if (name === "tools") renderTools();
-  if (name === "anno") renderAnnoList();
+  if (name === "anno") { renderAnnoList(); syncAnnoRulerWarn(); }
   if (name === "wiki") openWiki();
   markDirty();
 }
@@ -1500,8 +1507,10 @@ function initData() {
     runOverpass([`nwr["${m[1]}"="${m[2]}"]`], `${m[1]}=${m[2]}`, 10);
   });
   $("#data-clear").addEventListener("click", () => {
+    if (cancelOverpass("query cancelled.")) return;   // if a query is running, CLEAR cancels it
     state.dataLayer.clearLayers();
     state.lastData = null;
+    state._plotted = [];
     $("#data-status").textContent = "";
     syncQgisButton();
   });
@@ -1581,7 +1590,30 @@ async function openInQgis() {
   } catch { status("local server unreachable", true); }
 }
 
+// Tracks the in-flight Overpass query so it can be cancelled (re-clicking PLOT,
+// or the CANCEL affordance) and so concurrent runs can't leak timers/race.
+state.overpass = null;   // { ctrl: AbortController, tick: intervalId }
+
+function cancelOverpass(msg) {
+  if (!state.overpass) return false;
+  clearInterval(state.overpass.tick);
+  state.overpass.ctrl.abort();
+  state.overpass = null;
+  setOverpassLoading(false);
+  $("#data-status").textContent = msg || "query cancelled.";
+  return true;
+}
+
+// Flip the PLOT buttons to a CANCEL affordance while a query runs.
+function setOverpassLoading(on) {
+  const run = $("#data-run"), runC = $("#data-run-custom");
+  if (run) { run.textContent = on ? "✕ CANCEL" : "PLOT"; run.classList.toggle("armed", on); }
+  if (runC) runC.disabled = on;     // custom PLOT disabled during a run (one query at a time)
+}
+
 async function runOverpass(selectors, label, minZoom = 10) {
+  // Re-clicking PLOT while a query is in flight cancels it (toggle behaviour).
+  if (state.overpass) { cancelOverpass("query cancelled — click PLOT to run again."); return; }
   if (state.map.getZoom() < minZoom) {
     return status(`zoom in to at least level ${minZoom} for "${label}" (current: ${state.map.getZoom()})`, true, 6000);
   }
@@ -1589,20 +1621,25 @@ async function runOverpass(selectors, label, minZoom = 10) {
   const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map((v) => v.toFixed(4)).join(",");
   const q = `[out:json][timeout:20];(${selectors.map((s) => `${s}(${bbox});`).join("")});out center 600;`;
   const t0 = Date.now();
+  const ctrl = new AbortController();
   const tick = setInterval(() => {
     $("#data-status").textContent =
       `querying OSM for ${label}… ${Math.round((Date.now() - t0) / 1000)}s ` +
-      `(first run on an area can take ~10-30s; repeats are cached)`;
+      `(first run on an area can take ~10-30s; repeats are cached — click CANCEL to stop)`;
   }, 500);
+  state.overpass = { ctrl, tick };
+  setOverpassLoading(true);
   $("#data-status").textContent = `querying OSM for ${label}…`;
   try {
     const r = await fetch("/api/overpass", {
       method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
-      body: JSON.stringify({ q }),
+      body: JSON.stringify({ q }), signal: ctrl.signal,
     });
     clearInterval(tick);
     const j = await r.json();
     if (j.error) throw new Error(j.error);
+    state.overpass = null;
+    setOverpassLoading(false);
     state.dataLayer.clearLayers();
     const feats = [];
     state._plotted = [];                          // registry for "pin to case" (avoids inline-onclick injection)
@@ -1628,6 +1665,9 @@ async function runOverpass(selectors, label, minZoom = 10) {
     syncQgisButton();
   } catch (err) {
     clearInterval(tick);
+    setOverpassLoading(false);
+    if (err.name === "AbortError") return;        // user cancelled — message already set
+    state.overpass = null;
     $("#data-status").textContent = "";
     status(err.message || "Overpass failed", true, 8000);
   }

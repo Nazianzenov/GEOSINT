@@ -442,12 +442,16 @@ class Handler(BaseHTTPRequestHandler):
         if len(parts) != 5 or parts[1] not in TILE_LAYERS:
             return self.send_json({"error": "unknown tile layer"}, 404)
         layer = parts[1]
-        try:
-            z, x, y = (int(re.sub(r"\D", "", p)) for p in parts[2:5])
-        except ValueError:
+        # Strict integer parse (no \D-stripping, which silently turned "-1" into
+        # "1" and let negative zoom/coords through). Reject anything non-integer.
+        if not all(re.fullmatch(r"-?\d+", p) for p in parts[2:5]):
             return self.send_json({"error": "bad tile coords"}, 400)
+        z, x, y = (int(p) for p in parts[2:5])
         if not (0 <= z <= 20):
             return self.send_json({"error": "bad zoom"}, 400)
+        n = 1 << z
+        if not (0 <= x < n and 0 <= y < n):
+            return self.send_json({"error": "tile coords out of range"}, 400)
         f = TILE_CACHE / layer / str(z) / str(x) / f"{y}.png"
         if cache_fresh(f, TILE_TTL):
             return self.send_cached_body(f.read_bytes(), "image/png", "hit", TILE_TTL)
@@ -629,7 +633,10 @@ class Handler(BaseHTTPRequestHandler):
     def api_overpass(self, payload):
         """Run an Overpass QL query with a 7-day local file cache."""
         q = str(payload.get("q") or "")
-        if not (10 < len(q) < 6000) or "out" not in q:
+        # Require a real `out` statement (word-boundary), not just the substring
+        # "out" — otherwise "timeout"/"output" satisfied the old check and an
+        # unvalidated query was forwarded to the mirrors.
+        if not (10 < len(q) < 6000) or not re.search(r"\bout\b", q):
             return self.send_json({"error": "invalid query"}, 400)
         OVERPASS_CACHE.mkdir(parents=True, exist_ok=True)
         cached = OVERPASS_CACHE / (hashlib.sha1(q.encode()).hexdigest() + ".json")
@@ -674,13 +681,15 @@ class Handler(BaseHTTPRequestHandler):
     def api_exif(self, raw: bytes):
         """Run local ExifTool on an uploaded image; body = raw bytes,
         X-Filename header used only for the temp file extension."""
-        exiftool = find_exiftool()
-        if exiftool is None:
-            return self.send_json({"error": "ExifTool not found. Install: winget install OliverBetz.ExifTool"}, 409)
+        # Validate the request (400/413) before probing for the tool (409), so a
+        # bad request reports the bad request, not "tool missing".
         if not raw:
             return self.send_json({"error": "empty body"}, 400)
         if len(raw) > 200 * 1024 * 1024:
             return self.send_json({"error": "file too large"}, 413)
+        exiftool = find_exiftool()
+        if exiftool is None:
+            return self.send_json({"error": "ExifTool not found. Install: winget install OliverBetz.ExifTool"}, 409)
         tmp = None
         try:
             tmp = self._write_exif_temp(raw)
@@ -731,13 +740,13 @@ class Handler(BaseHTTPRequestHandler):
         return gps, (d.get("DateTimeOriginal") or d.get("CreateDate"))
 
     def api_exif_preview(self, raw: bytes):
-        exiftool = find_exiftool()
-        if exiftool is None:
-            return self.send_json({"error": "ExifTool not found. Install: winget install OliverBetz.ExifTool"}, 409)
         if not raw:
             return self.send_json({"error": "empty body"}, 400)
         if len(raw) > 200 * 1024 * 1024:
             return self.send_json({"error": "file too large"}, 413)
+        exiftool = find_exiftool()
+        if exiftool is None:
+            return self.send_json({"error": "ExifTool not found. Install: winget install OliverBetz.ExifTool"}, 409)
         tmp = prev_tmp = None
         try:
             tmp = self._write_exif_temp(raw)
@@ -766,17 +775,21 @@ class Handler(BaseHTTPRequestHandler):
             time_mismatch = bool(main_time and prev_time and main_time != prev_time)
 
             ctype = "image/jpeg" if body[:2] == b"\xff\xd8" else "application/octet-stream"
+            # These values come from attacker-controlled EXIF — strip CR/LF and
+            # cap length so they can't split the response / inject headers.
+            def _hv(v):
+                return re.sub(r"[\r\n]", " ", str(v))[:80]
             self.send_response(200)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Cache-Control", "no-store")
-            self.send_header("X-Preview-Tag", chosen)
+            self.send_header("X-Preview-Tag", _hv(chosen))
             self.send_header("X-Preview-Bytes", str(len(body)))
-            if main_gps:  self.send_header("X-Main-GPS", main_gps)
-            if prev_gps:  self.send_header("X-Preview-GPS", prev_gps)
-            if main_time: self.send_header("X-Main-Time", main_time)
-            if prev_time: self.send_header("X-Preview-Time", prev_time)
+            if main_gps:  self.send_header("X-Main-GPS", _hv(main_gps))
+            if prev_gps:  self.send_header("X-Preview-GPS", _hv(prev_gps))
+            if main_time: self.send_header("X-Main-Time", _hv(main_time))
+            if prev_time: self.send_header("X-Preview-Time", _hv(prev_time))
             self.send_header("X-GPS-Mismatch", "1" if gps_mismatch else "0")
             self.send_header("X-Time-Mismatch", "1" if time_mismatch else "0")
             self.end_headers()

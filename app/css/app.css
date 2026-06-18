@@ -369,6 +369,10 @@ table.batch .batch-go { text-decoration: none; font-size: 14px; }
 #cmd-list li[aria-selected="true"] .cmd-label { color: var(--accent); }
 #cmd-list .cmd-empty { padding: 14px 12px; color: var(--txt-dim); font-size: 13px; }
 
+/* inline warning banner (e.g. ruler↔annotation conflict) */
+.warn-banner { background: #3a2a12; border: 1px solid var(--accent-2); color: var(--accent-2);
+  border-radius: 5px; padding: 7px 10px; font-size: 12px; margin: 0 0 10px; }
+
 /* ── autosave restore banner (7.2) ── */
 #restore-bar[hidden] { display: none; }          /* explicit display below would otherwise beat [hidden] */
 #restore-bar { display: flex; align-items: center; gap: 12px; padding: 7px 14px;
