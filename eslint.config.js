@@ -72,7 +72,8 @@ module.exports = [
     // — so no-undef is off for this set (common.js/sun.js/search.js keep it).
     // Every other rule (unused vars, cond-assign, dupe-keys, …) still applies.
     ...base,
-    files: ["app/js/app.js", "app/js/case.js", "app/js/modules/*.js"],
+    files: ["app/js/app.js", "app/js/core.js", "app/js/map.js", "app/js/case.js",
+            "app/js/palette.js", "app/js/modules/*.js"],
     languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals } },
     rules: { ...sharedRules, "no-undef": "off", "no-unused-vars": "off" },
   },
