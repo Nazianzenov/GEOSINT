@@ -72,6 +72,18 @@ route table, cache-state UX) are tracked as open issues.
   log / dossier / case file) and `palette.js` — leaving `app.js` a 109-line
   bootstrap. Behaviour-neutral (classic `<script>`s, shared global scope, no
   bundler); each file is now a targetable home for tests and future changes.
+- **`dossier.js` extracted from `case.js`:** the self-contained dossier export
+  (`DOSSIER_CSS` + `buildDossier` + `exportDossier`) moved to its own file, so
+  `case.js` is now purely the evidence-log / chain-of-custody / case-file engine.
+
+#### Audit follow-ups (data integrity, a11y)
+- **Atomic cache writes:** the threaded server's cache writes (`/tiles`,
+  `/api/prefetch`, `/api/pget`, `/api/overpass`, `/api/qgis`) now go through one
+  `atomic_write()` helper (temp file + `os.replace`) — a concurrent reader can no
+  longer observe a half-written cache file and serve/cache a truncated response.
+  Also removes the duplicated `mkdir + write_bytes` pattern from the five sites.
+- **Image alt text:** the timeline evidence thumbnail and the wiki search-result
+  card image now carry `alt` attributes (screen-reader accessibility).
 
 ### Security & correctness — re-audit cycle (api / ux / pen-tester batches)
 
