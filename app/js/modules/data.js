@@ -314,9 +314,16 @@ async function gbifOverlay(name, knownKey) {
       key = j.usageKey; shown = j.canonicalName || name; note = cacheNote(r);
     }
     if (state.gbifLayers[key]) return status("overlay already active");
+    // Fine hex-binned density (#63): a DENSE grid of small filled cells reads as a
+    // smooth density field that scales with zoom — not the old fixed-pixel `.point`
+    // dots (barely visible zoomed in, "in water" near coasts) nor coarse blocky
+    // hexes. `hexPerTile=100` keeps cells small; `-noborder.poly` drops hard edges;
+    // opacity 0.55 lets the basemap show through so it doesn't bury the map.
+    // GBIF density tiles are 512 px, so set tileSize 512 + zoomOffset -1 (the
+    // default 256 squashed each tile into a quarter-slot and broke alignment).
     const tl = L.tileLayer(
-      `https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${key}&style=purpleYellow.point`,
-      { opacity: 0.85, attribution: "Occurrences © GBIF" }).addTo(state.map);
+      `https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${key}&bin=hex&hexPerTile=100&style=purpleYellow-noborder.poly`,
+      { opacity: 0.55, tileSize: 512, zoomOffset: -1, attribution: "Occurrences © GBIF" }).addTo(state.map);
     tl._caseName = shown;                       // remembered for case-file save/restore
     state.gbifLayers[key] = tl;
     const chip = document.createElement("span");

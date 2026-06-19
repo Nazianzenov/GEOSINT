@@ -6,6 +6,17 @@ versioning (`server.py --version`, surfaced in `/api/status`).
 
 ## [Unreleased]
 
+### Fixed
+- **GBIF species overlay legibility (#63):** the occurrence-density overlay now
+  renders a **fine hex-binned density field** (`bin=hex&hexPerTile=100`,
+  `purpleYellow-noborder.poly`, 0.55 opacity) instead of fixed-pixel dots. The old
+  dots were barely visible zoomed in, dropped occurrences "in water" near coasts,
+  and didn't scale; the binned cells scale with zoom, read as a smooth gradient,
+  and let the basemap show through. Also fixes a tile-size bug: GBIF tiles are
+  512 px, so the layer sets `tileSize: 512` + `zoomOffset: -1` (Leaflet's default
+  256 squashed every tile into a quarter-slot). A softer client-rendered radial
+  heatmap is tracked separately (#69).
+
 ### Production-readiness pass (security, data integrity, resilience, hygiene)
 
 A staff-level review cycle to bring the workbench to production quality,
