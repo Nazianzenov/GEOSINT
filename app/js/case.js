@@ -310,7 +310,7 @@ function openTimeline() {
         <div class="tl-dot">${e.sym}</div>
         <div class="tl-card">
           <div class="tl-label"><b>${esc(e.label)}</b>${e.detail ? ` <span class="muted">· ${esc(e.detail)}</span>` : ""}</div>
-          ${dataThumb(e.thumb) ? `<img src="${esc(dataThumb(e.thumb))}" style="max-width:120px;border-radius:3px;margin:4px 0">` : ""}
+          ${dataThumb(e.thumb) ? `<img src="${esc(dataThumb(e.thumb))}" alt="evidence thumbnail" style="max-width:120px;border-radius:3px;margin:4px 0">` : ""}
           ${e.sha ? `<div class="muted" style="font-family:monospace;font-size:11px">sha256 ${esc(e.sha.slice(0, 16))}…</div>` : ""}
           ${e.ll ? `<a href="#" class="tl-go" data-i="${i}">⌖ ${e.ll[0].toFixed(4)}, ${e.ll[1].toFixed(4)}</a>` : ""}
         </div>
