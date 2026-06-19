@@ -32,3 +32,13 @@ docs/scoping/
 
 # local-only training/CTF exercises (link-only; not for redistribution)
 challenges/
+
+# agentic code review — local tooling & output, not for prod
+# (the agents in .claude/ stay TRACKED so the team shares the workflow)
+/launch-review-sprint.sh
+/install-sprint-kit.sh
+/launch-review-sprint.ps1
+/install-sprint-kit.ps1
+/sprints/
+# per-instance worktrees created during a sprint
+/sprint-impl-*/
