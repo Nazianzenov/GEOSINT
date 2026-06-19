@@ -74,7 +74,8 @@ async function loadData() {
 class SearchUI {
   constructor(root, opts) {
     this.root = root;
-    this.onPick = opts && opts.onPick;          // (card) => void; falls back to #ll= link
+    this.onPick = opts && opts.onPick;          // (intent) => void; in-place map action
+    this.onWiki = opts && opts.onWiki;          // (url, title) => void; dock a wiki page in-panel
     this.onLog = opts && opts.onLog;            // (card) => void; log a card to the case (workbench only)
     this.DATA = null; this.MS = null;
     this.state = { country: null, continent: null, cats: new Set(), photos: false };
@@ -273,17 +274,26 @@ class SearchUI {
     return href ? `<a href="${esc(href)}" target="_blank">${label}</a>` : "";
   }
 
-  // Wire any in-place map links inside a container to onPick, passing the parsed
-  // intent (the photo grid builds via insertAdjacentHTML, so listeners attach
-  // after render). Idempotent so "show all" can re-run it.
-  wirePicks(container) {
-    if (!this.onPick) return;
-    container.querySelectorAll("a.s-pick:not([data-wired])").forEach((a) => {
+  // Render a card's wiki-page link. In the workbench (onWiki set) it docks the
+  // page in-panel (no new tab); standalone it keeps target="_blank".
+  pageLinkHtml(c, label = "source page") {
+    if (!c.page) return "";
+    return this.onWiki
+      ? `<a href="#" class="s-page" data-url="${esc(c.page)}" data-title="${esc(c.t || "")}">${label}</a>`
+      : `<a href="${esc(c.page)}" target="_blank">${label}</a>`;
+  }
+
+  // Wire in-place result actions inside a container: map picks -> onPick, wiki page
+  // links -> onWiki. The photo grid builds via insertAdjacentHTML, so listeners
+  // attach after render; idempotent (data-wired) so "show all" can re-run it.
+  wireActions(container) {
+    if (this.onPick) container.querySelectorAll("a.s-pick:not([data-wired])").forEach((a) => {
       a.dataset.wired = "1";
-      a.addEventListener("click", (ev) => {
-        ev.preventDefault();
-        this.onPick(JSON.parse(a.dataset.pick));
-      });
+      a.addEventListener("click", (ev) => { ev.preventDefault(); this.onPick(JSON.parse(a.dataset.pick)); });
+    });
+    if (this.onWiki) container.querySelectorAll("a.s-page:not([data-wired])").forEach((a) => {
+      a.dataset.wired = "1";
+      a.addEventListener("click", (ev) => { ev.preventDefault(); this.onWiki(a.dataset.url, a.dataset.title); });
     });
   }
 
@@ -295,7 +305,7 @@ class SearchUI {
       items.slice(from, to).forEach((c) => {
         const links = [
           this.mapLinkHtml(c),
-          c.page ? `<a href="${esc(c.page)}" target="_blank">wiki</a>` : "",
+          this.pageLinkHtml(c, "wiki"),
         ].filter(Boolean).join(" · ");
         const title = esc((c.c || []).join(", ") || c.t);
         // image-less cards (e.g. the flags "look-alike groups" tips) must NOT render
@@ -310,7 +320,7 @@ class SearchUI {
               c.x ? `<small>${esc(c.x)}</small>` : ""}<span>${links}</span></div></div>`);
         }
       });
-      this.wirePicks(grid);
+      this.wireActions(grid);
     };
     renderSlice(0, cap);
     wrap.appendChild(grid);
@@ -347,8 +357,8 @@ class SearchUI {
         `<b>${esc(c.t)}</b>${where && where !== c.t ? ` <span class="muted">(${esc(where)})</span>` : ""}
          ${c.img ? `<br><img src="${esc(c.img)}" alt="${esc(c.t || "reference image")}" loading="lazy" style="max-width:300px;border-radius:4px;margin:6px 0">` : ""}
          <div>${hl(esc(c.x || ""))}</div>
-         <div class="src"><a href="${esc(c.page || "#")}" target="_blank">source page</a>${mapLink}${logLink}</div>`;
-      this.wirePicks(div);
+         <div class="src">${this.pageLinkHtml(c) || '<span class="muted">no source page</span>'}${mapLink}${logLink}</div>`;
+      this.wireActions(div);
       if (this.onLog) {
         const a = div.querySelector(".s-log");
         if (a) a.addEventListener("click", (ev) => { ev.preventDefault(); this.onLog(c); });

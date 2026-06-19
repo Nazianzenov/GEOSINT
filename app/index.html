@@ -63,8 +63,18 @@
     </div>
     <div id="panel-body">
 
-      <!-- ════════ WIKI SEARCH (docked) ════════ -->
-      <section id="module-wiki" class="geosearch" hidden></section>
+      <!-- ════════ WIKI (docked: search engine + the wiki itself, in-panel) ════════ -->
+      <section id="module-wiki" hidden>
+        <nav id="wiki-nav" role="tablist" aria-label="Wiki views">
+          <button id="wiki-tab-search" class="wiki-tab active" role="tab" aria-selected="true">🔍 Search</button>
+          <button id="wiki-tab-page" class="wiki-tab" role="tab" aria-selected="false">📖 Wiki</button>
+          <span id="wiki-page-title" class="muted"></span>
+        </nav>
+        <div id="wiki-search" class="geosearch"></div>
+        <div id="wiki-frame-wrap" hidden>
+          <iframe id="wiki-frame" title="GeOSINT wiki" referrerpolicy="no-referrer"></iframe>
+        </div>
+      </section>
 
       <!-- ════════ SUN ════════ -->
       <section id="module-sun" hidden>

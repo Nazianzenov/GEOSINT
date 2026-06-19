@@ -143,26 +143,59 @@ function applyPick(intent) {
   if (intent.kind === "point") setPoint(L.latLng(intent.ll[0], intent.ll[1]), { fly: true, zoom: 13 });
   else if (intent.kind === "species") gbifOverlay(intent.name, intent.key);
 }
+// The docked Wiki module has two in-panel views — the search engine and the wiki
+// pages themselves (an iframe over the same-origin MkDocs site) — toggled by a
+// navbar. A "source page"/wiki link in a search result loads the page here
+// instead of a new tab. Only same-origin /wiki/ URLs are framed (never an
+// arbitrary URL), so the iframe can't be pointed off-origin.
+function showWikiView(which) {              // 'search' | 'page'
+  const page = which === "page";
+  $("#wiki-search").hidden = page;
+  $("#wiki-frame-wrap").hidden = !page;
+  $("#wiki-tab-search").classList.toggle("active", !page);
+  $("#wiki-tab-page").classList.toggle("active", page);
+  $("#wiki-tab-search").setAttribute("aria-selected", String(!page));
+  $("#wiki-tab-page").setAttribute("aria-selected", String(page));
+  if (!page) GeoSearch.focus();
+}
+
+// Load a wiki page into the docked iframe and switch to the wiki view. `url` is a
+// site-relative wiki path (e.g. /wiki/landmarks/) or a full same-origin /wiki/
+// URL; anything else is ignored (defence against framing an off-origin page).
+function openWikiPage(url, title) {
+  let path;
+  try { path = new URL(url, location.origin); }
+  catch { return; }
+  if (path.origin !== location.origin || !path.pathname.startsWith("/wiki/")) return;
+  const frame = $("#wiki-frame");
+  if (frame.getAttribute("src") !== path.href) frame.setAttribute("src", path.href);
+  $("#wiki-page-title").textContent = title || "";
+  showWikiView("page");
+}
+
 let _wikiMounted = false;
 function openWiki() {
-  if (window.GeoSearch) {
-    if (!_wikiMounted) {
-      _wikiMounted = true;
-      GeoSearch.mount($("#module-wiki"), {
-        onPick: applyPick,
-        // 9A.2 — log a recognition card to the case as a sourced observation
-        onLog: (card) => logObservation({
-          text: card.t, source: card.page,
-          ll: card.ll ? [card.ll[0], card.ll[1]] : undefined,
-        }),
-      }).then(() => GeoSearch.focus());
-    } else {
-      GeoSearch.focus();
-    }
-  } else {
-    $("#module-wiki").innerHTML =
+  if (!window.GeoSearch) {
+    $("#wiki-search").innerHTML =
       `<p class="hint" style="padding:14px">Wiki Search failed to load. Open the standalone page: `
       + `<a href="search.html" target="_blank">search.html</a>.</p>`;
+    return;
+  }
+  if (!_wikiMounted) {
+    _wikiMounted = true;
+    $("#wiki-tab-search").addEventListener("click", () => showWikiView("search"));
+    $("#wiki-tab-page").addEventListener("click", () => showWikiView("page"));
+    GeoSearch.mount($("#wiki-search"), {
+      onPick: applyPick,
+      onWiki: (url, title) => openWikiPage(url, title),   // dock a wiki page in-panel
+      // 9A.2 — log a recognition card to the case as a sourced observation
+      onLog: (card) => logObservation({
+        text: card.t, source: card.page,
+        ll: card.ll ? [card.ll[0], card.ll[1]] : undefined,
+      }),
+    }).then(() => GeoSearch.focus());
+  } else {
+    GeoSearch.focus();
   }
 }
 function closePanel() {

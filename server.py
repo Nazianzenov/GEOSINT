@@ -427,7 +427,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(body)
 
-    def send_file(self, path: Path):
+    def send_file(self, path: Path, frameable=False):
         ctype = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
         data = path.read_bytes()
         self.send_response(200)
@@ -439,15 +439,23 @@ class Handler(BaseHTTPRequestHandler):
         # — plus 'unsafe-inline' (the app uses some inline handlers/styles) and the
         # external img/connect origins it legitimately needs — backstops any missed
         # XSS sink and blocks framing/clickjacking.
+        #   frameable=True (wiki pages only): allow SAME-ORIGIN framing so the SPA
+        #   can dock the wiki in a panel iframe. The SPA itself stays unframeable.
+        #   The wiki is static reference content with no actions/secrets, so the
+        #   clickjacking surface this opens is negligible.
         if ctype == "text/html":
+            frame_ancestors = "'self'" if frameable else "'none'"
             self.send_header("Content-Security-Policy",
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline'; "
                 "style-src 'self' 'unsafe-inline'; "
                 "img-src 'self' data: blob: https:; "
                 "connect-src 'self' https:; "
-                "frame-ancestors 'none'; base-uri 'self'")
-            self.send_header("X-Frame-Options", "DENY")
+                f"frame-ancestors {frame_ancestors}; base-uri 'self'")
+            # X-Frame-Options can't express "self only" portably; emit DENY only when
+            # framing is disallowed and let the CSP frame-ancestors govern the wiki.
+            if not frameable:
+                self.send_header("X-Frame-Options", "DENY")
             self.send_header("Referrer-Policy", "no-referrer")
         self.end_headers()
         if self.command != "HEAD":
@@ -526,7 +534,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", "0")
         self.end_headers()
 
-    def serve_static(self, base: Path, rel: str):
+    def serve_static(self, base: Path, rel: str, frameable=False):
         # Safe path resolution: never escape the base directory. The check is
         # separator-aware (plain startswith would let ".../app" match ".../app2").
         target = (base / unquote(rel)).resolve()
@@ -536,7 +544,7 @@ class Handler(BaseHTTPRequestHandler):
         if target.is_dir():
             target = target / "index.html"
         if target.is_file():
-            return self.send_file(target)
+            return self.send_file(target, frameable=frameable)
         self.send_json({"error": "not found"}, 404)   # don't echo the caller-supplied path
 
     def send_cached_body(self, body: bytes, ctype: str, hit: str, browser_ttl=0):
@@ -694,7 +702,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(body)
                 return
-            return self.serve_static(WIKI_SITE, path[len("/wiki"):].lstrip("/"))
+            # frameable: the SPA docks wiki pages in a panel iframe (same-origin).
+            return self.serve_static(WIKI_SITE, path[len("/wiki"):].lstrip("/"), frameable=True)
         self._not_found_or_405(path, "GET")
 
     def do_POST(self):

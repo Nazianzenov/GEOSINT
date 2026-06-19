@@ -423,3 +423,35 @@ def test_wbintent_external_link_is_not_in_place(page):
     # an external Google-Maps short-link can't be plotted -> no intent (stays new-tab)
     assert page.evaluate("() => GeoSearch.wbIntent('https://goo.gl/maps/abc123')") is None
     assert page.evaluate("() => GeoSearch.wbIntent('')") is None
+
+
+# ── in-panel wiki: openWikiPage only frames same-origin /wiki/ URLs (#65) ────
+def test_open_wiki_page_loads_same_origin_wiki(page):
+    res = page.evaluate(
+        """() => {
+            openWikiPage('/wiki/landmarks/manmade/', 'Landmarks');
+            const f = document.querySelector('#wiki-frame');
+            return { src: f.getAttribute('src'),
+                     onPageView: !document.querySelector('#wiki-frame-wrap').hidden };
+        }"""
+    )
+    assert res["src"].endswith("/wiki/landmarks/manmade/")
+    assert res["onPageView"] is True
+
+
+def test_open_wiki_page_rejects_off_origin_and_non_wiki(page):
+    # The iframe must never be pointed off-origin or outside /wiki/ (defence in
+    # depth on top of the server's frame-ancestors 'self').
+    res = page.evaluate(
+        """() => {
+            const f = document.querySelector('#wiki-frame');
+            f.removeAttribute('src');
+            openWikiPage('https://evil.example.com/x', 't');   // off-origin
+            const afterEvil = f.getAttribute('src');
+            openWikiPage('/app/index.html', 't');               // same-origin but not /wiki/
+            const afterApp = f.getAttribute('src');
+            return { afterEvil, afterApp };
+        }"""
+    )
+    assert res["afterEvil"] is None        # off-origin URL ignored
+    assert res["afterApp"] is None         # non-/wiki/ path ignored
