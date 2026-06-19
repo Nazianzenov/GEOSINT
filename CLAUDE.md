@@ -20,6 +20,9 @@ and fixes ship as ordinary PRs gated by the existing required checks.
 ```
 Needs `claude` and an authenticated `gh` on PATH. Output lands in
 `sprints/<date>/` (gitignored); read `sprints/<date>/2-audit.md` for the verdict.
+The launcher **never runs on `main`** — on `main`/detached HEAD it first creates
+`review-sprint/<date>` (iter-1.5 fixes merge into the launch branch); land it as
+a squash PR to `main`.
 
 **The agents** (`.claude/agents/`, shared with the team):
 - `security-agent`, `architect-agent`, `developer-agent` — read-only reviewers
