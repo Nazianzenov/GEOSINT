@@ -212,30 +212,43 @@ function renderCustodyTable() {
       <td title="${esc(a.source || "")}">${esc((a.source || "—").slice(0, 28))}</td>
       <td>${short(a.sha256)}</td>
       <td>${a.ll ? `${a.ll[0].toFixed(4)}, ${a.ll[1].toFixed(4)}` : "—"}</td>
-      <td><a href="#" class="art-link" data-id="${a.id}" title="Link this artifact to another (builds the case relationship graph)">🔗</a></td>
+      <td class="art-link-cell"><a href="#" class="art-link" data-id="${a.id}" title="Link this artifact to another (builds the case relationship graph)">🔗</a></td>
     </tr>`).join("");
   t.querySelectorAll(".art-link").forEach((el) =>
-    el.addEventListener("click", (e) => { e.preventDefault(); linkArtifact(+el.dataset.id); }));
+    el.addEventListener("click", (e) => { e.preventDefault(); openLinkPicker(+el.dataset.id, el.closest(".art-link-cell")); }));
 }
 
+const artLabel = (a) => (a.text || a.source || a.kind || `#${a.id}`).slice(0, 40);
+
 /* 9A.3 — link one artifact to another so the case becomes a graph (rendered as a
-   Relationships section in the dossier). Lightweight prompt-based picker. */
-function linkArtifact(fromId) {
+   Relationships section in the dossier). In-app inline picker (no blocking
+   prompt): the action cell becomes a <select> of the other artifacts + confirm,
+   so the analyst picks by label rather than typing an id. */
+function openLinkPicker(fromId, cell) {
   const arts = state.artifacts;
   const from = arts.find((a) => a.id === fromId);
-  if (!from) return;
+  if (!from || !cell) return;
   const others = arts.filter((a) => a.id !== fromId);
   if (!others.length) return status("Need a second artifact to link to.", true);
-  const menu = others.map((a) => `${a.id}: ${(a.text || a.source || a.kind).slice(0, 40)}`).join("\n");
-  const pick = prompt(`Link "${(from.text || from.source || from.kind).slice(0, 40)}" to which artifact?\n\n${menu}\n\nEnter the id:`);
-  if (pick == null) return;
-  const toId = parseInt(pick, 10);
-  if (!others.some((a) => a.id === toId)) return status("No artifact with that id.", true);
-  from.links = from.links || [];
-  if (!from.links.includes(toId)) from.links.push(toId);
-  renderCustodyTable();
-  markDirty();
-  status("artifacts linked");
+  cell.innerHTML =
+    `<select class="art-link-sel" aria-label="Link to artifact">` +
+    others.map((a) => `<option value="${a.id}">${esc(artLabel(a))}</option>`).join("") +
+    `</select> <a href="#" class="art-link-ok" title="Confirm link">✓</a> ` +
+    `<a href="#" class="art-link-cancel" title="Cancel">✕</a>`;
+  const sel = cell.querySelector(".art-link-sel");
+  sel.focus();
+  cell.querySelector(".art-link-ok").addEventListener("click", (e) => {
+    e.preventDefault();
+    const toId = +sel.value;
+    from.links = from.links || [];
+    if (!from.links.includes(toId)) from.links.push(toId);
+    renderCustodyTable();
+    markDirty();
+    status("artifacts linked");
+  });
+  cell.querySelector(".art-link-cancel").addEventListener("click", (e) => {
+    e.preventDefault(); renderCustodyTable();
+  });
 }
 
 /* Chain-of-custody export. JSON = the raw artifacts (minus bulky thumbnails);
