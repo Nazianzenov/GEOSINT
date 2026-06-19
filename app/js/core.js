@@ -136,14 +136,20 @@ function openModule(name) {
 }
 
 // Lazy-mount the docked Wiki Search the first time it's opened; re-focus thereafter.
-// onPick jumps the active point in place — no new tab, no #ll= round-trip.
+// A docked-search "map" link acts in place — no new tab, no deep-link round-trip.
+// The search hands us a typed intent; we apply it WITHOUT leaving the wiki view
+// (gbifOverlay/setPoint don't switch modules), so the analyst can keep searching.
+function applyPick(intent) {
+  if (intent.kind === "point") setPoint(L.latLng(intent.ll[0], intent.ll[1]), { fly: true, zoom: 13 });
+  else if (intent.kind === "species") gbifOverlay(intent.name, intent.key);
+}
 let _wikiMounted = false;
 function openWiki() {
   if (window.GeoSearch) {
     if (!_wikiMounted) {
       _wikiMounted = true;
       GeoSearch.mount($("#module-wiki"), {
-        onPick: ({ ll }) => setPoint(L.latLng(ll[0], ll[1]), { fly: true, zoom: 13 }),
+        onPick: applyPick,
         // 9A.2 — log a recognition card to the case as a sourced observation
         onLog: (card) => logObservation({
           text: card.t, source: card.page,

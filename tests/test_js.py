@@ -402,3 +402,24 @@ def test_link_picker_records_link(page):
     )
     assert res["opts"] == 1            # only the OTHER artifact is offered
     assert res["linked"] is True       # confirming records the link (no prompt())
+
+
+# ── docked search "map" links act in place, no new tab (search.js) ──────────
+# wbIntent is the pure parser the docked search uses to turn a card's "map" deep
+# link into an in-place action (vs. a new-tab external link). Tested directly so
+# the test needs no GeoSearch.mount (which loads the 25 MB index — flaky in CI).
+def test_wbintent_point_link(page):
+    res = page.evaluate("() => GeoSearch.wbIntent('/app/index.html#ll=43.5,-5.2')")
+    assert res == {"kind": "point", "ll": [43.5, -5.2]}
+
+
+def test_wbintent_species_link(page):
+    # the olive case: a flora card's "map" is a #species= distribution deep link
+    res = page.evaluate("() => GeoSearch.wbIntent('/app/index.html#species=5415040&name=Olive')")
+    assert res == {"kind": "species", "key": 5415040, "name": "Olive"}
+
+
+def test_wbintent_external_link_is_not_in_place(page):
+    # an external Google-Maps short-link can't be plotted -> no intent (stays new-tab)
+    assert page.evaluate("() => GeoSearch.wbIntent('https://goo.gl/maps/abc123')") is None
+    assert page.evaluate("() => GeoSearch.wbIntent('')") is None
