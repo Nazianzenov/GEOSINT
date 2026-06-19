@@ -150,6 +150,15 @@ function applyPick(intent) {
 // arbitrary URL), so the iframe can't be pointed off-origin.
 function showWikiView(which) {              // 'search' | 'page'
   const page = which === "page";
+  // Switching to the Wiki view with nothing loaded yet -> show the wiki home,
+  // not a blank iframe.
+  if (page) {
+    const frame = $("#wiki-frame");
+    if (!frame.getAttribute("src")) {
+      frame.setAttribute("src", "/wiki/");
+      $("#wiki-page-title").textContent = "GeOSINT Field Wiki";
+    }
+  }
   $("#wiki-search").hidden = page;
   $("#wiki-frame-wrap").hidden = !page;
   $("#wiki-tab-search").classList.toggle("active", !page);
@@ -159,14 +168,20 @@ function showWikiView(which) {              // 'search' | 'page'
   if (!page) GeoSearch.focus();
 }
 
-// Load a wiki page into the docked iframe and switch to the wiki view. `url` is a
-// site-relative wiki path (e.g. /wiki/landmarks/) or a full same-origin /wiki/
-// URL; anything else is ignored (defence against framing an off-origin page).
+// Open a card's "source page". Same-origin /wiki/ pages dock in the iframe; an
+// external page (wikidata, ourairports, …) can't be framed cross-origin, so it
+// opens in a new tab — most indexed cards point off-site, and silently doing
+// nothing for them was the bug. Anything unparseable is ignored.
 function openWikiPage(url, title) {
   let path;
   try { path = new URL(url, location.origin); }
   catch { return; }
-  if (path.origin !== location.origin || !path.pathname.startsWith("/wiki/")) return;
+  const internalWiki = path.origin === location.origin && path.pathname.startsWith("/wiki/");
+  if (!internalWiki) {
+    // external (or non-/wiki/ same-origin) — open in a new tab, never frame it
+    if (/^https?:$/.test(path.protocol)) window.open(path.href, "_blank", "noopener");
+    return;
+  }
   const frame = $("#wiki-frame");
   if (frame.getAttribute("src") !== path.href) frame.setAttribute("src", path.href);
   $("#wiki-page-title").textContent = title || "";
@@ -185,6 +200,16 @@ function openWiki() {
     _wikiMounted = true;
     $("#wiki-tab-search").addEventListener("click", () => showWikiView("search"));
     $("#wiki-tab-page").addEventListener("click", () => showWikiView("page"));
+    // Keep the page-title label in sync when the user navigates INSIDE the iframe
+    // (clicking links in the wiki) — otherwise the label stayed stuck on whatever
+    // card first opened it. Same-origin /wiki/, so we can read the loaded title.
+    $("#wiki-frame").addEventListener("load", () => {
+      try {
+        const t = $("#wiki-frame").contentDocument?.title || "";
+        // MkDocs titles are "Page - Site"; keep just the page part.
+        $("#wiki-page-title").textContent = t.split(" - ")[0].trim();
+      } catch { /* cross-origin (shouldn't happen) — leave the label as-is */ }
+    });
     GeoSearch.mount($("#wiki-search"), {
       onPick: applyPick,
       onWiki: (url, title) => openWikiPage(url, title),   // dock a wiki page in-panel

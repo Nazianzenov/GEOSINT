@@ -439,19 +439,39 @@ def test_open_wiki_page_loads_same_origin_wiki(page):
     assert res["onPageView"] is True
 
 
-def test_open_wiki_page_rejects_off_origin_and_non_wiki(page):
-    # The iframe must never be pointed off-origin or outside /wiki/ (defence in
-    # depth on top of the server's frame-ancestors 'self').
+def test_open_wiki_page_never_frames_off_origin_opens_tab(page):
+    # The iframe must never be pointed off-origin (defence in depth on top of the
+    # server's frame-ancestors 'self'). An external "source page" opens in a NEW
+    # TAB instead of silently doing nothing (#73). Stub window.open to capture it.
     res = page.evaluate(
         """() => {
             const f = document.querySelector('#wiki-frame');
             f.removeAttribute('src');
-            openWikiPage('https://evil.example.com/x', 't');   // off-origin
-            const afterEvil = f.getAttribute('src');
-            openWikiPage('/app/index.html', 't');               // same-origin but not /wiki/
-            const afterApp = f.getAttribute('src');
-            return { afterEvil, afterApp };
+            const opened = [];
+            const realOpen = window.open;
+            window.open = (u) => { opened.push(u); return null; };
+            try {
+                openWikiPage('https://ourairports.com/airports/X', 't');  // external
+                const afterExt = f.getAttribute('src');
+                openWikiPage('/app/index.html', 't');   // same-origin but not /wiki/
+                const afterApp = f.getAttribute('src');
+                return { afterExt, afterApp, opened };
+            } finally { window.open = realOpen; }
         }"""
     )
-    assert res["afterEvil"] is None        # off-origin URL ignored
-    assert res["afterApp"] is None         # non-/wiki/ path ignored
+    assert res["afterExt"] is None         # external never framed
+    assert res["afterApp"] is None         # non-/wiki/ same-origin never framed
+    assert res["opened"][0].startswith("https://ourairports.com/")  # external -> new tab
+
+
+def test_wiki_tab_with_no_page_loads_home(page):
+    # Clicking the "Wiki" tab before any source page is opened should show the
+    # wiki HOME, not a blank iframe (#73).
+    res = page.evaluate(
+        """() => {
+            document.querySelector('#wiki-frame').removeAttribute('src');
+            showWikiView('page');
+            return document.querySelector('#wiki-frame').getAttribute('src');
+        }"""
+    )
+    assert res == "/wiki/"
