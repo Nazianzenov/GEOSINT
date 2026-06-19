@@ -488,7 +488,7 @@ class Handler(BaseHTTPRequestHandler):
     POST_RAW_PATHS = {"/api/exif", "/api/exif-preview"}
 
     # Known routes per method, for 405 (path exists but wrong verb) vs 404.
-    GET_PATHS = {"/", "/index.html", "/api/pget", "/wiki", "/api/status"}
+    GET_PATHS = {"/", "/index.html", "/api/pget", "/wiki", "/api/status", "/api/health"}
     POST_PATHS = POST_RAW_PATHS | POST_JSON_ROUTES.keys()
 
     def send_405(self, allow):
@@ -652,10 +652,16 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- routes --------------------------------------------------------
     def do_GET(self):
-        if not self.host_ok():
-            return self.send_json({"error": "bad host"}, 403)
         parsed = urlparse(self.path)
         path = parsed.path
+        # Liveness probe: cheap, no tool detection, and exempt from the Host guard
+        # so a container HEALTHCHECK (which probes via the container's own
+        # IP/hostname, not loopback) isn't rejected as a bad host. It returns no
+        # data beyond {"ok": true, "version"}, so skipping the guard leaks nothing.
+        if path == "/api/health":
+            return self.send_json({"ok": True, "version": VERSION})
+        if not self.host_ok():
+            return self.send_json({"error": "bad host"}, 403)
         if path in ("/", "/index.html"):
             return self.redirect("/app/")
         if path.startswith("/tiles/"):

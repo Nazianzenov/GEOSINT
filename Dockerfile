@@ -56,5 +56,10 @@ RUN useradd --system --uid 10001 --create-home geosint \
 USER geosint
 
 EXPOSE 8650
+# Liveness probe via the cheap /api/health endpoint (no tool detection, exempt
+# from the Host guard so probing the container's own address isn't a 403). Uses
+# Python (already present) so we don't depend on curl being installed.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8650/api/health', timeout=4).status==200 else 1)"
 # Bind 0.0.0.0 so the published port is reachable; no browser inside a container.
 ENTRYPOINT ["python", "server.py", "--host", "0.0.0.0", "--no-browser"]

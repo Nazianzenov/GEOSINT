@@ -42,6 +42,12 @@ publish the port to networks you trust. ExifTool is installed in the image;
 Google Earth Pro / QGIS are GUI desktop apps and are intentionally absent in a
 headless container (the app degrades gracefully).
 
+The image ships a `HEALTHCHECK` that polls `GET /api/health` — a cheap liveness
+endpoint (`{"ok": true, "version": …}`, no tool detection, exempt from the
+Host-guard so an orchestrator can probe the container's own address). `docker ps`
+shows `healthy`/`unhealthy`; orchestrators (Compose `depends_on: condition:
+service_healthy`, Kubernetes liveness probe) can gate on it.
+
 ## 4. Releases
 Tag `vX.Y.Z` → CI builds the per-OS executables (with `.sha256` checksums) and
 the GHCR image, and attaches them to a GitHub Release. `server.py --version`
