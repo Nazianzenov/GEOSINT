@@ -60,6 +60,19 @@ route table, cache-state UX) are tracked as open issues.
 - **CI/governance:** `main` is branch-protected (all checks required, linear
   history, no force-push); the unit/`js-tests`/`lint` jobs run per push/PR.
 
+#### Modularization — front-end structure
+- **Shared JS extracted (#24):** `esc` (triplicated) and ~10 near-identical
+  helpers (`cachedFetch`, `parseCoords`, `fmtDD`/`toDMS`/`fmtDMS`, `compassAz`,
+  `cardinal`, `project`, `drawSunChart`, …) moved into one `app/js/common.js`,
+  ending the drift between `app.js`, `sun.js` and `search.js`. The dossier
+  stylesheet became a `DOSSIER_CSS` constant.
+- **`app.js` split into modules (#31):** the 3,142-line monolith was broken into
+  cohesive, dependency-ordered files — `core.js` (state + search + panel),
+  `map.js`, `modules/{sun,weather,image,tools,data,anno}.js`, `case.js` (evidence
+  log / dossier / case file) and `palette.js` — leaving `app.js` a 109-line
+  bootstrap. Behaviour-neutral (classic `<script>`s, shared global scope, no
+  bundler); each file is now a targetable home for tests and future changes.
+
 ### Security & correctness — re-audit cycle (api / ux / pen-tester batches)
 
 Hardening and fixes from a full multi-agent audit re-run (predates the
