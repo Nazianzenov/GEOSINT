@@ -306,7 +306,7 @@ class SearchUI {
       div.className = "fcard";
       div.innerHTML =
         `<b>${esc(c.t)}</b>${where && where !== c.t ? ` <span class="muted">(${esc(where)})</span>` : ""}
-         ${c.img ? `<br><img src="${esc(c.img)}" loading="lazy" style="max-width:300px;border-radius:4px;margin:6px 0">` : ""}
+         ${c.img ? `<br><img src="${esc(c.img)}" alt="${esc(c.t || "reference image")}" loading="lazy" style="max-width:300px;border-radius:4px;margin:6px 0">` : ""}
          <div>${hl(esc(c.x || ""))}</div>
          <div class="src"><a href="${esc(c.page || "#")}" target="_blank">source page</a>${mapLink}${logLink}</div>`;
       if (this.onPick && c.ll) {
