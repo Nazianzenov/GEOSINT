@@ -330,6 +330,27 @@ def cache_fresh(path: Path, ttl: int) -> bool:
     return path.is_file() and time.time() - path.stat().st_mtime < ttl
 
 
+def atomic_write(path: Path, data: bytes) -> None:
+    """Write a cache file atomically. The server is threaded, so two requests can
+    race to populate the same cache entry while a third reads it; a plain
+    write_bytes is not atomic, so the reader could see a half-written (truncated)
+    file. Write to a unique temp file in the same dir, then os.replace() — which
+    is atomic on POSIX and Windows — so a reader only ever sees the old file or
+    the complete new one."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=".tmp-", suffix=path.suffix)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
 def _lonlat_to_tile(lon, lat, z):
     """Slippy-map tile x,y for a lon/lat at zoom z (Web Mercator)."""
     n = 2 ** z
@@ -553,8 +574,7 @@ class Handler(BaseHTTPRequestHandler):
         url = TILE_LAYERS[layer].format(z=z, x=x, y=y)
         try:
             body = upstream_get(url, timeout=20)
-            f.parent.mkdir(parents=True, exist_ok=True)
-            f.write_bytes(body)
+            atomic_write(f, body)
             return self.send_cached_body(body, "image/png", "miss", TILE_TTL)
         except Exception as e:
             self._warn("/tiles", _host_of(url), e)
@@ -598,8 +618,7 @@ class Handler(BaseHTTPRequestHandler):
                 continue
             try:
                 body = upstream_get(TILE_LAYERS[layer].format(z=z, x=x, y=y), timeout=20)
-                f.parent.mkdir(parents=True, exist_ok=True)
-                f.write_bytes(body)
+                atomic_write(f, body)
                 fetched += 1
                 time.sleep(0.05)                  # gentle on the tile server
             except Exception:
@@ -623,8 +642,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = upstream_get(url, timeout=30)
             json.loads(body)
-            PGET_CACHE.mkdir(parents=True, exist_ok=True)
-            f.write_bytes(body)
+            atomic_write(f, body)
             return self.send_cached_body(body, "application/json; charset=utf-8", "miss")
         except Exception as e:
             self._warn("/api/pget", _host_of(url), e)
@@ -725,10 +743,9 @@ class Handler(BaseHTTPRequestHandler):
         if qgis is None:
             return self.send_json({"error": "QGIS not found. Install: winget install OSGeo.QGIS.LTR"}, 409)
         out = CACHE / "qgis"
-        out.mkdir(parents=True, exist_ok=True)
         name = re.sub(r"[^A-Za-z0-9_-]+", "_", str(payload.get("name") or "geosint"))[:40] or "geosint"
         f = out / f"{name}.geojson"
-        f.write_text(json.dumps(fc), encoding="utf-8")
+        atomic_write(f, json.dumps(fc).encode("utf-8"))
         try:
             _launch_app(qgis, [f])           # hands the layer file to QGIS, cross-platform
             return self.send_json({"ok": True, "file": str(f), "features": len(feats)})
@@ -744,7 +761,6 @@ class Handler(BaseHTTPRequestHandler):
         # unvalidated query was forwarded to the mirrors.
         if not (10 < len(q) < 6000) or not re.search(r"\bout\b", q):
             return self.send_json({"error": "invalid query"}, 400)
-        OVERPASS_CACHE.mkdir(parents=True, exist_ok=True)
         cached = OVERPASS_CACHE / (hashlib.sha1(q.encode()).hexdigest() + ".json")
         if cache_fresh(cached, OVERPASS_TTL):
             return self.send_cached_body(cached.read_bytes(),
@@ -763,7 +779,7 @@ class Handler(BaseHTTPRequestHandler):
                     body = resp.read(MAX_UPSTREAM_BYTES + 1)[:MAX_UPSTREAM_BYTES]
                 json.loads(body)            # validate before caching
                 _preferred_mirror[0] = mirror
-                cached.write_bytes(body)
+                atomic_write(cached, body)
                 return self.send_cached_body(body, "application/json; charset=utf-8", "miss")
             except Exception as e:
                 last_err = str(e)[:200]
