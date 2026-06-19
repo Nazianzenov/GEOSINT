@@ -5,15 +5,7 @@
 /* ════════════════════════════ SUN ══════════════════════════════ */
 function initSun() {
   const sel = $("#sun-offset");
-  for (let q = -48; q <= 56; q++) {           // -12:00 .. +14:00 in 15-min steps
-    const o = q / 4;
-    const sign = o < 0 ? "-" : "+";
-    const h = Math.floor(Math.abs(o)), mm = String(Math.round((Math.abs(o) % 1) * 60)).padStart(2, "0");
-    const opt = document.createElement("option");
-    opt.value = o; opt.textContent = `UTC${sign}${String(h).padStart(2, "0")}:${mm}`;
-    sel.appendChild(opt);
-  }
-  sel.value = -(new Date().getTimezoneOffset()) / 60;
+  fillUtcOffsets(sel);
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   $("#sun-dt").value = now.toISOString().slice(0, 16);
@@ -22,22 +14,7 @@ function initSun() {
   $("#solver-run").addEventListener("click", runSolver);
 }
 
-/* Date from the datetime-local string interpreted at the chosen UTC offset */
-function sunDate() {
-  const v = $("#sun-dt").value;
-  if (!v) return null;
-  const off = parseFloat($("#sun-offset").value);
-  const [d, tm] = v.split("T");
-  const [Y, M, D] = d.split("-").map(Number);
-  const [h, mi] = tm.split(":").map(Number);
-  return { date: new Date(Date.UTC(Y, M - 1, D, h, mi) - off * 3600e3), off, Y, M, D };
-}
-const fmtClock = (date, off) => {
-  if (!date || isNaN(date)) return "—";
-  const t = new Date(date.getTime() + off * 3600e3);
-  return t.toISOString().slice(11, 16);
-};
-/* compassAz + cardinal are in common.js */
+/* fillUtcOffsets, sunDate, fmtClock, compassAz, cardinal are in common.js */
 
 function renderSun() {
   state.sunLayer.clearLayers();

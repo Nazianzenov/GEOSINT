@@ -94,34 +94,14 @@ function initLocSearch() {
 /* ════════════════════════ date / time ══════════════════════════ */
 function initDate() {
   const sel = $("#sun-offset");
-  for (let q = -48; q <= 56; q++) {
-    const o = q / 4, sign = o < 0 ? "-" : "+";
-    const h = Math.floor(Math.abs(o)), mm = String(Math.round((Math.abs(o) % 1) * 60)).padStart(2, "0");
-    const opt = document.createElement("option");
-    opt.value = o; opt.textContent = `UTC${sign}${String(h).padStart(2, "0")}:${mm}`;
-    sel.appendChild(opt);
-  }
-  sel.value = -(new Date().getTimezoneOffset()) / 60;
+  fillUtcOffsets(sel);
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   $("#sun-dt").value = now.toISOString().slice(0, 16);
   $("#sun-dt").addEventListener("change", recompute);
   sel.addEventListener("change", recompute);
 }
-function sunDate() {
-  const v = $("#sun-dt").value;
-  if (!v) return null;
-  const off = parseFloat($("#sun-offset").value);
-  const [d, tm] = v.split("T");
-  const [Y, M, D] = d.split("-").map(Number);
-  const [h, mi] = tm.split(":").map(Number);
-  return { date: new Date(Date.UTC(Y, M - 1, D, h, mi) - off * 3600e3), off, Y, M, D };
-}
-/* compassAz is in common.js */
-const fmtClock = (date, off) => {
-  if (!date || isNaN(date)) return "—";
-  return new Date(date.getTime() + off * 3600e3).toISOString().slice(11, 16);
-};
+/* sunDate, fmtClock, fillUtcOffsets, compassAz are in common.js */
 
 /* ════════════════════════ sun geometry ═════════════════════════ */
 function renderGeometry() {
