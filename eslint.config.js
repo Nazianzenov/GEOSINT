@@ -52,16 +52,28 @@ module.exports = [
   {
     // common.js DEFINES the shared helpers — don't predeclare them here, and
     // don't flag them as "unused": they're the module's public surface, consumed
-    // by app.js / sun.js / search.js (which ESLint lints as separate files).
+    // by the other scripts (which ESLint lints as separate files).
     ...base,
     files: ["app/js/common.js"],
     languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals } },
     rules: { ...sharedRules, "no-unused-vars": "off" },
   },
   {
-    // consumers USE the shared helpers (defined in common.js).
+    // The standalone Studio (sun.js) and the search module use only common.js's
+    // helpers, so no-undef can fully resolve their references.
     ...base,
-    files: ["app/js/app.js", "app/js/sun.js", "app/js/search.js"],
+    files: ["app/js/sun.js", "app/js/search.js"],
     languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals } },
+  },
+  {
+    // The workbench is ONE program split across app.js + modules/*.js (classic
+    // <script>s sharing global scope, #31). They legitimately cross-reference
+    // each other's top-level functions/consts, which a per-file linter can't see
+    // — so no-undef is off for this set (common.js/sun.js/search.js keep it).
+    // Every other rule (unused vars, cond-assign, dupe-keys, …) still applies.
+    ...base,
+    files: ["app/js/app.js", "app/js/modules/*.js"],
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals } },
+    rules: { ...sharedRules, "no-undef": "off", "no-unused-vars": "off" },
   },
 ];
