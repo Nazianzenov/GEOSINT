@@ -70,6 +70,26 @@ def test_status_shape():
         assert {"label", "found", "path", "kind", "install"} <= set(t)
 
 
+# ── health (liveness probe) ─────────────────────────────────────────────────
+def test_health_ok():
+    st, _, body = req("GET", "/api/health")
+    assert st == 200
+    j = json.loads(body)
+    assert j == {"ok": True, "version": server.VERSION}
+
+
+def test_health_exempt_from_host_guard():
+    # A container HEALTHCHECK probes via the container's own host (not loopback);
+    # /api/health must answer 200 even for a Host the rebinding guard would reject.
+    st, _, _ = req("GET", "/api/health", headers={"Host": "evil.example.com"})
+    assert st == 200
+
+
+def test_health_wrong_verb_405():
+    st, h, _ = jpost("/api/health", {})        # POST to a GET-only path
+    assert st == 405 and "GET" in h.get("Allow", "")
+
+
 # ── host / CSRF guards ──────────────────────────────────────────────────────
 def test_bad_host_rejected():
     st, _, _ = req("GET", "/api/status", headers={"Host": "evil.example.com"})
