@@ -26,6 +26,7 @@ const commonGlobals = {
   fmtDD: "readonly", toDMS: "readonly", fmtDMS: "readonly",
   compassAz: "readonly", cardinal: "readonly",
   parseCoords: "readonly", project: "readonly", drawSunChart: "readonly",
+  fillUtcOffsets: "readonly", sunDate: "readonly", fmtClock: "readonly",
 };
 
 const sharedRules = {
