@@ -397,6 +397,22 @@ table.batch .batch-go { text-decoration: none; font-size: 14px; }
 #restore-bar .btn { padding: 3px 12px; }
 #restore-bar #restore-no { margin-left: -4px; }
 
+/* ── docked Wiki module: navbar (Search | Wiki) + the two in-panel views ── */
+#module-wiki { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+#module-wiki[hidden] { display: none; }
+#wiki-nav { display: flex; align-items: center; gap: 6px; padding: 8px 12px; flex: none;
+  background: var(--bg-1); border-bottom: 1px solid var(--line); }
+.wiki-tab { padding: 5px 12px; border-radius: 5px; font: 13px var(--sans); cursor: pointer;
+  border: 1px solid transparent; background: transparent; color: var(--txt-dim); }
+.wiki-tab:hover { color: var(--txt); }
+.wiki-tab.active { background: var(--bg); color: var(--txt); border-color: var(--line); }
+#wiki-page-title { margin-left: 6px; font: 12px var(--mono); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+#wiki-search { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+#wiki-search[hidden], #wiki-frame-wrap[hidden] { display: none; }
+#wiki-frame-wrap { flex: 1; min-height: 0; }
+#wiki-frame { width: 100%; height: 100%; border: 0; background: #fff; }
+
 /* ── shared Wiki Search styles (GeoSearch.mount) ──────────────────────
    Used by both the standalone search.html page and the docked #module-wiki
    panel, so the two render identically. Scoped under .geosearch. */

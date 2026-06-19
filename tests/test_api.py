@@ -250,8 +250,22 @@ def test_html_has_security_headers():
     st, h, _ = req("GET", "/app/index.html")
     assert st == 200
     assert "default-src 'self'" in h.get("Content-Security-Policy", "")
+    # the SPA itself is never frameable
+    assert "frame-ancestors 'none'" in h.get("Content-Security-Policy", "")
     assert h.get("X-Frame-Options") == "DENY"
     assert h.get("X-Content-Type-Options") == "nosniff"
+
+
+def test_wiki_is_same_origin_frameable():
+    # Wiki pages allow same-origin framing (the SPA docks them in a panel iframe),
+    # but NOT via X-Frame-Options: DENY, which would block even same-origin.
+    st, h, _ = req("GET", "/wiki/index.html")
+    if st == 503:
+        import pytest
+        pytest.skip("wiki not built in this checkout")
+    assert st == 200
+    assert "frame-ancestors 'self'" in h.get("Content-Security-Policy", "")
+    assert "X-Frame-Options" not in h           # DENY would defeat the same-origin frame
 
 
 def test_static_traversal_blocked():
