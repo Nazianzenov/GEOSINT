@@ -251,31 +251,35 @@ function openLinkPicker(fromId, cell) {
   });
 }
 
-/* Chain-of-custody export. JSON = the raw artifacts (minus bulky thumbnails);
-   CSV = a flat provenance table for a report appendix. */
+/* Chain-of-custody serializers — pure (no DOM/download), so they're unit-testable.
+   CSV = a flat provenance table for a report appendix; rows sorted by observed
+   time, every field RFC-4180 quoted. */
+function custodyCsv(arts) {
+  const q = (v) => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
+  const rows = [["id", "observed", "kind", "source", "sha256", "lat", "lng", "added", "text"]];
+  [...arts].sort((a, b) => String(a.t).localeCompare(String(b.t))).forEach((a) =>
+    rows.push([a.id, a.t, a.kind, a.source || "", a.sha256 || "",
+               a.ll ? a.ll[0] : "", a.ll ? a.ll[1] : "",
+               (a.meta && a.meta.added) || "", a.text || ""]));
+  return rows.map((r) => r.map(q).join(",")).join("\r\n");
+}
+/* JSON = the raw artifacts minus bulky thumbnails (keeps the record small and
+   text-diffable). */
+function custodyJson(arts) {
+  const slim = arts.map(({ thumb, ...rest }) => rest);
+  return JSON.stringify({ app: "geosint-workbench", kind: "chain-of-custody",
+                          exported: new Date().toISOString(), artifacts: slim }, null, 1);
+}
+
 function exportCustody(fmt) {
   const arts = state.artifacts;
   if (!arts.length) return status("evidence log is empty", true);
   const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
-  let body, type, ext;
-  if (fmt === "csv") {
-    const q = (v) => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
-    const rows = [["id", "observed", "kind", "source", "sha256", "lat", "lng", "added", "text"]];
-    [...arts].sort((a, b) => String(a.t).localeCompare(String(b.t))).forEach((a) =>
-      rows.push([a.id, a.t, a.kind, a.source || "", a.sha256 || "",
-                 a.ll ? a.ll[0] : "", a.ll ? a.ll[1] : "",
-                 (a.meta && a.meta.added) || "", a.text || ""]));
-    body = rows.map((r) => r.map(q).join(",")).join("\r\n");
-    type = "text/csv"; ext = "csv";
-  } else {
-    // strip thumbnails so the custody record stays small and text-diffable
-    const slim = arts.map(({ thumb, ...rest }) => rest);
-    body = JSON.stringify({ app: "geosint-workbench", kind: "chain-of-custody",
-                            exported: new Date().toISOString(), artifacts: slim }, null, 1);
-    type = "application/json"; ext = "json";
-  }
+  const csv = fmt === "csv";
+  const body = csv ? custodyCsv(arts) : custodyJson(arts);
+  const ext = csv ? "csv" : "json";
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([body], { type }));
+  a.href = URL.createObjectURL(new Blob([body], { type: csv ? "text/csv" : "application/json" }));
   a.download = `custody-${stamp}.${ext}`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);

@@ -20,6 +20,7 @@ needed for the functions under test; we wait only for app.js to define them).
 Skips cleanly if Playwright or its Chromium build isn't present, so the pure
 stdlib unit suite (test_api / test_platform) is unaffected on a bare machine.
 """
+import json
 import socket
 import threading
 from http.server import ThreadingHTTPServer
@@ -320,3 +321,84 @@ def test_cachenote_behavior(page):
     assert "cached copy" in res["stale"] and "out of date" in res["stale"]
     assert res["hit"] == "" and res["miss"] == ""            # fresh -> no note
     assert res["none"] == "" and res["noHeaders"] == ""      # robust to missing header
+
+
+# ── chain-of-custody serializers (#50 coverage) ─────────────────────────────
+def test_custody_csv_quotes_and_orders(page):
+    res = page.evaluate(
+        """() => custodyCsv([
+            { id: 2, kind: 'note', t: '2024-02-01T00:00:00', text: 'second, with comma' },
+            { id: 1, kind: 'obs',  t: '2024-01-01T00:00:00', source: 'he said "hi"', ll: [1.5, 2.5] },
+        ])"""
+    )
+    lines = res.split("\r\n")
+    assert lines[0].startswith('"id","observed","kind"')        # header
+    assert lines[1].startswith('"1"')                           # sorted by observed time
+    assert '"he said ""hi"""' in lines[1]                       # embedded quotes doubled
+    assert '"1.5"' in lines[1] and '"2.5"' in lines[1]          # lat/lng split out
+    assert '"second, with comma"' in lines[2]                   # comma stays inside the quoted field
+    assert len(lines) == 3                                       # header + 2 rows
+
+
+def test_custody_json_strips_thumbnails(page):
+    res = page.evaluate(
+        """() => custodyJson([
+            { id: 1, kind: 'image', t: '2024-01-01T00:00:00', sha256: 'abc',
+              thumb: 'data:image/jpeg;base64,XXXX', text: 'keep me' }])"""
+    )
+    j = json.loads(res)
+    assert j["kind"] == "chain-of-custody"
+    art = j["artifacts"][0]
+    assert "thumb" not in art                    # bulky thumbnail stripped
+    assert art["sha256"] == "abc" and art["text"] == "keep me"   # everything else kept
+
+
+# ── shadow solver maths (#50 coverage) ──────────────────────────────────────
+def test_shadowfit_within_and_outside_tolerance(page):
+    res = page.evaluate(
+        """() => {
+            const s = { shAz: 100, ratio: 1.5 };
+            return {
+                inAz:  shadowFit(s, 105, NaN, 8).ok,    // 5° off, tol 8 -> ok
+                outAz: shadowFit(s, 120, NaN, 8).ok,    // 20° off, tol 8 -> reject
+                wrap:  shadowFit({shAz: 5, ratio: 1}, 355, NaN, 12).ok,  // 10° across 0/360 -> ok
+                ratioOk:  shadowFit(s, NaN, 1.5, 8).ok, // exact ratio -> ok
+                ratioBad: shadowFit(s, NaN, 3.0, 8).ok, // ratio 2x off -> reject (>18%)
+            };
+        }"""
+    )
+    assert res["inAz"] is True and res["outAz"] is False
+    assert res["wrap"] is True                    # azimuth difference wraps around 360
+    assert res["ratioOk"] is True and res["ratioBad"] is False
+
+
+def test_shadowat_null_below_horizon(page):
+    # midnight UTC at the equator/prime meridian on an equinox -> sun below horizon
+    res = page.evaluate(
+        """() => {
+            const sd = { Y: 2024, M: 3, D: 20, off: 0 };
+            return { night: shadowAt(0, sd, 0, 0), noon: !!shadowAt(720, sd, 0, 0) };
+        }"""
+    )
+    assert res["night"] is None        # no shadow when the sun is at/below the horizon
+    assert res["noon"] is True         # a shadow exists around local noon
+
+
+# ── artifact link picker (#50 coverage; replaces the old prompt flow) ───────
+def test_link_picker_records_link(page):
+    res = page.evaluate(
+        """() => {
+            state.artifacts = [
+              { id: 1, kind: 'note', t: '2024-01-01T00:00:00', text: 'first' },
+              { id: 2, kind: 'obs',  t: '2024-01-02T00:00:00', text: 'second' }];
+            renderCustodyTable();
+            openLinkPicker(1, document.querySelector('.art-link-cell'));
+            const sel = document.querySelector('.art-link-sel');
+            const opts = sel.options.length;
+            sel.value = '2';
+            document.querySelector('.art-link-ok').click();
+            return { opts, linked: (state.artifacts.find(a => a.id === 1).links || []).includes(2) };
+        }"""
+    )
+    assert res["opts"] == 1            # only the OTHER artifact is offered
+    assert res["linked"] is True       # confirming records the link (no prompt())
