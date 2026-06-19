@@ -127,6 +127,33 @@ def test_version_constant():
     assert server.UA.startswith(f"GeOSINT-Workbench/{server.VERSION}")
 
 
+# ── atomic cache writes (threaded server: no half-written reads) ─────────────
+def test_atomic_write_creates_dirs_and_replaces(tmp_path):
+    target = tmp_path / "a" / "b" / "c.bin"     # nested dir doesn't exist yet
+    server.atomic_write(target, b"hello")
+    assert target.read_bytes() == b"hello"
+    server.atomic_write(target, b"world")       # replace in place
+    assert target.read_bytes() == b"world"
+
+
+def test_atomic_write_leaves_no_temp_files(tmp_path):
+    server.atomic_write(tmp_path / "x.json", b"{}")
+    # only the final file remains — no .tmp-* leftovers from the temp/replace dance
+    names = [p.name for p in tmp_path.iterdir()]
+    assert names == ["x.json"]
+
+
+def test_atomic_write_no_partial_file_on_failure(tmp_path, monkeypatch):
+    # If the replace fails, the temp file is cleaned up and the target is not
+    # left half-written (a reader keeps seeing the old file / nothing).
+    target = tmp_path / "y.bin"
+    monkeypatch.setattr(server.os, "replace", lambda *a: (_ for _ in ()).throw(OSError("boom")))
+    with pytest.raises(OSError):
+        server.atomic_write(target, b"data")
+    assert not target.exists()
+    assert [p.name for p in tmp_path.iterdir()] == []   # temp cleaned up
+
+
 # ── route table (#33) — one source of truth for POST dispatch + 405 ─────────
 def test_post_routes_single_source_of_truth():
     H = server.Handler
