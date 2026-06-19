@@ -6,6 +6,20 @@ versioning (`server.py --version`, surfaced in `/api/status`).
 
 ## [Unreleased]
 
+### Added
+- **Multi-agent code-review sprint (#68):** institutionalised the previously
+  ad-hoc review loop as a Claude Code workflow — a manager orchestrates
+  read-only `security`/`architect`/`developer` reviewers that cross-critique,
+  dispatches agreed findings as labelled GitHub issues, has N parallel
+  `implementer` agents fix them in isolated git worktrees, and an `audit` agent
+  verifies the fixes. Agents + the `/review-sprint` command are tracked under
+  `.claude/`; the launchers (`launch-review-sprint.{ps1,sh}`) and run output
+  (`sprints/`) are **local-only/gitignored**. It is **not** a CI gate (drives
+  `claude -p`, non-hermetic, needs a local key) — it plugs into the
+  issues→PR→CI→merge loop and is documented in
+  [docs/CODE-REVIEW-SPRINT.md](docs/CODE-REVIEW-SPRINT.md). Replaces the four
+  informal local specialist agents (api-/pen-/ux-tester, usage-sme).
+
 ### Fixed
 - **GBIF species overlay legibility (#63):** the occurrence-density overlay now
   renders a **fine hex-binned density field** (`bin=hex&hexPerTile=100`,

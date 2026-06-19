@@ -69,6 +69,10 @@ a new catalogue.
   `CASE_VERSION` and handling back-compat in `applyCase`.
 - Security: all attacker-influenceable strings (EXIF, geocoder, OSM tags, pasted
   findings) must be `esc()`-escaped before reaching `innerHTML` or a dossier.
+- Reviewing a branch? The repo has a local multi-agent **code-review sprint**
+  (security/architect/developer reviewers → GitHub issues → parallel fixes →
+  audit) that plugs into the issues→PR→CI→merge loop. It's local tooling, not a
+  CI gate — see [docs/CODE-REVIEW-SPRINT.md](docs/CODE-REVIEW-SPRINT.md).
 
 ## Doctrine (non-negotiable)
 
