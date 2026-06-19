@@ -54,6 +54,11 @@ The second positional / `-NImpl` is the number of parallel implementer agents
 (default 2). Output lands in `sprints/<date>/`; the wrap-up points you at
 `sprints/<date>/2-audit.md`.
 
+> **Branch safety:** the launcher never runs on `main` — on `main` (or detached
+> HEAD) it auto-creates and checks out `review-sprint/<date>` first (override
+> with `-Branch <name>` / `SPRINT_BRANCH=<name>`), because iter-1.5 fixes merge
+> back into the launch branch. Land the result as a single squash PR to `main`.
+
 ## How a sprint flows
 
 - **Iter 0 — blind audit.** security/architect/developer run in parallel, each
