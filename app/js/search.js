@@ -31,6 +31,21 @@ const GROUP_ORDER = ["country-facts", "recognition", "landmarks", "unesco", "cas
 const PHOTO_CAP = 48, FACT_CAP = 25;
 const debounce = (fn, ms) => { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; };
 
+/* Parse a workbench "map" deep link into a typed in-app intent the host can act
+   on in place, or null if it isn't one we can handle (e.g. an external Google
+   Maps short-link). The two link types the card index uses:
+     /app/...#ll=lat,lng                  -> a point        { kind:'point', ll }
+     /app/...#species=<gbifKey>&name=<n>  -> a distribution { kind:'species', key, name }
+   Pure (no DOM/index) — exposed on GeoSearch for testing. */
+function wbIntent(url) {
+  if (!url) return null;
+  let m = /#ll=(-?[\d.]+),(-?[\d.]+)/.exec(url);
+  if (m) return { kind: "point", ll: [+m[1], +m[2]] };
+  m = /#species=(\d+)(?:&name=([^&]*))?/.exec(url);
+  if (m) return { kind: "species", key: +m[1], name: decodeURIComponent(m[2] || "species") };
+  return null;
+}
+
 /* The index + MiniSearch instance are expensive (25 MB / ~105k cards). Build once,
    share across every mount (the standalone page mounts once; the workbench re-mounts
    the same instance whenever the panel re-opens). */
@@ -244,27 +259,13 @@ class SearchUI {
     }
   }
 
-  // Parse a workbench deep link into a typed in-app intent the host can act on in
-  // place, or null if it isn't one we can handle (e.g. an external Google Maps
-  // short-link). The two link types the card index uses:
-  //   /app/...#ll=lat,lng                  -> a point        { kind:'point', ll }
-  //   /app/...#species=<gbifKey>&name=<n>  -> a distribution { kind:'species', key, name }
-  _wbIntent(url) {
-    if (!url) return null;
-    let m = /#ll=(-?[\d.]+),(-?[\d.]+)/.exec(url);
-    if (m) return { kind: "point", ll: [+m[1], +m[2]] };
-    m = /#species=(\d+)(?:&name=([^&]*))?/.exec(url);
-    if (m) return { kind: "species", key: +m[1], name: decodeURIComponent(m[2] || "species") };
-    return null;
-  }
-
   // Render a card's map link, one place for every card/link type. In the workbench
   // (onPick set) a recognised workbench deep link — a point OR a species
   // distribution — becomes an in-place action (no new tab, stays on the docked
   // wiki); an external link, or the standalone page, keeps target="_blank".
   //   label : link text;  ll : explicit [lat,lng] when the card carries structured coords.
   mapLinkHtml(c, label = "map", ll = null) {
-    const intent = ll ? { kind: "point", ll } : this._wbIntent(c.map);
+    const intent = ll ? { kind: "point", ll } : wbIntent(c.map);
     if (this.onPick && intent) {
       return `<a href="#" class="s-pick" data-pick="${esc(JSON.stringify(intent))}">${label}</a>`;
     }
@@ -375,5 +376,5 @@ async function mount(rootEl, opts) {
 }
 function focus() { if (_mounted) _mounted.focus(); }
 
-return { mount, focus };
+return { mount, focus, wbIntent };   // wbIntent exported for tests (pure)
 })();
