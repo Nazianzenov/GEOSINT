@@ -402,3 +402,61 @@ def test_link_picker_records_link(page):
     )
     assert res["opts"] == 1            # only the OTHER artifact is offered
     assert res["linked"] is True       # confirming records the link (no prompt())
+
+
+# ── docked search "map" links act in place, no new tab (search.js) ──────────
+def _mount_search(page):
+    return page.evaluate(
+        """async () => {
+            window._pk = null;
+            const root = document.createElement('div'); document.body.appendChild(root);
+            window._ui = await GeoSearch.mount(root, { onPick: (p) => { window._pk = p; } });
+            return true;
+        }"""
+    )
+
+
+def test_docked_search_point_link_is_in_place(page):
+    # A card with structured coords -> in-place point pick (not target=_blank),
+    # and clicking it hands onPick a {kind:'point', ll}.
+    _mount_search(page)
+    res = page.evaluate(
+        """() => {
+            const frag = _ui.factList([{ t: 'A place', x: 'desc', ll: [43.5, 5.2] }], 10, '');
+            document.body.appendChild(frag);
+            const a = frag.querySelector('a.s-pick');
+            const blank = !!frag.querySelector('a.s-pick[target=_blank]');
+            a.click();
+            return { inPlace: !!a, blank, pick: window._pk };
+        }"""
+    )
+    assert res["inPlace"] is True and res["blank"] is False
+    assert res["pick"] == {"kind": "point", "ll": [43.5, 5.2]}
+
+
+def test_docked_search_species_link_is_in_place(page):
+    # The olive case: a flora card's map is a #species= deep link. It must become
+    # an in-place pick that hands onPick a {kind:'species', key, name} — NOT a new
+    # tab — so the distribution loads on the current map.
+    _mount_search(page)
+    res = page.evaluate(
+        """() => {
+            const html = _ui.mapLinkHtml({ map: '/app/index.html#species=5415040&name=Olive' });
+            const wrap = document.createElement('div'); wrap.innerHTML = html;
+            _ui.wirePicks(wrap);
+            const a = wrap.querySelector('a.s-pick');
+            a.click();
+            return { inPlace: !!a, newTab: html.includes('target="_blank"'), pick: window._pk };
+        }"""
+    )
+    assert res["inPlace"] is True and res["newTab"] is False
+    assert res["pick"] == {"kind": "species", "key": 5415040, "name": "Olive"}
+
+
+def test_docked_search_external_map_stays_new_tab(page):
+    # An external Google-Maps short-link can't be plotted in app -> stays a
+    # target=_blank link even in workbench mode.
+    _mount_search(page)
+    res = page.evaluate("() => _ui.mapLinkHtml({ map: 'https://goo.gl/maps/abc123' })")
+    assert 'target="_blank"' in res and "goo.gl/maps/abc123" in res
+    assert "s-pick" not in res

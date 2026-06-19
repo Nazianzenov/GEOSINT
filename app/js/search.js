@@ -244,28 +244,73 @@ class SearchUI {
     }
   }
 
+  // Parse a workbench deep link into a typed in-app intent the host can act on in
+  // place, or null if it isn't one we can handle (e.g. an external Google Maps
+  // short-link). The two link types the card index uses:
+  //   /app/...#ll=lat,lng                  -> a point        { kind:'point', ll }
+  //   /app/...#species=<gbifKey>&name=<n>  -> a distribution { kind:'species', key, name }
+  _wbIntent(url) {
+    if (!url) return null;
+    let m = /#ll=(-?[\d.]+),(-?[\d.]+)/.exec(url);
+    if (m) return { kind: "point", ll: [+m[1], +m[2]] };
+    m = /#species=(\d+)(?:&name=([^&]*))?/.exec(url);
+    if (m) return { kind: "species", key: +m[1], name: decodeURIComponent(m[2] || "species") };
+    return null;
+  }
+
+  // Render a card's map link, one place for every card/link type. In the workbench
+  // (onPick set) a recognised workbench deep link — a point OR a species
+  // distribution — becomes an in-place action (no new tab, stays on the docked
+  // wiki); an external link, or the standalone page, keeps target="_blank".
+  //   label : link text;  ll : explicit [lat,lng] when the card carries structured coords.
+  mapLinkHtml(c, label = "map", ll = null) {
+    const intent = ll ? { kind: "point", ll } : this._wbIntent(c.map);
+    if (this.onPick && intent) {
+      return `<a href="#" class="s-pick" data-pick="${esc(JSON.stringify(intent))}">${label}</a>`;
+    }
+    const href = c.map || (ll ? `/app/index.html#ll=${ll[0]},${ll[1]}` : null);
+    return href ? `<a href="${esc(href)}" target="_blank">${label}</a>` : "";
+  }
+
+  // Wire any in-place map links inside a container to onPick, passing the parsed
+  // intent (the photo grid builds via insertAdjacentHTML, so listeners attach
+  // after render). Idempotent so "show all" can re-run it.
+  wirePicks(container) {
+    if (!this.onPick) return;
+    container.querySelectorAll("a.s-pick:not([data-wired])").forEach((a) => {
+      a.dataset.wired = "1";
+      a.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        this.onPick(JSON.parse(a.dataset.pick));
+      });
+    });
+  }
+
   photoGrid(items, cap) {
     const wrap = document.createElement("div");
     const grid = document.createElement("div");
     grid.className = "grid";
-    const renderSlice = (from, to) => items.slice(from, to).forEach((c) => {
-      const links = [
-        c.map ? `<a href="${esc(c.map)}" target="_blank">map</a>` : "",
-        c.page ? `<a href="${esc(c.page)}" target="_blank">wiki</a>` : "",
-      ].filter(Boolean).join(" · ");
-      const title = esc((c.c || []).join(", ") || c.t);
-      // image-less cards (e.g. the flags "look-alike groups" tips) must NOT render
-      // an empty <img> (it shows as a black box) — show them as a text tile instead.
-      if (c.img) {
-        grid.insertAdjacentHTML("beforeend",
-          `<div class="pcard"><img src="${esc(c.img)}" loading="lazy" alt="">
-           <div class="cap"><b>${title}</b><span>${links}</span></div></div>`);
-      } else {
-        grid.insertAdjacentHTML("beforeend",
-          `<div class="pcard noimg"><div class="cap"><b>${title}</b>${
-            c.x ? `<small>${esc(c.x)}</small>` : ""}<span>${links}</span></div></div>`);
-      }
-    });
+    const renderSlice = (from, to) => {
+      items.slice(from, to).forEach((c) => {
+        const links = [
+          this.mapLinkHtml(c),
+          c.page ? `<a href="${esc(c.page)}" target="_blank">wiki</a>` : "",
+        ].filter(Boolean).join(" · ");
+        const title = esc((c.c || []).join(", ") || c.t);
+        // image-less cards (e.g. the flags "look-alike groups" tips) must NOT render
+        // an empty <img> (it shows as a black box) — show them as a text tile instead.
+        if (c.img) {
+          grid.insertAdjacentHTML("beforeend",
+            `<div class="pcard"><img src="${esc(c.img)}" loading="lazy" alt="">
+             <div class="cap"><b>${title}</b><span>${links}</span></div></div>`);
+        } else {
+          grid.insertAdjacentHTML("beforeend",
+            `<div class="pcard noimg"><div class="cap"><b>${title}</b>${
+              c.x ? `<small>${esc(c.x)}</small>` : ""}<span>${links}</span></div></div>`);
+        }
+      });
+      this.wirePicks(grid);
+    };
     renderSlice(0, cap);
     wrap.appendChild(grid);
     if (items.length > cap) {
@@ -290,16 +335,9 @@ class SearchUI {
     };
     const renderSlice = (from, to) => items.slice(from, to).forEach((c) => {
       const where = [(c.c || []).join(", "), c.k].filter(Boolean).join(" · ");
-      // When mounted in the workbench, "open on map" drives the active point in
-      // place (no new tab); standalone it falls back to the #ll= deep link.
-      let mapLink = "";
-      if (c.ll) {
-        if (this.onPick) {
-          mapLink = ` · <a href="#" class="s-pick" data-lat="${c.ll[0]}" data-lng="${c.ll[1]}">⌖ open on map</a>`;
-        } else {
-          mapLink = ` · <a href="/app/index.html#ll=${c.ll[0]},${c.ll[1]}" target="_blank">⌖ open on map</a>`;
-        }
-      }
+      // "⌖ open on map" uses the card's structured coords (fact cards carry `ll`).
+      const map = c.ll ? this.mapLinkHtml(c, "⌖ open on map", c.ll) : "";
+      const mapLink = map ? ` · ${map}` : "";
       // 9A.2 — in the workbench, a card can be logged to the case as a sourced observation
       const logLink = this.onLog ? ` · <a href="#" class="s-log">＋ log to case</a>` : "";
       const div = document.createElement("div");
@@ -309,13 +347,7 @@ class SearchUI {
          ${c.img ? `<br><img src="${esc(c.img)}" alt="${esc(c.t || "reference image")}" loading="lazy" style="max-width:300px;border-radius:4px;margin:6px 0">` : ""}
          <div>${hl(esc(c.x || ""))}</div>
          <div class="src"><a href="${esc(c.page || "#")}" target="_blank">source page</a>${mapLink}${logLink}</div>`;
-      if (this.onPick && c.ll) {
-        const a = div.querySelector(".s-pick");
-        if (a) a.addEventListener("click", (ev) => {
-          ev.preventDefault();
-          this.onPick({ ll: [+a.dataset.lat, +a.dataset.lng], card: c });
-        });
-      }
+      this.wirePicks(div);
       if (this.onLog) {
         const a = div.querySelector(".s-log");
         if (a) a.addEventListener("click", (ev) => { ev.preventDefault(); this.onLog(c); });
