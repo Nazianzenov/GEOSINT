@@ -87,8 +87,18 @@ PGET_ALLOW = [
     ("https://nominatim.openstreetmap.org/search?", 30 * 86400),
     ("https://api.gbif.org/v1/species/match?", 30 * 86400),
 ]
-VERSION = "1.0.0"
-UA = f"GeOSINT-Workbench/{VERSION} (local personal OSINT tool; non-commercial)"
+# Version + User-Agent: single source of truth is geosint/__init__.py, so the
+# version advertised by /api/status, --version and every outbound request can
+# never drift from the package version. Import defensively — a frozen/standalone
+# server.py must still start if the `geosint` package isn't importable.
+try:
+    from geosint import __version__ as VERSION, ua as _ua
+    UA = _ua(VERSION)
+except Exception:                       # pragma: no cover - frozen/standalone fallback
+    VERSION = "1.0.0"
+    UA = (f"GeOSINT-Workbench/{VERSION} "
+          f"(https://github.com/Nazianzenov/GEOSINT; "
+          f"non-commercial personal OSINT tool)")
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")
 
 # Platform flags — the detection + launch layers branch on these so the workbench

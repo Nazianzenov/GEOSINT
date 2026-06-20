@@ -15,13 +15,32 @@ Tools that talk to a specific service add their own logic above this — they do
 not re-implement retries or rate limiting.
 """
 import json
+import sys
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 
-UA = ("GeOSINT-Workbench/1.0 (https://github.com/Nazianzenov/GEOSINT; "
-      "non-commercial personal OSINT tool) python-urllib")
+# Single source of truth for version + UA is geosint/__init__.py. Derive both
+# from it so the fetchers advertise the same version as the server. Import
+# defensively (and add the repo root to sys.path) so this module still works when
+# run as a loose script where the package isn't already importable; the fallback
+# reproduces the identical UA template if the import can't be resolved.
+try:
+    from geosint import __version__, ua as _ua
+except Exception:                       # pragma: no cover - loose-script fallback
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from geosint import __version__, ua as _ua
+    except Exception:
+        __version__ = "1.0.0"
+
+        def _ua(version=__version__):
+            return (f"GeOSINT-Workbench/{version} "
+                    f"(https://github.com/Nazianzenov/GEOSINT; "
+                    f"non-commercial personal OSINT tool)")
+
+UA = _ua(__version__)
 
 FLOOR = 0.5            # min seconds between any two requests (whole-run shared)
 _last = [0.0]
