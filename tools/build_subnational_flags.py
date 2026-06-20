@@ -52,11 +52,14 @@ def _member(m):
         return m, m, None, None
     if isinstance(m, dict):
         return (m["name"], m.get("search", m["name"]), m.get("qid"), m.get("file"))
-    if len(m) == 2 and _is_qid(m[1]):
-        return m[0], m[0], m[1], None
-    if len(m) == 2:
-        return m[0], m[1], None, None
-    return m[0], m[1], m[2], None
+    if isinstance(m, tuple):
+        if len(m) == 2 and _is_qid(m[1]):
+            return m[0], m[0], m[1], None
+        if len(m) == 2:
+            return m[0], m[1], None, None
+        if len(m) == 3:
+            return m[0], m[1], m[2], None
+    raise ValueError(f"bad member entry: {m!r}")
 COUNTRIES = {
     "switzerland": {
         "name": "Switzerland", "iso2": "ch", "kind": "Cantons", "hint": "canton of Switzerland",
@@ -87,7 +90,7 @@ COUNTRIES = {
         "members": [
             "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut",
             "Delaware", "Florida", ("Georgia", "Q1428"), "Hawaii", "Idaho", "Illinois", "Indiana",
-            ("Indiana", "Q1415"), "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
+            "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
             "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
             "New Hampshire", "New Jersey", "New Mexico", ("New York", "Q1384"), "North Carolina",
             "North Dakota", "Ohio", ("Oklahoma", "Q1649"), "Oregon", "Pennsylvania", "Rhode Island",
@@ -197,7 +200,22 @@ GALLERY_CSS = (
 )
 
 
+def _assert_unique_members():
+    """Fail loudly at startup if any country lists the same display name twice
+    (a duplicate would silently collide on its cached flag path / caption)."""
+    for cslug, c in COUNTRIES.items():
+        seen = {}
+        for member in c["members"]:
+            name = _member(member)[0]
+            if name in seen:
+                raise ValueError(
+                    f"duplicate member {name!r} in country {cslug!r}: "
+                    f"{seen[name]!r} and {member!r}")
+            seen[name] = member
+
+
 def main():
+    _assert_unique_members()
     PAGES.mkdir(parents=True, exist_ok=True)
     fetched = skipped = failed = 0
     index_rows = []
