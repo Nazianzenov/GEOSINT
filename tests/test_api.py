@@ -103,6 +103,35 @@ def test_post_requires_csrf_header():
     assert b"X-GeOSINT" in body
 
 
+# ── SEC-01: GET proxies refuse an explicit cross-site drive-by ──────────────
+def test_pget_cross_site_refused(monkeypatch):
+    # A cross-site Sec-Fetch-Site is rejected (403) BEFORE param/allowlist checks,
+    # so a drive-by page can neither launder a request nor poison the cache.
+    st, _, _ = req("GET", "/api/pget?u=https://api.open-meteo.com/v1/forecast?x=1",
+                   headers={"Sec-Fetch-Site": "cross-site"})
+    assert st == 403
+
+
+def test_tile_cross_site_refused():
+    st, _, _ = req("GET", "/tiles/osm/1/0/0", headers={"Sec-Fetch-Site": "cross-site"})
+    assert st == 403
+
+
+def test_pget_same_origin_not_blocked_by_csrf_guard():
+    # same-origin (the SPA's own fetch) passes the cross-site guard — it then fails
+    # later on the allowlist (403) or upstream, NOT on the Sec-Fetch-Site check.
+    # Use the missing-param path to prove the guard let it through: 400, not 403.
+    st, _, _ = req("GET", "/api/pget", headers={"Sec-Fetch-Site": "same-origin"})
+    assert st == 400                             # reached the param check, not refused
+
+
+def test_tile_no_sec_fetch_header_allowed():
+    # Clients that send no Sec-Fetch-Site (older browsers, curl, HEALTHCHECK, bare
+    # <img> in some engines) are NOT refused — an unknown layer still 404s normally.
+    st, _, _ = req("GET", "/tiles/nope/1/0/0")   # no Sec-Fetch-Site header
+    assert st == 404                             # normal validation, not a 403 refusal
+
+
 # ── pget allowlist ──────────────────────────────────────────────────────────
 def test_pget_missing_param_is_400():
     st, _, _ = req("GET", "/api/pget")

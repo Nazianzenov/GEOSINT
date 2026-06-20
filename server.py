@@ -657,6 +657,22 @@ class Handler(BaseHTTPRequestHandler):
                     f"Publish only to 127.0.0.1, or restrict with --allow-host.\n")
         return True
 
+    def _is_cross_site(self):
+        """True iff the browser explicitly flagged this request as cross-site.
+
+        The cache-writing GET proxies (/api/pget, /tiles) are not behind the
+        POST-only X-GeOSINT CSRF header, so a malicious page could drive them
+        cross-origin to launder requests through the allowlist or poison the
+        durable on-disk cache for the analyst's future lookups (SEC-01).
+
+        `Sec-Fetch-Site` is set by the browser and cannot be forged by page JS.
+        We reject ONLY the unambiguous `cross-site` value: the SPA's own requests
+        are `same-origin`, and clients that send no Sec-Fetch-* header at all
+        (older browsers, curl, the container HEALTHCHECK) are allowed through so
+        we don't break legitimate non-browser/loopback use. `same-site` is left
+        permitted (there is no other site on loopback to distinguish it from)."""
+        return self.headers.get("Sec-Fetch-Site", "").lower() == "cross-site"
+
     # JSON POST routes: path -> handler-method name. do_POST dispatches the
     # uniform JSON endpoints from this one table, and POST_PATHS is derived from
     # it (plus the two raw-bytes exif routes), so a new endpoint is registered in
@@ -738,6 +754,10 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- cached tile proxy: /tiles/<layer>/<z>/<x>/<y> -------------------
     def api_tile(self, path):
+        # SEC-01: refuse an explicit cross-site drive-by before any cache read or
+        # upstream fetch, so it can neither launder a request nor poison the cache.
+        if self._is_cross_site():
+            return self.send_json({"error": "cross-site request refused"}, 403)
         parts = path.strip("/").split("/")          # tiles, layer, z, x, y
         if len(parts) != 5 or parts[1] not in TILE_LAYERS:
             return self.send_json({"error": "unknown tile layer"}, 404)
@@ -824,6 +844,10 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- generic cached GET proxy: /api/pget?u=<allowlisted url> ---------
     def api_pget(self, query):
+        # SEC-01: refuse an explicit cross-site drive-by before any cache read or
+        # upstream fetch (same rationale as api_tile).
+        if self._is_cross_site():
+            return self.send_json({"error": "cross-site request refused"}, 403)
         url = urllib.parse.parse_qs(query).get("u", [""])[0]
         if not url:                               # missing required param is a bad request, not "forbidden"
             return self.send_json({"error": "missing 'u' parameter"}, 400)
