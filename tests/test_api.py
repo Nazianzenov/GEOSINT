@@ -8,6 +8,7 @@ import json
 import socket
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -221,6 +222,135 @@ def test_prefetch_budget_stops_with_remaining(monkeypatch):
     assert j["done"] is False
     assert j["remaining"] == j["tiles"] and j["tiles"] > 0
     assert j["fetched"] == 0
+
+
+def test_prefetch_done_false_when_a_tile_fails(monkeypatch, tmp_path):
+    # #91: `done` must be (processed==len(tiles) AND failed==0). A run where every
+    # tile fails has processed==len(tiles) but failed>0, so it must report
+    # done:false (the client resumes/retries) — not done:true on remaining==0.
+    def boom(url, timeout=20):
+        raise OSError("upstream down")
+    monkeypatch.setattr(server, "upstream_get", boom)
+    monkeypatch.setattr(server, "TILE_CACHE", tmp_path / "tiles")
+    st, _, body = jpost("/api/prefetch", {"layer": "osm", "bbox": [0, 0, 0.01, 0.01],
+                                          "zmin": 1, "zmax": 1})
+    assert st == 200
+    j = json.loads(body)
+    assert j["tiles"] > 0
+    assert j["failed"] == j["tiles"]      # every tile failed
+    assert j["fetched"] == 0 and j["cached"] == 0
+    assert j["remaining"] == 0            # all tiles were processed (started)
+    assert j["done"] is False            # but failures mean it is NOT done
+
+
+def test_prefetch_bbox_swapped_corners_400():
+    # #100: api_prefetch validates the bbox after the zoom check. A swapped
+    # bbox (s > n) is rejected with 400 before any tile is computed/fetched.
+    st, _, _ = jpost("/api/prefetch", {"layer": "osm", "bbox": [1, 0, 0, 1],
+                                       "zmin": 1, "zmax": 1})
+    assert st == 400
+
+
+def test_prefetch_bbox_out_of_range_400():
+    # #100: an out-of-range latitude/longitude in the bbox -> 400.
+    st, _, _ = jpost("/api/prefetch", {"layer": "osm", "bbox": [-100, 0, 100, 1],
+                                       "zmin": 1, "zmax": 1})
+    assert st == 400
+
+
+# ── cached proxy: X-Cache miss -> hit, Cache-Control always present ──────────
+def test_pget_miss_then_hit(monkeypatch, tmp_path):
+    # First request populates the cache (X-Cache: miss); the second is served from
+    # disk (X-Cache: hit). Stub the upstream so no network is hit and redirect the
+    # pget cache to a temp dir so the test leaves no artifacts. Cache-Control must
+    # always be emitted (proxied OSINT data must not get heuristic browser caching).
+    monkeypatch.setattr(server, "PGET_CACHE", tmp_path / "pget")
+    monkeypatch.setattr(server, "upstream_get",
+                        lambda url, timeout=30: b'{"elevation":[123]}')
+    url = "https://api.open-meteo.com/v1/elevation?latitude=0&longitude=0"
+    q = "/api/pget?u=" + urllib.parse.quote(url, safe="")
+    st1, h1, b1 = req("GET", q)
+    assert st1 == 200
+    assert h1.get("X-Cache") == "miss"
+    assert "Cache-Control" in h1
+    assert json.loads(b1) == {"elevation": [123]}
+    st2, h2, _ = req("GET", q)
+    assert st2 == 200
+    assert h2.get("X-Cache") == "hit"
+    assert "Cache-Control" in h2
+
+
+# ── static serving: nested file + directory -> index.html ───────────────────
+def test_serve_static_nested_file():
+    # A real nested static asset is served (200) with a sane content type.
+    st, h, body = req("GET", "/app/css/app.css")
+    assert st == 200
+    assert "text/css" in h.get("Content-Type", "")
+    assert len(body) > 0
+
+
+def test_serve_static_dir_serves_index_html():
+    # A directory request resolves to its index.html (the /app/ root). The SPA's
+    # index is HTML and carries the locked-down CSP, so assert both.
+    st, h, body = req("GET", "/app/")
+    assert st == 200
+    assert "text/html" in h.get("Content-Type", "")
+    assert "default-src 'self'" in h.get("Content-Security-Policy", "")
+    assert len(body) > 0
+
+
+# ── tiles: POST to a GET-only proxy is 405 (not 404/501) ────────────────────
+def test_post_tiles_405():
+    # /tiles/ exists only under GET/HEAD; a POST (carrying the CSRF header so it
+    # reaches routing, not the 403 guard) must get 405 with an Allow listing GET.
+    st, h, _ = jpost("/tiles/osm/1/1/1", {})
+    assert st == 405
+    assert "GET" in h.get("Allow", "")
+
+
+# ── launch: unknown tool key is a 400 (bad request), not 409/500 ────────────
+def test_launch_unknown_tool_400():
+    st, _, body = jpost("/api/launch", {"tool": "definitely-not-a-tool"})
+    assert st == 400
+    assert b"unknown tool" in body
+
+
+# ── HEAD on the unbuilt wiki: status returned, ZERO-LENGTH body (#94) ────────
+def test_head_wiki_unbuilt_has_empty_body():
+    # #94: do_HEAD delegates to do_GET; on the unbuilt-wiki 503 the handler must
+    # NOT write the explanatory HTML body for a HEAD (a HEAD response carries no
+    # body). Skip if the wiki happens to be built in this checkout.
+    get_st, _, _ = req("GET", "/wiki/index.html")
+    if get_st != 503:
+        pytest.skip("wiki is built in this checkout")
+    st, h, body = req("HEAD", "/wiki/index.html")
+    assert st == 503
+    assert body == b""                    # zero-length body on HEAD
+    # Content-Length still advertises the would-be body size (HEAD semantics).
+    assert int(h.get("Content-Length", "0")) > 0
+
+
+# ── host_ok / _host_name: IPv6 Host parsing (#99) ───────────────────────────
+def test_host_name_ipv6_parsing():
+    # #99: _host_name strips a trailing :port robustly for IPv6, never mistaking
+    # the colons inside a bare v6 literal for a port separator, and never
+    # fabricating a bracket for a malformed value.
+    assert server._host_name("[::1]:8650") == "[::1]"
+    assert server._host_name("[::1]") == "[::1]"
+    assert server._host_name("::1") == "::1"            # bare v6: left intact
+    assert server._host_name("fe80::1") == "fe80::1"    # multi-colon: no port strip
+    assert server._host_name("127.0.0.1:8650") == "127.0.0.1"
+    assert server._host_name("localhost:8650") == "localhost"
+    assert server._host_name("[::1") == "[::1"          # malformed: returned as-is
+
+
+def test_host_guard_accepts_bracketed_ipv6_loopback():
+    # End-to-end: the rebinding guard accepts the loopback IPv6 Host names (port
+    # stripped via _host_name), so an IPv6 Docker/loopback client isn't rejected.
+    st, _, _ = req("GET", "/api/status", headers={"Host": "[::1]:9999"})
+    assert st == 200
+    st2, _, _ = req("GET", "/api/status", headers={"Host": "[::1]"})
+    assert st2 == 200
 
 
 # ── verb / 404 / 405 handling ───────────────────────────────────────────────

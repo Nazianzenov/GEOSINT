@@ -14,6 +14,13 @@
 FROM python:3.12-slim AS build
 
 # ExifTool for the image-intelligence endpoints (the only runtime native dep).
+# ExifTool parses UNTRUSTED image/video bytes (the /api/exif* endpoints) and has
+# had parser CVEs, so it must be kept patched: `apt-get update` immediately
+# before install pulls the latest security-patched build from the base image's
+# repos. We do NOT pin an exact apt version (Debian only keeps the current one,
+# so a hard pin would break rebuilds and freeze you on an unpatched release) —
+# rebuild the image periodically to pick up upstream security updates.
+# Min recommended: ExifTool >= 12.50.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends libimage-exiftool-perl \
  && rm -rf /var/lib/apt/lists/*
@@ -39,6 +46,13 @@ RUN python tools/fetch_datasets.py || true \
 
 # ── runtime image: drop the mkdocs toolchain, keep the built site ──
 FROM python:3.12-slim
+# ExifTool parses UNTRUSTED image/video bytes (the /api/exif* endpoints) and has
+# had parser CVEs, so it must be kept patched: `apt-get update` immediately
+# before install pulls the latest security-patched build from the base image's
+# repos. We do NOT pin an exact apt version (Debian only keeps the current one,
+# so a hard pin would break rebuilds and freeze you on an unpatched release) —
+# rebuild the image periodically to pick up upstream security updates.
+# Min recommended: ExifTool >= 12.50.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends libimage-exiftool-perl \
  && rm -rf /var/lib/apt/lists/*
@@ -61,5 +75,14 @@ EXPOSE 8650
 # Python (already present) so we don't depend on curl being installed.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8650/api/health', timeout=4).status==200 else 1)"
-# Bind 0.0.0.0 so the published port is reachable; no browser inside a container.
+# Bind 0.0.0.0 so the *published* port is reachable; no browser inside a
+# container.
+#
+# SECURITY: 0.0.0.0 here binds inside the container only — your exposure is
+# decided entirely by HOW you publish the port. The ONLY safe publish on an
+# untrusted network is to host loopback:
+#     docker run --rm -p 127.0.0.1:8650:8650 geosint
+# A raw `-p 8650:8650` binds the host's 0.0.0.0 and exposes the launch/write API
+# to your whole LAN. The Host-header + X-GeOSINT guards reduce, but do not erase,
+# that risk — do not rely on them as your network boundary. See README "OPSEC".
 ENTRYPOINT ["python", "server.py", "--host", "0.0.0.0", "--no-browser"]

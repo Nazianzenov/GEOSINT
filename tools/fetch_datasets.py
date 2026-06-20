@@ -338,6 +338,8 @@ def fetch_submarine_cables():
     # properties.coordinates label point TeleGeography ships per feature).
     cable_feats = []
     for f in cables.get("features", []):
+        if not f.get("geometry"):
+            continue                       # malformed feature: no geometry
         p = f.get("properties", {})
         cable_feats.append({
             "type": "Feature", "geometry": f["geometry"],
@@ -353,7 +355,10 @@ def fetch_submarine_cables():
         geom = f.get("geometry") or {}
         if geom.get("type") != "Point":
             continue
-        lng, lat = geom["coordinates"][:2]
+        coords = geom.get("coordinates")
+        if not (isinstance(coords, list) and len(coords) >= 2):
+            continue                       # empty/null/short coordinates
+        lng, lat = coords[:2]
         name = p.get("name") or p.get("id") or "landing point"
         landing_feats.append({
             "type": "Feature", "geometry": geom,

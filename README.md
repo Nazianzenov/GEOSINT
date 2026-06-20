@@ -133,6 +133,14 @@ wiki/site/         built wiki (generated)
   engine and hand it the image.
 - Nominatim/Open-Meteo queries necessarily reveal the coordinates you're investigating to
   those services; for sensitive casework, route the browser through your usual opsec setup.
+- **Publishing the Docker port.** The container binds `0.0.0.0` *inside* the container,
+  so your real exposure is decided by **how you publish the port**. On an untrusted
+  network the ONLY safe form is to bind host loopback:
+  `docker run --rm -p 127.0.0.1:8650:8650 geosint`. A raw `-p 8650:8650` binds the host's
+  `0.0.0.0` and exposes the launch/write API (which can run local programs and write
+  files) to your whole LAN. The Host-header allowlist and the `X-GeOSINT` CSRF header are
+  **defense-in-depth, not a network boundary** — do not rely on them to substitute for
+  binding loopback.
 
 ## License
 
