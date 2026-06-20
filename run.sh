@@ -40,18 +40,12 @@ if [ ! -x ".venv/bin/mkdocs" ]; then
   "$PIP" install --quiet -r requirements.txt
 fi
 
-if [ "$REBUILD" -eq 1 ] || [ ! -f "wiki/site/index.html" ]; then
-  echo "[geosint] Refreshing open datasets (cache hit if <30 days old)..."
-  "$PY" tools/fetch_datasets.py || true
-  "$PY" tools/build_flora.py || true
-  echo "[geosint] Building wiki..."
-  .venv/bin/mkdocs build -f wiki/mkdocs.yml
-  echo "[geosint] Rebuilding search index + knowledge graph..."
-  "$PY" tools/build_search_index.py || true
-fi
-if [ ! -f "app/data/search-index.json" ]; then
-  "$PY" tools/build_search_index.py || true
-fi
+# Single shared build pipeline (tools/build_all.py) — same artifacts on every
+# platform as run.ps1 / `python -m geosint` (#90). Idempotent: it skips when the
+# wiki is already built unless --rebuild, and aborts only on a required step.
+REBUILD_FLAG=""
+[ "$REBUILD" -eq 1 ] && REBUILD_FLAG="--rebuild"
+"$PY" tools/build_all.py --python "$PY" --mkdocs ".venv/bin/mkdocs" $REBUILD_FLAG
 
 echo "[geosint] Starting server on port $PORT"
 exec "$PY" server.py --port "$PORT" --host "$HOST" $NO_BROWSER
