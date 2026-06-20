@@ -122,7 +122,8 @@ def main():
             rewritten += 1
 
     MANIFEST.write_text(json.dumps(manifest, indent=1), encoding="utf-8")
-    total_kb = sum(f.stat().st_size for f in ASSETS.iterdir()) // 1024 if any(ASSETS.iterdir()) else 0
+    files = [f for f in ASSETS.iterdir() if f.is_file()]
+    total_kb = sum(f.stat().st_size for f in files) // 1024
     print(f"done: {fetched} fetched, {skipped} fresh (<30 days, cache hit), {failed} failed, "
           f"{rewritten} pages rewritten to local paths. Cache: wiki/docs/assets/wm ({total_kb} KB)")
     return 1 if failed else 0
