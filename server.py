@@ -500,10 +500,11 @@ except Exception:                       # pragma: no cover - frozen/standalone f
                 for y in range(min(y0, y1), max(y0, y1) + 1):
                     yield z, x, y
 
-# Domain modules extracted from the Handler (#88): ExifTool orchestration. These
-# are pure-stdlib and the exif endpoints require them, so import hard (no frozen
-# fallback) — if the package is unavailable, /api/exif* simply 500s via render().
+# Domain modules extracted from the Handler (#88): ExifTool orchestration + the
+# cached-proxy core. Pure-stdlib and required by the exif/proxy endpoints, so
+# import hard (no frozen fallback).
 from geosint import exif as exif_domain
+from geosint import proxy as proxy_domain
 
 
 # Opener that refuses to follow 3xx redirects. The /api/pget and /tiles proxies
@@ -796,18 +797,12 @@ class Handler(BaseHTTPRequestHandler):
         if not (0 <= x < n and 0 <= y < n):
             return self.send_json({"error": "tile coords out of range"}, 400)
         f = TILE_CACHE / layer / str(z) / str(x) / f"{y}.png"
-        if cache_fresh(f, TILE_TTL):
-            return self.send_cached_body(f.read_bytes(), "image/png", "hit", TILE_TTL)
         url = TILE_LAYERS[layer].format(z=z, x=x, y=y)
-        try:
-            body = upstream_get(url, timeout=20)
-            atomic_write(f, body)
-            return self.send_cached_body(body, "image/png", "miss", TILE_TTL)
-        except Exception as e:
-            self._warn("/tiles", _host_of(url), e)
-            if f.is_file():                          # stale beats nothing
-                return self.send_cached_body(f.read_bytes(), "image/png", "stale", 3600)
-            return self.send_json({"error": "tile upstream unreachable"}, 502)
+        return self.render(proxy_domain.fetch_cached(
+            f, url, TILE_TTL, "image/png", timeout=20,
+            fetch=upstream_get, cache_fresh=cache_fresh, atomic_write=atomic_write,
+            log_where=_host_of(url), browser_ttl=TILE_TTL, stale_browser_ttl=3600,
+            error_msg="tile upstream unreachable"))
 
     # ---- API: prefetch a bbox of tiles for offline use ------------------
     def api_prefetch(self, payload):
@@ -878,18 +873,10 @@ class Handler(BaseHTTPRequestHandler):
         if ttl is None:
             return self.send_json({"error": "url not allowlisted"}, 403)
         f = PGET_CACHE / (hashlib.sha1(url.encode()).hexdigest() + ".json")
-        if cache_fresh(f, ttl):
-            return self.send_cached_body(f.read_bytes(), "application/json; charset=utf-8", "hit")
-        try:
-            body = upstream_get(url, timeout=30)
-            json.loads(body)
-            atomic_write(f, body)
-            return self.send_cached_body(body, "application/json; charset=utf-8", "miss")
-        except Exception as e:
-            self._warn("/api/pget", _host_of(url), e)
-            if f.is_file():
-                return self.send_cached_body(f.read_bytes(), "application/json; charset=utf-8", "stale")
-            return self.send_json({"error": f"upstream failed: {str(e)[:160]}"}, 502)
+        return self.render(proxy_domain.fetch_cached(
+            f, url, ttl, "application/json; charset=utf-8", timeout=30,
+            fetch=upstream_get, cache_fresh=cache_fresh, atomic_write=atomic_write,
+            validate=json.loads, log_where=_host_of(url), error_msg="upstream failed"))
 
     # ---- routes --------------------------------------------------------
     def do_GET(self):
