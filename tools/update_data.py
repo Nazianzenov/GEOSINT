@@ -78,8 +78,15 @@ def git_restore(paths):
     files that were clean before the probe — never restore a path that already
     had uncommitted work, or --check would silently destroy it."""
     for p in paths:
-        subprocess.run(["git", "-C", str(ROOT), "checkout", "--", p],
-                       capture_output=True)
+        r = subprocess.run(["git", "-C", str(ROOT), "checkout", "--", p],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            # The probe modified `p` but git could not revert it; warn loudly so
+            # --check does not silently leave the working tree dirty.
+            sys.stderr.write(
+                f"  WARN: failed to restore {p} (git checkout exit "
+                f"{r.returncode}); run `git checkout -- {p}` manually. "
+                f"{r.stderr.strip()}\n")
 
 
 def run_source(key, check):

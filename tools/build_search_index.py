@@ -235,7 +235,10 @@ def strip_md(text):
 
 def page_url(md: Path, anchor=""):
     rel = md.relative_to(DOCS).with_suffix("")
-    url = "/wiki/" + rel.as_posix().replace("index", "") + "/"
+    # drop only a trailing "index" segment (foo/index -> foo/), never an
+    # "index" substring elsewhere in the path (e.g. a page named reindex.md)
+    body = rel.as_posix()[: -len("index")] if rel.name == "index" else rel.as_posix()
+    url = "/wiki/" + body + "/"
     url = url.replace("//", "/")
     return url + (f"#{anchor}" if anchor else "")
 
@@ -258,7 +261,17 @@ class Indexer:
 
     def add(self, **kw):
         kw.setdefault("c", [])
-        self.cards.append({"id": len(self.cards), **{k: v for k, v in kw.items() if v}})
+        # Drop only values that carry no information: None, empty strings and
+        # empty collections (e.g. an empty country list `c` or a missing
+        # continent `k`). A meaningful falsy scalar like 0 or False is KEPT,
+        # so a future numeric/boolean field is not silently swallowed.
+        def keep(v):
+            if v is None:
+                return False
+            if isinstance(v, (str, list, tuple, dict, set)) and len(v) == 0:
+                return False
+            return True
+        self.cards.append({"id": len(self.cards), **{k: v for k, v in kw.items() if keep(v)}})
 
     def canon(self, name):
         name = strip_md(name).strip(" .")
