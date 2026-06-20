@@ -19,6 +19,8 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 # Single source of truth for version + UA is geosint/__init__.py. Derive both
@@ -54,9 +56,35 @@ def _throttle():
     _last[0] = time.time()
 
 
+# Per RFC 7231 Retry-After is either delta-seconds (an integer) or an HTTP-date;
+# Wikidata/Commons send the HTTP-date form. Returns the seconds to wait, or None
+# if the header is missing/unparseable (caller then uses its default backoff).
+# Far-future dates are clamped so a bad header can't hang the build, and any
+# parse failure is swallowed so this never raises out of get().
+_RETRY_AFTER_MAX = 300.0
+
+
+def _retry_after_seconds(ra):
+    if not ra:
+        return None
+    ra = ra.strip()
+    if ra.isdigit():
+        return float(ra)
+    try:
+        parsed = parsedate_to_datetime(ra)
+        if parsed is None:
+            return None
+        now = datetime.now(timezone.utc) if parsed.tzinfo else datetime.now()
+        delta = (parsed - now).total_seconds()
+    except Exception:
+        return None
+    return max(0.0, min(_RETRY_AFTER_MAX, delta))
+
+
 def get(url, timeout=40, accept=None, tries=6):
     """GET `url` politely. Returns (bytes, content_type). Retries 429/5xx with
-    backoff that honours Retry-After; raises on other HTTP errors / final fail."""
+    backoff that honours Retry-After (both delta-seconds and HTTP-date forms);
+    raises on other HTTP errors / final fail."""
     headers = {"User-Agent": UA}
     if accept:
         headers["Accept"] = accept
@@ -71,8 +99,8 @@ def get(url, timeout=40, accept=None, tries=6):
             last = e
             if e.code not in _RETRY_CODES:
                 raise
-            ra = e.headers.get("Retry-After")
-            wait = float(ra) if (ra and ra.isdigit()) else min(60, 5 * (attempt + 1) ** 2)
+            ra = _retry_after_seconds(e.headers.get("Retry-After"))
+            wait = ra if ra is not None else min(60, 5 * (attempt + 1) ** 2)
             time.sleep(wait)
         except urllib.error.URLError as e:
             last = e
