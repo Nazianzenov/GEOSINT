@@ -68,19 +68,8 @@ const cacheNote = (r) =>
 /* ════════════════════════ coordinate formatting ════════════════════════ */
 const fmtDD = (ll, p = 5) => `${ll.lat.toFixed(p)}, ${ll.lng.toFixed(p)}`;
 
-function toDMS(deg, isLat) {
-  const dir = deg >= 0 ? (isLat ? "N" : "E") : (isLat ? "S" : "W");
-  const a = Math.abs(deg);
-  const d = Math.floor(a), m = Math.floor((a - d) * 60);
-  const s = ((a - d) * 3600 - m * 60).toFixed(1);
-  return `${d}°${String(m).padStart(2, "0")}'${s}"${dir}`;
-}
-const fmtDMS = (ll) => `${toDMS(ll.lat, true)} ${toDMS(ll.lng, false)}`;
-
-/* SunCalc azimuth is 0=South; convert to compass 0=North. */
-const compassAz = (rad) => (rad * 180 / Math.PI + 180) % 360;
-const cardinal = (deg) =>
-  ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(deg / 22.5) % 16];
+/* toDMS / fmtDMS / compassAz / cardinal are pure and live in coreutils.js (#89),
+   loaded before this file; they remain available as bare globals. */
 
 /* Populate a UTC-offset <select> with UTC-12:00 .. +14:00 in 15-min steps, and
    default it to the viewer's local offset. Shared by the workbench Sun module and

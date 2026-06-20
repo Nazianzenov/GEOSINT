@@ -353,6 +353,47 @@ def test_custody_json_strips_thumbnails(page):
     assert art["sha256"] == "abc" and art["text"] == "keep me"   # everything else kept
 
 
+# ── coreutils.js: the DOM-free seam (#89) ───────────────────────────────────
+# These call the CoreUtils namespace directly — no state, no DOM ids, no Leaflet.
+# That is the whole point of the extraction: pure logic reachable without a page.
+def test_coreutils_namespace_surface(page):
+    keys = page.evaluate(
+        "() => Object.keys(CoreUtils).sort()")
+    assert keys == ["cardinal", "compassAz", "custodyCsv", "custodyJson", "fmtDMS", "toDMS"]
+
+
+def test_coreutils_todms_and_cardinal_are_pure(page):
+    res = page.evaluate(
+        """() => ({
+            latN: CoreUtils.toDMS(48.8584, true),
+            lngE: CoreUtils.toDMS(2.2945, false),
+            latS: CoreUtils.toDMS(-33.8568, true),
+            n: CoreUtils.cardinal(0), e: CoreUtils.cardinal(90),
+            s: CoreUtils.cardinal(180), w: CoreUtils.cardinal(270),
+        })"""
+    )
+    assert res["latN"].endswith("N") and res["latN"].startswith("48°51'")
+    assert res["lngE"].endswith("E") and res["lngE"].startswith("2°17'")
+    assert res["latS"].endswith("S")             # negative latitude -> S
+    assert [res["n"], res["e"], res["s"], res["w"]] == ["N", "E", "S", "W"]
+
+
+def test_coreutils_compassaz_converts_suncalc_to_compass(page):
+    # SunCalc azimuth is 0=South (radians); compassAz returns 0=North degrees.
+    res = page.evaluate(
+        "() => ({ south: CoreUtils.compassAz(0), north: CoreUtils.compassAz(Math.PI) })")
+    assert res["south"] == 180                    # SunCalc 0 rad (south) -> 180° compass
+    assert res["north"] in (0, 360)               # SunCalc π (north) -> 0/360° compass
+
+
+def test_custody_serializers_reachable_via_namespace(page):
+    # the same pure serializers, called through CoreUtils rather than the bare global
+    res = page.evaluate(
+        "() => CoreUtils.custodyJson([{ id: 1, kind: 'note', t: '2024-01-01T00:00:00', thumb: 'x', text: 'k' }])")
+    j = json.loads(res)
+    assert j["kind"] == "chain-of-custody" and "thumb" not in j["artifacts"][0]
+
+
 # ── shadow solver maths (#50 coverage) ──────────────────────────────────────
 def test_shadowfit_within_and_outside_tolerance(page):
     res = page.evaluate(

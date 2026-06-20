@@ -23,10 +23,19 @@ const commonGlobals = {
   $: "readonly", $$: "readonly", esc: "readonly", dataThumb: "readonly",
   fetchT: "readonly", cachedFetch: "readonly", cacheNote: "readonly",
   FETCH_TIMEOUT: "readonly", UPLOAD_TIMEOUT: "readonly",
-  fmtDD: "readonly", toDMS: "readonly", fmtDMS: "readonly",
-  compassAz: "readonly", cardinal: "readonly",
+  fmtDD: "readonly",
   parseCoords: "readonly", project: "readonly", drawSunChart: "readonly",
   fillUtcOffsets: "readonly", sunDate: "readonly", fmtClock: "readonly",
+};
+
+// Pure utilities DEFINED in app/js/coreutils.js (loaded before common.js): coord
+// formatting + custody serialization (#89). Declared here so no-undef resolves
+// their use in common.js / case.js / sun.js / search.js; coreutils.js itself is
+// linted without these so its own declarations are the definitions.
+const coreUtilsGlobals = {
+  CoreUtils: "readonly", toDMS: "readonly", fmtDMS: "readonly",
+  compassAz: "readonly", cardinal: "readonly",
+  custodyCsv: "readonly", custodyJson: "readonly",
 };
 
 // Shared chronolocation engine DEFINED in app/js/chrono.js (loaded after
@@ -59,12 +68,22 @@ const base = {
 
 module.exports = [
   {
+    // coreutils.js DEFINES the pure utilities (CoreUtils + the toDMS/compassAz/
+    // custodyCsv/… page globals). Like common.js: don't predeclare its own
+    // surface and don't flag it "unused" (consumed by the other scripts/tests).
+    ...base,
+    files: ["app/js/coreutils.js"],
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals } },
+    rules: { ...sharedRules, "no-unused-vars": "off" },
+  },
+  {
     // common.js DEFINES the shared helpers — don't predeclare them here, and
     // don't flag them as "unused": they're the module's public surface, consumed
-    // by the other scripts (which ESLint lints as separate files).
+    // by the other scripts (which ESLint lints as separate files). It may use the
+    // coreutils.js globals (loaded first).
     ...base,
     files: ["app/js/common.js"],
-    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals } },
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...coreUtilsGlobals } },
     rules: { ...sharedRules, "no-unused-vars": "off" },
   },
   {
@@ -73,27 +92,27 @@ module.exports = [
     // and don't flag it "unused" (consumed by the solver modules / tests).
     ...base,
     files: ["app/js/chrono.js"],
-    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals } },
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals, ...coreUtilsGlobals } },
     rules: { ...sharedRules, "no-unused-vars": "off" },
   },
   {
-    // The standalone Studio (sun.js) and the search module use only common.js's
-    // helpers (and, for sun.js, the chrono.js engine), so no-undef can fully
-    // resolve their references.
+    // The standalone Studio (sun.js) and the search module use common.js's +
+    // coreutils.js's helpers (and, for sun.js, the chrono.js engine), so no-undef
+    // can fully resolve their references.
     ...base,
     files: ["app/js/sun.js", "app/js/search.js"],
-    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals, ...chronoGlobals } },
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals, ...coreUtilsGlobals, ...chronoGlobals } },
   },
   {
     // The workbench is ONE program split across app.js + modules/*.js (classic
     // <script>s sharing global scope, #31). They legitimately cross-reference
     // each other's top-level functions/consts, which a per-file linter can't see
-    // — so no-undef is off for this set (common.js/chrono.js/sun.js/search.js keep it).
-    // Every other rule (unused vars, cond-assign, dupe-keys, …) still applies.
+    // — so no-undef is off for this set (common.js/coreutils.js/chrono.js/sun.js/
+    // search.js keep it). Every other rule (unused vars, cond-assign, …) applies.
     ...base,
     files: ["app/js/app.js", "app/js/core.js", "app/js/map.js", "app/js/case.js",
             "app/js/dossier.js", "app/js/palette.js", "app/js/modules/*.js"],
-    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals, ...chronoGlobals } },
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals, ...coreUtilsGlobals, ...chronoGlobals } },
     rules: { ...sharedRules, "no-undef": "off", "no-unused-vars": "off" },
   },
 ];

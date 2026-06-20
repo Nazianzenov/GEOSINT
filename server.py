@@ -478,23 +478,27 @@ def atomic_write(path: Path, data: bytes) -> None:
         _enforce_cache_cap()
 
 
-def _lonlat_to_tile(lon, lat, z):
-    """Slippy-map tile x,y for a lon/lat at zoom z (Web Mercator)."""
-    n = 2 ** z
-    x = int((lon + 180.0) / 360.0 * n)
-    lat_r = math.radians(max(-85.0511, min(85.0511, lat)))
-    y = int((1 - math.asinh(math.tan(lat_r)) / math.pi) / 2 * n)
-    return max(0, min(n - 1, x)), max(0, min(n - 1, y))
+# Pure Web-Mercator tile math lives in geosint/tiles.py (ARC-05 / #88) so it is
+# unit-testable without the HTTP Handler. Imported defensively so a frozen/
+# standalone server.py still starts if the package isn't importable, falling back
+# to a local copy. _lonlat_to_tile keeps its old name (used internally + in tests).
+try:
+    from geosint.tiles import lonlat_to_tile as _lonlat_to_tile, tiles_in_bbox
+except Exception:                       # pragma: no cover - frozen/standalone fallback
+    def _lonlat_to_tile(lon, lat, z):
+        n = 2 ** z
+        x = int((lon + 180.0) / 360.0 * n)
+        lat_r = math.radians(max(-85.0511, min(85.0511, lat)))
+        y = int((1 - math.asinh(math.tan(lat_r)) / math.pi) / 2 * n)
+        return max(0, min(n - 1, x)), max(0, min(n - 1, y))
 
-
-def tiles_in_bbox(s, w, n, e, zmin, zmax):
-    """Yield (z, x, y) for every tile covering bbox [s,w,n,e] over zmin..zmax."""
-    for z in range(zmin, zmax + 1):
-        x0, y0 = _lonlat_to_tile(w, n, z)        # NW corner
-        x1, y1 = _lonlat_to_tile(e, s, z)        # SE corner
-        for x in range(min(x0, x1), max(x0, x1) + 1):
-            for y in range(min(y0, y1), max(y0, y1) + 1):
-                yield z, x, y
+    def tiles_in_bbox(s, w, n, e, zmin, zmax):
+        for z in range(zmin, zmax + 1):
+            x0, y0 = _lonlat_to_tile(w, n, z)
+            x1, y1 = _lonlat_to_tile(e, s, z)
+            for x in range(min(x0, x1), max(x0, x1) + 1):
+                for y in range(min(y0, y1), max(y0, y1) + 1):
+                    yield z, x, y
 
 
 # Opener that refuses to follow 3xx redirects. The /api/pget and /tiles proxies
