@@ -29,6 +29,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+# Pin .svg -> image/svg+xml deterministically. send_file()'s SVG CSP/sandbox
+# branch keys off guess_type returning exactly this; on Windows, mimetypes.init()
+# consults the registry first, which can map .svg to something else and silently
+# skip the CSP. Registering it here makes the guard fire on every platform.
+mimetypes.add_type("image/svg+xml", ".svg")
+
 # ROOT = read-only bundled assets (app/, wiki/site/, data/). When frozen by
 # PyInstaller these live in the extracted bundle dir (sys._MEIPASS); otherwise
 # next to this file. DATA_ROOT = writable runtime dir (cache/): next to the
@@ -137,6 +143,14 @@ ALLOWED_HOSTS = set()           # exact host:port strings (fast path)
 # on hostname, not port, so DNS-rebinding (an attacker domain) is rejected while
 # Docker port-mapping (localhost:<any-port>) still works.
 ALLOWED_HOSTNAMES = {"127.0.0.1", "localhost", "[::1]", "::1"}
+
+# True when bound off-loopback (e.g. 0.0.0.0 in a container). Set in main().
+# When set, host_ok() emits a throttled warning for any request accepted only via
+# the unconditional loopback-name fallback — i.e. a peer reached the exposed bind
+# and sent `Host: localhost`, the exact scenario the startup warning tells the
+# operator to avoid. Makes that exposure observable per request (SEC-02).
+OFF_LOOPBACK_BIND = False
+_off_loopback_warn_at = [0.0]   # last warn time; throttle to avoid log flooding
 
 KML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -563,7 +577,22 @@ class Handler(BaseHTTPRequestHandler):
         host = (self.headers.get("Host") or "").strip().lower()
         if host in ALLOWED_HOSTS:                 # exact host:port (fast path)
             return True
-        return _host_name(host) in ALLOWED_HOSTNAMES
+        name = _host_name(host)
+        if name not in ALLOWED_HOSTNAMES:
+            return False
+        # Accepted via the hostname fallback. If we are bound off-loopback and the
+        # accepted name is a bare loopback alias, a network peer reached the exposed
+        # port and forged `Host: localhost` to slip past the rebinding guard — log
+        # it (throttled) so the operator sees the exposure they were warned about.
+        if OFF_LOOPBACK_BIND and name in ("127.0.0.1", "localhost", "[::1]", "::1"):
+            now = time.monotonic()
+            if now - _off_loopback_warn_at[0] > 60:
+                _off_loopback_warn_at[0] = now
+                sys.stderr.write(
+                    f"[geosint] WARNING: request accepted via loopback Host '{name}' while bound "
+                    f"off-loopback — a network peer may be reaching this exposed port. "
+                    f"Publish only to 127.0.0.1, or restrict with --allow-host.\n")
+        return True
 
     # JSON POST routes: path -> handler-method name. do_POST dispatches the
     # uniform JSON endpoints from this one table, and POST_PATHS is derived from
@@ -886,7 +915,12 @@ class Handler(BaseHTTPRequestHandler):
                 req = urllib.request.Request(mirror, data=data,
                                              headers={"User-Agent": UA})
                 with _no_redirect_opener.open(req, timeout=OVERPASS_TIMEOUT) as resp:
-                    body = resp.read(MAX_UPSTREAM_BYTES + 1)[:MAX_UPSTREAM_BYTES]
+                    # Read one byte past the ceiling to DETECT an oversize body and
+                    # raise (caught below), rather than silently truncating — same
+                    # contract as upstream_get(). Avoids caching a partial response.
+                    body = resp.read(MAX_UPSTREAM_BYTES + 1)
+                    if len(body) > MAX_UPSTREAM_BYTES:
+                        raise ValueError("overpass response too large")
                 json.loads(body)            # validate before caching
                 _preferred_mirror[0] = mirror
                 atomic_write(cached, body)
@@ -948,8 +982,11 @@ class Handler(BaseHTTPRequestHandler):
             self._warn("/api/exif", "exiftool", e)
             return self.send_json({"error": "exiftool timed out"}, 504)
         except (OSError, json.JSONDecodeError, ValueError) as e:
+            # Keep the exception text (which can embed the ExifTool path on a spawn
+            # OSError) only in the operator log; the client gets a generic message,
+            # matching the bad-exit branch above.
             self._warn("/api/exif", "exiftool", e)
-            return self.send_json({"error": str(e)[:500]}, 500)
+            return self.send_json({"error": "exiftool could not process this file"}, 500)
         finally:
             if tmp:
                 try:
@@ -1124,7 +1161,7 @@ def main():
     args = ap.parse_args()
 
     # Build the DNS-rebinding guard's accepted Host set for this run.
-    global ALLOWED_HOSTS, ALLOWED_HOSTNAMES
+    global ALLOWED_HOSTS, ALLOWED_HOSTNAMES, OFF_LOOPBACK_BIND
     ALLOWED_HOSTS = {
         f"127.0.0.1:{args.port}", f"localhost:{args.port}", f"[::1]:{args.port}",
         "127.0.0.1", "localhost", "[::1]",
@@ -1135,6 +1172,7 @@ def main():
         h = h.strip().lower()
         ALLOWED_HOSTNAMES.add(h.rsplit(":", 1)[0] if (":" in h and not h.startswith("[")) else h)
     loopback = args.host in ("127.0.0.1", "localhost", "::1")
+    OFF_LOOPBACK_BIND = not loopback
     if not loopback:
         # Off-loopback bind (e.g. 0.0.0.0 in a container). Loopback names still
         # work for the common `-p host:container` Docker case; direct IP/hostname
