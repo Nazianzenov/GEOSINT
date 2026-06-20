@@ -103,6 +103,35 @@ def test_post_requires_csrf_header():
     assert b"X-GeOSINT" in body
 
 
+# ── SEC-01: GET proxies refuse an explicit cross-site drive-by ──────────────
+def test_pget_cross_site_refused(monkeypatch):
+    # A cross-site Sec-Fetch-Site is rejected (403) BEFORE param/allowlist checks,
+    # so a drive-by page can neither launder a request nor poison the cache.
+    st, _, _ = req("GET", "/api/pget?u=https://api.open-meteo.com/v1/forecast?x=1",
+                   headers={"Sec-Fetch-Site": "cross-site"})
+    assert st == 403
+
+
+def test_tile_cross_site_refused():
+    st, _, _ = req("GET", "/tiles/osm/1/0/0", headers={"Sec-Fetch-Site": "cross-site"})
+    assert st == 403
+
+
+def test_pget_same_origin_not_blocked_by_csrf_guard():
+    # same-origin (the SPA's own fetch) passes the cross-site guard — it then fails
+    # later on the allowlist (403) or upstream, NOT on the Sec-Fetch-Site check.
+    # Use the missing-param path to prove the guard let it through: 400, not 403.
+    st, _, _ = req("GET", "/api/pget", headers={"Sec-Fetch-Site": "same-origin"})
+    assert st == 400                             # reached the param check, not refused
+
+
+def test_tile_no_sec_fetch_header_allowed():
+    # Clients that send no Sec-Fetch-Site (older browsers, curl, HEALTHCHECK, bare
+    # <img> in some engines) are NOT refused — an unknown layer still 404s normally.
+    st, _, _ = req("GET", "/tiles/nope/1/0/0")   # no Sec-Fetch-Site header
+    assert st == 404                             # normal validation, not a 403 refusal
+
+
 # ── pget allowlist ──────────────────────────────────────────────────────────
 def test_pget_missing_param_is_400():
     st, _, _ = req("GET", "/api/pget")
@@ -146,6 +175,17 @@ def test_overpass_substring_out_rejected():
     # regression: "timeout"/"output" must NOT satisfy the `out` requirement
     st, _, _ = jpost("/api/overpass", {"q": "[timeout:5];node(1,2,3,4);"})
     assert st == 400
+
+
+# ── .svg resolves to image/svg+xml so send_file's CSP/sandbox branch fires ────
+def test_svg_mimetype_registered(tmp_path):
+    # AUD-01/#108: send_file keys its SVG CSP/sandbox headers off guess_type
+    # returning exactly "image/svg+xml". Importing server must register that
+    # mapping deterministically (mimetypes can otherwise vary by OS/registry).
+    import mimetypes
+    f = tmp_path / "flag.svg"
+    f.write_text("<svg xmlns='http://www.w3.org/2000/svg'></svg>")
+    assert mimetypes.guess_type(str(f))[0] == "image/svg+xml"
 
 
 # ── exif: input validated before tool presence (400 before 409) ─────────────
@@ -403,6 +443,51 @@ def test_static_traversal_blocked():
     assert st in (403, 404)
     st2, _, _ = req("GET", "/app/../server.py")
     assert st2 in (403, 404)
+
+
+# ── global cache size cap (#82) ─────────────────────────────────────────────
+def test_cache_cap_evicts_oldest_over_ceiling(monkeypatch, tmp_path):
+    # _enforce_cache_cap deletes oldest-by-mtime files until total is back under
+    # CACHE_EVICT_TO × the ceiling. Build 10 × 1 KiB files with increasing mtimes,
+    # set a 5 KiB ceiling, and assert the oldest are gone and we are under target.
+    import os
+    monkeypatch.setattr(server, "CACHE", tmp_path)
+    monkeypatch.setattr(server, "CACHE_MAX_BYTES", 5 * 1024)
+    monkeypatch.setattr(server, "CACHE_EVICT_TO", 0.9)
+    (tmp_path / "tiles").mkdir()
+    for i in range(10):
+        f = tmp_path / "tiles" / f"e{i}.bin"
+        f.write_bytes(b"x" * 1024)
+        os.utime(f, (1000 + i, 1000 + i))       # e0 oldest ... e9 newest
+
+    server._enforce_cache_cap()
+
+    total = sum(p.stat().st_size for p in tmp_path.rglob("*.bin"))
+    assert total <= int(5 * 1024 * 0.9)          # back under the low-water mark
+    assert not (tmp_path / "tiles" / "e0.bin").exists()   # oldest evicted
+    assert (tmp_path / "tiles" / "e9.bin").exists()       # newest kept
+
+
+def test_cache_cap_disabled_when_zero(monkeypatch, tmp_path):
+    monkeypatch.setattr(server, "CACHE", tmp_path)
+    monkeypatch.setattr(server, "CACHE_MAX_BYTES", 0)        # disabled
+    f = tmp_path / "keep.bin"
+    f.write_bytes(b"x" * (4 * 1024))
+    server._enforce_cache_cap()
+    assert f.exists()                            # nothing evicted when cap is off
+
+
+def test_cache_cap_skips_inflight_temp_files(monkeypatch, tmp_path):
+    # .tmp-* files are in-flight atomic_write temps, not cache entries — the sweep
+    # must never count or delete them.
+    import os
+    monkeypatch.setattr(server, "CACHE", tmp_path)
+    monkeypatch.setattr(server, "CACHE_MAX_BYTES", 1024)
+    tmpf = tmp_path / ".tmp-writing.bin"
+    tmpf.write_bytes(b"x" * (4 * 1024))          # bigger than the ceiling
+    os.utime(tmpf, (1, 1))                        # very old, but must be ignored
+    server._enforce_cache_cap()
+    assert tmpf.exists()                         # in-flight temp untouched
 
 
 # ── redacted dossier logic is JS, but the case-format guard is shared — n/a ──

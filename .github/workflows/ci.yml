@@ -10,7 +10,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # ubuntu (POSIX) + windows cover the two code paths that branch on OS
+        # (os.waitpid/chmod/start_new_session vs. the Windows no-ops). macos-latest
+        # was dropped to conserve Actions minutes — it bills at 10x and added no
+        # coverage the Linux POSIX lane doesn't already give.
+        os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

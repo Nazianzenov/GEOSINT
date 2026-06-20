@@ -29,6 +29,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+# Pin .svg -> image/svg+xml deterministically. send_file()'s SVG CSP/sandbox
+# branch keys off guess_type returning exactly this; on Windows, mimetypes.init()
+# consults the registry first, which can map .svg to something else and silently
+# skip the CSP. Registering it here makes the guard fire on every platform.
+mimetypes.add_type("image/svg+xml", ".svg")
+
 # ROOT = read-only bundled assets (app/, wiki/site/, data/). When frozen by
 # PyInstaller these live in the extracted bundle dir (sys._MEIPASS); otherwise
 # next to this file. DATA_ROOT = writable runtime dir (cache/): next to the
@@ -45,6 +51,17 @@ CACHE = DATA_ROOT / "cache"
 OVERPASS_CACHE = CACHE / "overpass"
 TILE_CACHE = CACHE / "tiles"
 PGET_CACHE = CACHE / "pget"
+# Global on-disk cache ceiling. Per-response writes are already bounded
+# (MAX_UPSTREAM_BYTES) and prefetch is capped per request, but nothing bounded the
+# *total* — sustained tile/pget proxying or repeated prefetch resumes could fill
+# the disk over a long-lived run. After a write, atomic_write() occasionally sweeps
+# CACHE and, if over the ceiling, deletes oldest-by-mtime files down to a low-water
+# mark (a coarse LRU). Override with GEOSINT_CACHE_MAX_MB=0 to disable.
+try:
+    CACHE_MAX_BYTES = int(float(os.environ.get("GEOSINT_CACHE_MAX_MB", "2048")) * 1024 * 1024)
+except ValueError:
+    CACHE_MAX_BYTES = 2048 * 1024 * 1024
+CACHE_EVICT_TO = 0.9            # sweep evicts down to 90% of the ceiling (low-water)
 OVERPASS_TTL = 30 * 86400
 # Canonical instance first — it's the most reliable; the others are fallbacks for
 # when it's rate-limiting. (kumi.systems used to lead but is frequently slow.)
@@ -137,6 +154,14 @@ ALLOWED_HOSTS = set()           # exact host:port strings (fast path)
 # on hostname, not port, so DNS-rebinding (an attacker domain) is rejected while
 # Docker port-mapping (localhost:<any-port>) still works.
 ALLOWED_HOSTNAMES = {"127.0.0.1", "localhost", "[::1]", "::1"}
+
+# True when bound off-loopback (e.g. 0.0.0.0 in a container). Set in main().
+# When set, host_ok() emits a throttled warning for any request accepted only via
+# the unconditional loopback-name fallback — i.e. a peer reached the exposed bind
+# and sent `Host: localhost`, the exact scenario the startup warning tells the
+# operator to avoid. Makes that exposure observable per request (SEC-02).
+OFF_LOOPBACK_BIND = False
+_off_loopback_warn_at = [0.0]   # last warn time; throttle to avoid log flooding
 
 KML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -380,6 +405,52 @@ def cache_fresh(path: Path, ttl: int) -> bool:
     return path.is_file() and time.time() - path.stat().st_mtime < ttl
 
 
+_evict_lock = threading.Lock()
+_writes_since_sweep = [0]
+
+
+def _enforce_cache_cap() -> None:
+    """Best-effort global cache eviction. When CACHE exceeds CACHE_MAX_BYTES,
+    delete the oldest files (by mtime — a coarse LRU) until total size is back
+    under CACHE_EVICT_TO × the ceiling. Triggered occasionally from atomic_write,
+    not on every write (walking the tree is O(files)). Never raises: an eviction
+    failure must not break the cache write or the request that drove it."""
+    if CACHE_MAX_BYTES <= 0:
+        return
+    if not _evict_lock.acquire(blocking=False):
+        return                      # another thread is already sweeping
+    try:
+        entries = []                # (mtime, size, path)
+        total = 0
+        for root, _dirs, files in os.walk(CACHE):
+            for name in files:
+                if name.startswith(".tmp-"):
+                    continue        # in-flight atomic_write temp; not a cache entry
+                fp = os.path.join(root, name)
+                try:
+                    st = os.stat(fp)
+                except OSError:
+                    continue        # vanished mid-walk (concurrent write/evict)
+                entries.append((st.st_mtime, st.st_size, fp))
+                total += st.st_size
+        if total <= CACHE_MAX_BYTES:
+            return
+        target = int(CACHE_MAX_BYTES * CACHE_EVICT_TO)
+        entries.sort()             # oldest mtime first
+        for _mtime, size, fp in entries:
+            if total <= target:
+                break
+            try:
+                os.unlink(fp)
+                total -= size
+            except OSError:
+                pass               # already gone / locked — skip, keep going
+    except OSError:
+        pass                       # CACHE missing or unwalkable — nothing to do
+    finally:
+        _evict_lock.release()
+
+
 def atomic_write(path: Path, data: bytes) -> None:
     """Write a cache file atomically. The server is threaded, so two requests can
     race to populate the same cache entry while a third reads it; a plain
@@ -399,6 +470,12 @@ def atomic_write(path: Path, data: bytes) -> None:
         except OSError:
             pass
         raise
+    # Amortise the cap check: sweep roughly every 64th write rather than walking
+    # the whole cache tree on every single one.
+    _writes_since_sweep[0] += 1
+    if _writes_since_sweep[0] >= 64:
+        _writes_since_sweep[0] = 0
+        _enforce_cache_cap()
 
 
 def _lonlat_to_tile(lon, lat, z):
@@ -563,7 +640,38 @@ class Handler(BaseHTTPRequestHandler):
         host = (self.headers.get("Host") or "").strip().lower()
         if host in ALLOWED_HOSTS:                 # exact host:port (fast path)
             return True
-        return _host_name(host) in ALLOWED_HOSTNAMES
+        name = _host_name(host)
+        if name not in ALLOWED_HOSTNAMES:
+            return False
+        # Accepted via the hostname fallback. If we are bound off-loopback and the
+        # accepted name is a bare loopback alias, a network peer reached the exposed
+        # port and forged `Host: localhost` to slip past the rebinding guard — log
+        # it (throttled) so the operator sees the exposure they were warned about.
+        if OFF_LOOPBACK_BIND and name in ("127.0.0.1", "localhost", "[::1]", "::1"):
+            now = time.monotonic()
+            if now - _off_loopback_warn_at[0] > 60:
+                _off_loopback_warn_at[0] = now
+                sys.stderr.write(
+                    f"[geosint] WARNING: request accepted via loopback Host '{name}' while bound "
+                    f"off-loopback — a network peer may be reaching this exposed port. "
+                    f"Publish only to 127.0.0.1, or restrict with --allow-host.\n")
+        return True
+
+    def _is_cross_site(self):
+        """True iff the browser explicitly flagged this request as cross-site.
+
+        The cache-writing GET proxies (/api/pget, /tiles) are not behind the
+        POST-only X-GeOSINT CSRF header, so a malicious page could drive them
+        cross-origin to launder requests through the allowlist or poison the
+        durable on-disk cache for the analyst's future lookups (SEC-01).
+
+        `Sec-Fetch-Site` is set by the browser and cannot be forged by page JS.
+        We reject ONLY the unambiguous `cross-site` value: the SPA's own requests
+        are `same-origin`, and clients that send no Sec-Fetch-* header at all
+        (older browsers, curl, the container HEALTHCHECK) are allowed through so
+        we don't break legitimate non-browser/loopback use. `same-site` is left
+        permitted (there is no other site on loopback to distinguish it from)."""
+        return self.headers.get("Sec-Fetch-Site", "").lower() == "cross-site"
 
     # JSON POST routes: path -> handler-method name. do_POST dispatches the
     # uniform JSON endpoints from this one table, and POST_PATHS is derived from
@@ -646,6 +754,10 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- cached tile proxy: /tiles/<layer>/<z>/<x>/<y> -------------------
     def api_tile(self, path):
+        # SEC-01: refuse an explicit cross-site drive-by before any cache read or
+        # upstream fetch, so it can neither launder a request nor poison the cache.
+        if self._is_cross_site():
+            return self.send_json({"error": "cross-site request refused"}, 403)
         parts = path.strip("/").split("/")          # tiles, layer, z, x, y
         if len(parts) != 5 or parts[1] not in TILE_LAYERS:
             return self.send_json({"error": "unknown tile layer"}, 404)
@@ -732,6 +844,10 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- generic cached GET proxy: /api/pget?u=<allowlisted url> ---------
     def api_pget(self, query):
+        # SEC-01: refuse an explicit cross-site drive-by before any cache read or
+        # upstream fetch (same rationale as api_tile).
+        if self._is_cross_site():
+            return self.send_json({"error": "cross-site request refused"}, 403)
         url = urllib.parse.parse_qs(query).get("u", [""])[0]
         if not url:                               # missing required param is a bad request, not "forbidden"
             return self.send_json({"error": "missing 'u' parameter"}, 400)
@@ -886,7 +1002,12 @@ class Handler(BaseHTTPRequestHandler):
                 req = urllib.request.Request(mirror, data=data,
                                              headers={"User-Agent": UA})
                 with _no_redirect_opener.open(req, timeout=OVERPASS_TIMEOUT) as resp:
-                    body = resp.read(MAX_UPSTREAM_BYTES + 1)[:MAX_UPSTREAM_BYTES]
+                    # Read one byte past the ceiling to DETECT an oversize body and
+                    # raise (caught below), rather than silently truncating — same
+                    # contract as upstream_get(). Avoids caching a partial response.
+                    body = resp.read(MAX_UPSTREAM_BYTES + 1)
+                    if len(body) > MAX_UPSTREAM_BYTES:
+                        raise ValueError("overpass response too large")
                 json.loads(body)            # validate before caching
                 _preferred_mirror[0] = mirror
                 atomic_write(cached, body)
@@ -948,8 +1069,11 @@ class Handler(BaseHTTPRequestHandler):
             self._warn("/api/exif", "exiftool", e)
             return self.send_json({"error": "exiftool timed out"}, 504)
         except (OSError, json.JSONDecodeError, ValueError) as e:
+            # Keep the exception text (which can embed the ExifTool path on a spawn
+            # OSError) only in the operator log; the client gets a generic message,
+            # matching the bad-exit branch above.
             self._warn("/api/exif", "exiftool", e)
-            return self.send_json({"error": str(e)[:500]}, 500)
+            return self.send_json({"error": "exiftool could not process this file"}, 500)
         finally:
             if tmp:
                 try:
@@ -1124,7 +1248,7 @@ def main():
     args = ap.parse_args()
 
     # Build the DNS-rebinding guard's accepted Host set for this run.
-    global ALLOWED_HOSTS, ALLOWED_HOSTNAMES
+    global ALLOWED_HOSTS, ALLOWED_HOSTNAMES, OFF_LOOPBACK_BIND
     ALLOWED_HOSTS = {
         f"127.0.0.1:{args.port}", f"localhost:{args.port}", f"[::1]:{args.port}",
         "127.0.0.1", "localhost", "[::1]",
@@ -1135,6 +1259,7 @@ def main():
         h = h.strip().lower()
         ALLOWED_HOSTNAMES.add(h.rsplit(":", 1)[0] if (":" in h and not h.startswith("[")) else h)
     loopback = args.host in ("127.0.0.1", "localhost", "::1")
+    OFF_LOOPBACK_BIND = not loopback
     if not loopback:
         # Off-loopback bind (e.g. 0.0.0.0 in a container). Loopback names still
         # work for the common `-p host:container` Docker case; direct IP/hostname
