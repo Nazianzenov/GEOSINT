@@ -35,18 +35,14 @@ def ensure_venv():
 
 
 def ensure_wiki(rebuild=False):
-    site = ROOT / "wiki" / "site" / "index.html"
-    if rebuild or not site.exists():
-        # best-effort data refresh; the wiki builds even if network steps fail
-        for step in (["tools/fetch_datasets.py"], ["tools/build_flora.py"]):
-            try: _run([PY, *step])
-            except subprocess.CalledProcessError: pass
-        _run([MKDOCS, "build", "-f", str(ROOT / "wiki" / "mkdocs.yml")])
-        try: _run([PY, "tools/build_search_index.py"])
-        except subprocess.CalledProcessError: pass
-    if not (ROOT / "app" / "data" / "search-index.json").exists():
-        try: _run([PY, "tools/build_search_index.py"])
-        except subprocess.CalledProcessError: pass
+    # Delegate to the single shared pipeline (tools/build_all.py) so `python -m
+    # geosint`, run.ps1 and run.sh all build the SAME artifacts (#90). It is
+    # idempotent (skips when already built unless --rebuild) and aborts only on a
+    # required step (mkdocs / search index); network steps are best-effort.
+    cmd = [PY, str(ROOT / "tools" / "build_all.py"), "--python", str(PY), "--mkdocs", str(MKDOCS)]
+    if rebuild:
+        cmd.append("--rebuild")
+    _run(cmd)
 
 
 def main():

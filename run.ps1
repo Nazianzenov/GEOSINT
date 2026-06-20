@@ -22,30 +22,11 @@ if (-not (Test-Path ".venv\Scripts\mkdocs.exe")) {
     & $pip install --quiet -r requirements.txt
 }
 
-if ($RebuildWiki -or -not (Test-Path "wiki\site\index.html")) {
-    Write-Host "[geosint] Refreshing open datasets (cache hit if <30 days old)..." -ForegroundColor Cyan
-    & $py tools\fetch_datasets.py
-    & $py tools\build_flora.py
-    Write-Host "[geosint] Refreshing Wikimedia image cache (re-fetches only entries >30 days old)..." -ForegroundColor Cyan
-    & $py tools\cache_wikimedia.py
-    Write-Host "[geosint] Localizing GeoHints gallery images (one-off; skips already-cached, no auto-refresh)..." -ForegroundColor Cyan
-    & $py tools\cache_geohints.py
-    Write-Host "[geosint] Refreshing national flags from Wikimedia (skips already-cached)..." -ForegroundColor Cyan
-    & $py tools\build_flags.py
-    Write-Host "[geosint] Refreshing subnational & dependency flags (skips already-cached)..." -ForegroundColor Cyan
-    & $py tools\build_subnational_flags.py
-    Write-Host "[geosint] Refreshing Commons micro-detail galleries (hydrants/manholes/bus stops/pylons/chevrons)..." -ForegroundColor Cyan
-    & $py tools\build_commons_gallery.py
-    Write-Host "[geosint] Regenerating ccTLD + calling-code reference tables..." -ForegroundColor Cyan
-    & $py tools\build_refdata.py
-    Write-Host "[geosint] Building wiki..." -ForegroundColor Cyan
-    & ".venv\Scripts\mkdocs.exe" build -f wiki\mkdocs.yml
-    Write-Host "[geosint] Rebuilding search index + knowledge graph..." -ForegroundColor Cyan
-    & $py tools\build_search_index.py
-}
-if (-not (Test-Path "app\data\search-index.json")) {
-    & $py tools\build_search_index.py
-}
+# Single shared build pipeline (tools\build_all.py) — same artifacts on every
+# platform as run.sh / `python -m geosint` (#90). Idempotent: it skips when the
+# wiki is already built unless --rebuild, and aborts only on a required step.
+$rebuildArg = if ($RebuildWiki) { "--rebuild" } else { $null }
+& $py tools\build_all.py --python $py --mkdocs ".venv\Scripts\mkdocs.exe" $rebuildArg
 
 Write-Host "[geosint] Starting server on port $Port" -ForegroundColor Green
 & $py server.py --port $Port
