@@ -158,6 +158,16 @@ function renderGeometry() {
 /* drawSunChart is in common.js (shared with the workbench Sun module) */
 
 /* ════════════════════════════ solver ═══════════════════════════ */
+/* The shadow solver (shadowAt / shadowFit / solve) is the shared, DOM-free
+   CHRONO engine in app/js/chrono.js (issue #84). The Studio keeps only its own
+   rendering, two-shadow inputs and the "send to case" hand-off. */
+
+// wrap-aware HH:MM (two-shadow's m+dt2 can push a window past midnight)
+function hmClock(mins) {
+  const w = ((mins % 1440) + 1440) % 1440;
+  return `${String(Math.floor(w / 60)).padStart(2, "0")}:${String(w % 60).padStart(2, "0")}`;
+}
+
 function runSolver() {
   const out = $("#solver-out");
   if (!state.loc) { out.innerHTML = `<p class="nomatch">Set the photo location first.</p>`; return; }
@@ -165,59 +175,34 @@ function runSolver() {
   const ratioT = parseFloat($("#solver-ratio").value);
   const tol = parseFloat($("#solver-tol").value) || 8;
   if (isNaN(azT) && isNaN(ratioT)) { out.innerHTML = `<p class="hint">Measure object + shadow on the image, or type a shadow azimuth / ratio, to solve for the time.</p>`; return; }
+  // optional second reading taken Δ minutes after the first (two-shadow mode)
+  const az2 = parseFloat($("#solver-az2").value);
+  const ratio2 = parseFloat($("#solver-ratio2").value);
+  const dt2 = parseFloat($("#solver-dt2").value);
   const sd = sunDate(); const { lat, lng } = state.loc;
-  const matches = [];
-  for (let m = 0; m < 1440; m += 2) {
-    const d = new Date(Date.UTC(sd.Y, sd.M - 1, sd.D, 0, m) - sd.off * 3600e3);
-    const pos = SunCalc.getPosition(d, lat, lng);
-    if (pos.altitude <= 0.02) continue;
-    const shAz = (compassAz(pos.azimuth) + 180) % 360;
-    const ratio = 1 / Math.tan(pos.altitude);
-    let ok = true, err = 0;
-    if (!isNaN(azT)) {
-      const dAz = Math.min(Math.abs(shAz - azT), 360 - Math.abs(shAz - azT));
-      if (dAz > tol) ok = false; else err += dAz;
-    }
-    if (ok && !isNaN(ratioT)) {
-      const dR = Math.abs(ratio - ratioT) / ratioT;
-      if (dR > 0.18) ok = false; else err += dR * 20;
-    }
-    if (ok) matches.push({ m, shAz, ratio, err });
-  }
-  if (!matches.length) {
-    const conf = tol <= 5 ? "high" : tol <= 12 ? "moderate" : "low";
-    out.innerHTML = `<p class="nomatch">✗ <b>Claim inconsistent (${conf} confidence)</b> — no time on this
+
+  const res = CHRONO.solve({ sd, lat, lng, azT, ratioT, tol, second: { az2, ratio2, dt2 } });
+
+  if (res.status === "inconsistent") {
+    out.innerHTML = `<p class="nomatch">✗ <b>Claim inconsistent (${res.confidence} confidence)</b> — no time on this
       date matches at this location, within ±${tol}° tolerance.</p>` + sendToCaseBtn();
-    state.solverResult = { status: "inconsistent", confidence: conf, tol, windows: [],
-      loc: { lat, lng }, dt: $("#sun-dt").value };
+    state.solverResult = { status: "inconsistent", confidence: res.confidence, tol, twoShadow: res.twoShadow,
+      windows: [], loc: { lat, lng }, dt: $("#sun-dt").value };
     wireSendToCase();
     return;
   }
-  const groups = []; let g = [matches[0]];
-  for (let i = 1; i < matches.length; i++) {
-    if (matches[i].m - matches[i - 1].m <= 6) g.push(matches[i]);
-    else { groups.push(g); g = [matches[i]]; }
-  }
-  groups.push(g);
-  const hm = (mins) => `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
 
-  // Confidence: matched-window width × tolerance (mirrors the main workbench solver).
-  const totalWidth = groups.reduce((s, gr) => s + (gr[gr.length - 1].m - gr[0].m + 2), 0);
-  let conf, why;
-  if (totalWidth <= 30 && tol <= 8 && groups.length === 1) { conf = "high"; why = "single narrow window, tight tolerance"; }
-  else if (totalWidth <= 90 && groups.length <= 2) { conf = "moderate"; why = `${groups.length} window(s), ~${totalWidth} min total`; }
-  else { conf = "low"; why = `${groups.length} windows spanning ~${totalWidth} min — ambiguous`; }
-
-  out.innerHTML = groups.map((gr) => {
-    const best = gr.reduce((a, b) => (a.err < b.err ? a : b));
-    return `<div class="match">✓ ${hm(gr[0].m)}–${hm(gr[gr.length - 1].m)} local
-      (best ${hm(best.m)} · shadow→${best.shAz.toFixed(0)}° · ${best.ratio.toFixed(2)}×)</div>`;
-  }).join("") +
-    `<div class="solver-conf conf-${conf}">Confidence: <b>${conf}</b> — ${why} (tolerance ±${tol}°).</div>` +
+  const header = res.twoShadow
+    ? `<p class="hint">Two-shadow mode: times where both readings fit (1st reading's time shown; 2nd is ${dt2 > 0 ? "+" : ""}${dt2} min later).</p>`
+    : "";
+  out.innerHTML = header + res.windows.map((w) =>
+    `<div class="match">✓ ${hmClock(w.startMin)}–${hmClock(w.endMin)} local
+      (best ${hmClock(w.bestMin)} · shadow→${w.shAz.toFixed(0)}° · ${w.ratio.toFixed(2)}×)</div>`).join("") +
+    `<div class="solver-conf conf-${res.confidence}">Confidence: <b>${res.confidence}</b> — ${res.why} (tolerance ±${tol}°).</div>` +
     sendToCaseBtn();
   state.solverResult = {
-    status: "match", confidence: conf, why, tol,
-    windows: groups.map((gr) => `${hm(gr[0].m)}–${hm(gr[gr.length - 1].m)}`),
+    status: "match", confidence: res.confidence, why: res.why, tol, twoShadow: res.twoShadow,
+    windows: res.windows.map((w) => `${hmClock(w.startMin)}–${hmClock(w.endMin)}`),
     loc: { lat, lng }, dt: $("#sun-dt").value,
   };
   wireSendToCase();
@@ -251,7 +236,7 @@ function wireSendToCase() {
 
 function initSolver() {
   $("#solver-run").addEventListener("click", runSolver);
-  ["solver-az", "solver-ratio", "solver-tol"].forEach((id) =>
+  ["solver-az", "solver-ratio", "solver-tol", "solver-az2", "solver-ratio2", "solver-dt2"].forEach((id) =>
     $("#" + id).addEventListener("input", runSolver));
 }
 

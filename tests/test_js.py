@@ -384,6 +384,87 @@ def test_shadowat_null_below_horizon(page):
     assert res["noon"] is True         # a shadow exists around local noon
 
 
+# ── shared chronolocation engine: CHRONO.solve (#84) ────────────────────────
+# The solver used to be hand-copied into modules/sun.js and sun.js; it is now the
+# single DOM-free CHRONO.solve engine. These exercise the data it returns
+# (structured minute windows), independent of any DOM rendering.
+def _solve(page, **inp):
+    return page.evaluate("(i) => CHRONO.solve(i)", inp)
+
+
+# A real, self-consistent target: take the actual shadow at a known minute and feed
+# it back as the measurement — solve() must recover a window containing that minute.
+def test_solve_single_shadow_recovers_the_true_window(page):
+    res = page.evaluate(
+        """() => {
+            const sd = { Y: 2024, M: 6, D: 21, off: 0 };
+            const lat = 48.85, lng = 2.29, trueM = 600;        // 10:00 local
+            const s = CHRONO.shadowAt(trueM, sd, lat, lng);
+            const r = CHRONO.solve({ sd, lat, lng, azT: s.shAz, ratioT: s.ratio, tol: 8,
+                                     second: { az2: NaN, ratio2: NaN, dt2: NaN } });
+            const inWindow = r.windows.some(w => w.startMin <= trueM && trueM <= w.endMin);
+            return { status: r.status, twoShadow: r.twoShadow, inWindow, nWindows: r.windows.length };
+        }"""
+    )
+    assert res["status"] == "match"
+    assert res["twoShadow"] is False
+    assert res["inWindow"] is True          # the true minute lies inside a returned window
+
+
+def test_solve_no_match_is_inconsistent(page):
+    # An impossible ratio (sun would have to be effectively at the zenith all day)
+    # against a tight tolerance yields a falsification with no windows.
+    res = _solve(page, sd={"Y": 2024, "M": 6, "D": 21, "off": 0}, lat=48.85, lng=2.29,
+                 azT=float("nan"), ratioT=0.001, tol=4,
+                 second={"az2": float("nan"), "ratio2": float("nan"), "dt2": float("nan")})
+    assert res["status"] == "inconsistent"
+    assert res["windows"] == []
+    assert res["confidence"] == "high"      # tol <= 5 -> a confident falsification
+
+
+def test_solve_two_shadow_engages_and_tightens(page):
+    # Build a genuine two-reading scenario: shadow at trueM and at trueM+90.
+    # solve() must engage two-shadow mode and still contain the true minute.
+    res = page.evaluate(
+        """() => {
+            const sd = { Y: 2024, M: 6, D: 21, off: 0 };
+            const lat = 48.85, lng = 2.29, trueM = 540, dt2 = 90;   // 09:00 + 90 min
+            const s1 = CHRONO.shadowAt(trueM, sd, lat, lng);
+            const s2 = CHRONO.shadowAt(trueM + dt2, sd, lat, lng);
+            const r = CHRONO.solve({ sd, lat, lng, azT: s1.shAz, ratioT: s1.ratio, tol: 8,
+                                     second: { az2: s2.shAz, ratio2: s2.ratio, dt2 } });
+            const inWindow = r.windows.some(w => w.startMin <= trueM && trueM <= w.endMin);
+            return { status: r.status, twoShadow: r.twoShadow, inWindow };
+        }"""
+    )
+    assert res["status"] == "match"
+    assert res["twoShadow"] is True         # second reading present -> two-shadow engaged
+    assert res["inWindow"] is True
+
+
+def test_solve_window_shape_and_confidence_tiers(page):
+    # Each window is structured {startMin,endMin,bestMin,shAz,ratio}; confidence is
+    # one of the three tiers; a wider tolerance never yields a *higher* tier here.
+    res = page.evaluate(
+        """() => {
+            const sd = { Y: 2024, M: 6, D: 21, off: 0 }, lat = 48.85, lng = 2.29, m = 600;
+            const s = CHRONO.shadowAt(m, sd, lat, lng);
+            const tight = CHRONO.solve({ sd, lat, lng, azT: s.shAz, ratioT: s.ratio, tol: 3,
+                                         second: { az2: NaN, ratio2: NaN, dt2: NaN } });
+            const wide  = CHRONO.solve({ sd, lat, lng, azT: s.shAz, ratioT: s.ratio, tol: 30,
+                                         second: { az2: NaN, ratio2: NaN, dt2: NaN } });
+            const w = tight.windows[0];
+            const keys = w && ["startMin","endMin","bestMin","shAz","ratio"].every(k => k in w);
+            const rank = { high: 3, moderate: 2, low: 1 };
+            return { keys, tight: tight.confidence, wide: wide.confidence,
+                     wideNotHigher: rank[wide.confidence] <= rank[tight.confidence] };
+        }"""
+    )
+    assert res["keys"] is True              # window carries the documented structured fields
+    assert res["tight"] in ("high", "moderate", "low")
+    assert res["wideNotHigher"] is True     # looser tolerance is never a stronger claim
+
+
 # ── artifact link picker (#50 coverage; replaces the old prompt flow) ───────
 def test_link_picker_records_link(page):
     res = page.evaluate(

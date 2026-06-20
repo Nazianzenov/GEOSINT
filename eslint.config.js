@@ -29,6 +29,14 @@ const commonGlobals = {
   fillUtcOffsets: "readonly", sunDate: "readonly", fmtClock: "readonly",
 };
 
+// Shared chronolocation engine DEFINED in app/js/chrono.js (loaded after
+// common.js, before the solver modules). Same pattern as commonGlobals: declared
+// here so no-undef resolves CHRONO/shadowAt/shadowFit in sun.js; chrono.js itself
+// is linted without these so its own declarations are the definitions.
+const chronoGlobals = {
+  CHRONO: "readonly", shadowAt: "readonly", shadowFit: "readonly",
+};
+
 const sharedRules = {
   "no-undef": "error",
   "no-unused-vars": ["warn", { args: "none", varsIgnorePattern: "^_" }],
@@ -60,22 +68,32 @@ module.exports = [
     rules: { ...sharedRules, "no-unused-vars": "off" },
   },
   {
+    // chrono.js DEFINES the shared shadow-solver engine (CHRONO + the shadowAt/
+    // shadowFit page globals). Like common.js: don't predeclare its own surface
+    // and don't flag it "unused" (consumed by the solver modules / tests).
+    ...base,
+    files: ["app/js/chrono.js"],
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals } },
+    rules: { ...sharedRules, "no-unused-vars": "off" },
+  },
+  {
     // The standalone Studio (sun.js) and the search module use only common.js's
-    // helpers, so no-undef can fully resolve their references.
+    // helpers (and, for sun.js, the chrono.js engine), so no-undef can fully
+    // resolve their references.
     ...base,
     files: ["app/js/sun.js", "app/js/search.js"],
-    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals } },
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals, ...chronoGlobals } },
   },
   {
     // The workbench is ONE program split across app.js + modules/*.js (classic
     // <script>s sharing global scope, #31). They legitimately cross-reference
     // each other's top-level functions/consts, which a per-file linter can't see
-    // — so no-undef is off for this set (common.js/sun.js/search.js keep it).
+    // — so no-undef is off for this set (common.js/chrono.js/sun.js/search.js keep it).
     // Every other rule (unused vars, cond-assign, dupe-keys, …) still applies.
     ...base,
     files: ["app/js/app.js", "app/js/core.js", "app/js/map.js", "app/js/case.js",
             "app/js/dossier.js", "app/js/palette.js", "app/js/modules/*.js"],
-    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals } },
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals, ...chronoGlobals } },
     rules: { ...sharedRules, "no-undef": "off", "no-unused-vars": "off" },
   },
 ];
