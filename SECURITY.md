@@ -37,6 +37,10 @@ those endpoints through the user's browser:
 - **No shell** — all subprocess launches are argv-lists (no `shell=True`);
   attacker-controlled strings (EXIF, OSM tags, pasted findings) are escaped before
   reaching the DOM or a dossier.
+- **Native parser hygiene** — the `/api/exif*` endpoints run **ExifTool** over
+  untrusted image/video bytes, and ExifTool has had parser CVEs. Keep ExifTool
+  patched: rebuild the Docker image periodically (its `Dockerfile` documents this)
+  or keep your locally installed ExifTool up to date.
 
 ### In scope
 - Bypasses of the loopback / Host / CSRF / SSRF guards above.
