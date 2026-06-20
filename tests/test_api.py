@@ -148,6 +148,17 @@ def test_overpass_substring_out_rejected():
     assert st == 400
 
 
+# ── .svg resolves to image/svg+xml so send_file's CSP/sandbox branch fires ────
+def test_svg_mimetype_registered(tmp_path):
+    # AUD-01/#108: send_file keys its SVG CSP/sandbox headers off guess_type
+    # returning exactly "image/svg+xml". Importing server must register that
+    # mapping deterministically (mimetypes can otherwise vary by OS/registry).
+    import mimetypes
+    f = tmp_path / "flag.svg"
+    f.write_text("<svg xmlns='http://www.w3.org/2000/svg'></svg>")
+    assert mimetypes.guess_type(str(f))[0] == "image/svg+xml"
+
+
 # ── exif: input validated before tool presence (400 before 409) ─────────────
 def test_exif_empty_body_400_even_without_tool():
     # empty body is a 400 regardless of whether ExifTool is installed
