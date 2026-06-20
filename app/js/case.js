@@ -254,22 +254,8 @@ function openLinkPicker(fromId, cell) {
 /* Chain-of-custody serializers — pure (no DOM/download), so they're unit-testable.
    CSV = a flat provenance table for a report appendix; rows sorted by observed
    time, every field RFC-4180 quoted. */
-function custodyCsv(arts) {
-  const q = (v) => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`;
-  const rows = [["id", "observed", "kind", "source", "sha256", "lat", "lng", "added", "text"]];
-  [...arts].sort((a, b) => String(a.t).localeCompare(String(b.t))).forEach((a) =>
-    rows.push([a.id, a.t, a.kind, a.source || "", a.sha256 || "",
-               a.ll ? a.ll[0] : "", a.ll ? a.ll[1] : "",
-               (a.meta && a.meta.added) || "", a.text || ""]));
-  return rows.map((r) => r.map(q).join(",")).join("\r\n");
-}
-/* JSON = the raw artifacts minus bulky thumbnails (keeps the record small and
-   text-diffable). */
-function custodyJson(arts) {
-  const slim = arts.map(({ thumb, ...rest }) => rest);
-  return JSON.stringify({ app: "geosint-workbench", kind: "chain-of-custody",
-                          exported: new Date().toISOString(), artifacts: slim }, null, 1);
-}
+/* custodyCsv / custodyJson are pure serializers and live in coreutils.js (#89),
+   loaded before this file; they remain available as bare globals. */
 
 function exportCustody(fmt) {
   const arts = state.artifacts;
