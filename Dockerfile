@@ -35,6 +35,7 @@ COPY wiki ./wiki
 COPY tools ./tools
 COPY data ./data
 COPY app ./app
+COPY geosint ./geosint
 COPY server.py ./
 
 # Build the wiki + search index at image-build time so the container starts ready.
@@ -60,6 +61,7 @@ WORKDIR /app
 COPY --from=build /app/app ./app
 COPY --from=build /app/wiki/site ./wiki/site
 COPY --from=build /app/data ./data
+COPY --from=build /app/geosint ./geosint
 COPY --from=build /app/server.py ./server.py
 
 # Run as a non-root user; give it ownership of the writable cache dir. ExifTool
