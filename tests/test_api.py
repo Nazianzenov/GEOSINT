@@ -416,4 +416,49 @@ def test_static_traversal_blocked():
     assert st2 in (403, 404)
 
 
+# ── global cache size cap (#82) ─────────────────────────────────────────────
+def test_cache_cap_evicts_oldest_over_ceiling(monkeypatch, tmp_path):
+    # _enforce_cache_cap deletes oldest-by-mtime files until total is back under
+    # CACHE_EVICT_TO × the ceiling. Build 10 × 1 KiB files with increasing mtimes,
+    # set a 5 KiB ceiling, and assert the oldest are gone and we are under target.
+    import os
+    monkeypatch.setattr(server, "CACHE", tmp_path)
+    monkeypatch.setattr(server, "CACHE_MAX_BYTES", 5 * 1024)
+    monkeypatch.setattr(server, "CACHE_EVICT_TO", 0.9)
+    (tmp_path / "tiles").mkdir()
+    for i in range(10):
+        f = tmp_path / "tiles" / f"e{i}.bin"
+        f.write_bytes(b"x" * 1024)
+        os.utime(f, (1000 + i, 1000 + i))       # e0 oldest ... e9 newest
+
+    server._enforce_cache_cap()
+
+    total = sum(p.stat().st_size for p in tmp_path.rglob("*.bin"))
+    assert total <= int(5 * 1024 * 0.9)          # back under the low-water mark
+    assert not (tmp_path / "tiles" / "e0.bin").exists()   # oldest evicted
+    assert (tmp_path / "tiles" / "e9.bin").exists()       # newest kept
+
+
+def test_cache_cap_disabled_when_zero(monkeypatch, tmp_path):
+    monkeypatch.setattr(server, "CACHE", tmp_path)
+    monkeypatch.setattr(server, "CACHE_MAX_BYTES", 0)        # disabled
+    f = tmp_path / "keep.bin"
+    f.write_bytes(b"x" * (4 * 1024))
+    server._enforce_cache_cap()
+    assert f.exists()                            # nothing evicted when cap is off
+
+
+def test_cache_cap_skips_inflight_temp_files(monkeypatch, tmp_path):
+    # .tmp-* files are in-flight atomic_write temps, not cache entries — the sweep
+    # must never count or delete them.
+    import os
+    monkeypatch.setattr(server, "CACHE", tmp_path)
+    monkeypatch.setattr(server, "CACHE_MAX_BYTES", 1024)
+    tmpf = tmp_path / ".tmp-writing.bin"
+    tmpf.write_bytes(b"x" * (4 * 1024))          # bigger than the ceiling
+    os.utime(tmpf, (1, 1))                        # very old, but must be ignored
+    server._enforce_cache_cap()
+    assert tmpf.exists()                         # in-flight temp untouched
+
+
 # ── redacted dossier logic is JS, but the case-format guard is shared — n/a ──

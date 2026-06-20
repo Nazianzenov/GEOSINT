@@ -51,6 +51,17 @@ CACHE = DATA_ROOT / "cache"
 OVERPASS_CACHE = CACHE / "overpass"
 TILE_CACHE = CACHE / "tiles"
 PGET_CACHE = CACHE / "pget"
+# Global on-disk cache ceiling. Per-response writes are already bounded
+# (MAX_UPSTREAM_BYTES) and prefetch is capped per request, but nothing bounded the
+# *total* — sustained tile/pget proxying or repeated prefetch resumes could fill
+# the disk over a long-lived run. After a write, atomic_write() occasionally sweeps
+# CACHE and, if over the ceiling, deletes oldest-by-mtime files down to a low-water
+# mark (a coarse LRU). Override with GEOSINT_CACHE_MAX_MB=0 to disable.
+try:
+    CACHE_MAX_BYTES = int(float(os.environ.get("GEOSINT_CACHE_MAX_MB", "2048")) * 1024 * 1024)
+except ValueError:
+    CACHE_MAX_BYTES = 2048 * 1024 * 1024
+CACHE_EVICT_TO = 0.9            # sweep evicts down to 90% of the ceiling (low-water)
 OVERPASS_TTL = 30 * 86400
 # Canonical instance first — it's the most reliable; the others are fallbacks for
 # when it's rate-limiting. (kumi.systems used to lead but is frequently slow.)
@@ -394,6 +405,52 @@ def cache_fresh(path: Path, ttl: int) -> bool:
     return path.is_file() and time.time() - path.stat().st_mtime < ttl
 
 
+_evict_lock = threading.Lock()
+_writes_since_sweep = [0]
+
+
+def _enforce_cache_cap() -> None:
+    """Best-effort global cache eviction. When CACHE exceeds CACHE_MAX_BYTES,
+    delete the oldest files (by mtime — a coarse LRU) until total size is back
+    under CACHE_EVICT_TO × the ceiling. Triggered occasionally from atomic_write,
+    not on every write (walking the tree is O(files)). Never raises: an eviction
+    failure must not break the cache write or the request that drove it."""
+    if CACHE_MAX_BYTES <= 0:
+        return
+    if not _evict_lock.acquire(blocking=False):
+        return                      # another thread is already sweeping
+    try:
+        entries = []                # (mtime, size, path)
+        total = 0
+        for root, _dirs, files in os.walk(CACHE):
+            for name in files:
+                if name.startswith(".tmp-"):
+                    continue        # in-flight atomic_write temp; not a cache entry
+                fp = os.path.join(root, name)
+                try:
+                    st = os.stat(fp)
+                except OSError:
+                    continue        # vanished mid-walk (concurrent write/evict)
+                entries.append((st.st_mtime, st.st_size, fp))
+                total += st.st_size
+        if total <= CACHE_MAX_BYTES:
+            return
+        target = int(CACHE_MAX_BYTES * CACHE_EVICT_TO)
+        entries.sort()             # oldest mtime first
+        for _mtime, size, fp in entries:
+            if total <= target:
+                break
+            try:
+                os.unlink(fp)
+                total -= size
+            except OSError:
+                pass               # already gone / locked — skip, keep going
+    except OSError:
+        pass                       # CACHE missing or unwalkable — nothing to do
+    finally:
+        _evict_lock.release()
+
+
 def atomic_write(path: Path, data: bytes) -> None:
     """Write a cache file atomically. The server is threaded, so two requests can
     race to populate the same cache entry while a third reads it; a plain
@@ -413,6 +470,12 @@ def atomic_write(path: Path, data: bytes) -> None:
         except OSError:
             pass
         raise
+    # Amortise the cap check: sweep roughly every 64th write rather than walking
+    # the whole cache tree on every single one.
+    _writes_since_sweep[0] += 1
+    if _writes_since_sweep[0] >= 64:
+        _writes_since_sweep[0] = 0
+        _enforce_cache_cap()
 
 
 def _lonlat_to_tile(lon, lat, z):
