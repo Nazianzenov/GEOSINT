@@ -87,8 +87,18 @@ PGET_ALLOW = [
     ("https://nominatim.openstreetmap.org/search?", 30 * 86400),
     ("https://api.gbif.org/v1/species/match?", 30 * 86400),
 ]
-VERSION = "1.0.0"
-UA = f"GeOSINT-Workbench/{VERSION} (local personal OSINT tool; non-commercial)"
+# Version + User-Agent: single source of truth is geosint/__init__.py, so the
+# version advertised by /api/status, --version and every outbound request can
+# never drift from the package version. Import defensively — a frozen/standalone
+# server.py must still start if the `geosint` package isn't importable.
+try:
+    from geosint import __version__ as VERSION, ua as _ua
+    UA = _ua(VERSION)
+except Exception:                       # pragma: no cover - frozen/standalone fallback
+    VERSION = "1.0.0"
+    UA = (f"GeOSINT-Workbench/{VERSION} "
+          f"(https://github.com/Nazianzenov/GEOSINT; "
+          f"non-commercial personal OSINT tool)")
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")
 
 # Platform flags — the detection + launch layers branch on these so the workbench
@@ -168,10 +178,12 @@ def find_exiftool():
     if w:
         return Path(w)
     if IS_WIN:
+        # No `exiftool(-k).exe` candidate: the documented install renames it to
+        # `exiftool.exe` (which the PATH lookup above already finds), and the
+        # parenthesised name is fragile to glob/quoting — drop it.
         return _first_existing([
             Path(LOCALAPPDATA) / "Programs" / "ExifTool" / "exiftool.exe",
             r"C:\Program Files\exiftool\exiftool.exe",
-            r"C:\Program Files\exiftool\exiftool(-k).exe",
         ])
     if IS_MAC:
         return _first_existing([
@@ -283,6 +295,28 @@ TOOLS = {
 
 # Hide the transient console window when spawning a Windows .bat launcher.
 _NO_WINDOW = {"creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0)} if IS_WIN else {}
+# Detach spawned GUI/CLI children into their own session on POSIX so they (a) get
+# their own process group (a Ctrl-C in our terminal doesn't kill the user's app)
+# and (b) re-parent cleanly when they outlive us. Windows has no equivalent here.
+_DETACH = {"start_new_session": True} if not IS_WIN else {}
+
+
+def _reap_children():
+    """Non-blocking sweep of any finished child processes (POSIX only).
+
+    api_launch/api_flyto/api_qgis spawn Popens and discard them; on POSIX an
+    exited-but-unwaited child lingers as a zombie. Rather than a full registry,
+    we opportunistically reap every already-dead child on each launch. No-op on
+    Windows (no waitpid/WNOHANG) and harmless when there's nothing to reap."""
+    if IS_WIN or not hasattr(os, "waitpid") or not hasattr(os, "WNOHANG"):
+        return
+    while True:
+        try:
+            pid, _ = os.waitpid(-1, os.WNOHANG)
+        except (ChildProcessError, OSError):
+            break                         # no children at all
+        if pid == 0:                      # children exist but none have exited
+            break
 
 
 def _launch_app(path: Path, args=None, cwd=None):
@@ -291,14 +325,15 @@ def _launch_app(path: Path, args=None, cwd=None):
       - macOS .app    -> `open -a <bundle> [--args ...]`.
       - everything else (exe / unix binary) -> direct argv Popen.
     Files to *hand to* the app (KML, GeoJSON) are passed as args."""
+    _reap_children()                      # opportunistic zombie sweep (POSIX)
     args = [str(a) for a in (args or [])]
     p = str(path)
     if IS_WIN and path.suffix.lower() == ".bat":
         return subprocess.Popen(["cmd", "/c", p, *args], cwd=cwd, **_NO_WINDOW)
     if IS_MAC and path.suffix.lower() == ".app":
         cmd = ["open", "-a", p] + (["--args", *args] if args else [])
-        return subprocess.Popen(cmd, cwd=cwd)
-    return subprocess.Popen([p, *args], cwd=cwd)
+        return subprocess.Popen(cmd, cwd=cwd, **_DETACH)
+    return subprocess.Popen([p, *args], cwd=cwd, **_DETACH)
 
 
 def _open_document_with(app: Path, doc: Path):
@@ -307,8 +342,9 @@ def _open_document_with(app: Path, doc: Path):
       - macOS .app   -> `open -a <bundle> <doc>` (document-open form).
       - Linux binary -> <binary> <doc>.
     Used for the Google Earth Pro fly-to."""
+    _reap_children()                      # opportunistic zombie sweep (POSIX)
     if IS_MAC and app.suffix.lower() == ".app":
-        return subprocess.Popen(["open", "-a", str(app), str(doc)])
+        return subprocess.Popen(["open", "-a", str(app), str(doc)], **_DETACH)
     return _launch_app(app, [doc])
 
 
@@ -324,6 +360,20 @@ def tool_status():
             "install": t["install"],
         }
     return out
+
+
+def _chmod_600(path) -> None:
+    """Restrict a just-created per-call temp file to the owner (0o600).
+
+    tempfile.mkstemp() already does this, but NamedTemporaryFile honours the
+    process umask, so on a permissive umask these files (uploaded images, the
+    extracted preview, the fly-to KML — all carry private data) would be group/
+    world-readable. Best-effort: a no-op where chmod isn't meaningful (Windows)
+    or fails, leaving behaviour otherwise identical."""
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
 
 
 def cache_fresh(path: Path, ttl: int) -> bool:
@@ -387,7 +437,37 @@ MAX_UPSTREAM_BYTES = 64 * 1024 * 1024
 def upstream_get(url: str, timeout=30) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     with _no_redirect_opener.open(req, timeout=timeout) as r:
-        return r.read(MAX_UPSTREAM_BYTES + 1)[:MAX_UPSTREAM_BYTES]
+        # Read one byte past the ceiling so we can DETECT an oversize body and
+        # raise — rather than silently truncating it. Truncating would cache a
+        # corrupt (partial) tile/JSON; raising makes every caller treat it as a
+        # clean upstream failure (its except: block) and never cache a fragment.
+        body = r.read(MAX_UPSTREAM_BYTES + 1)
+        if len(body) > MAX_UPSTREAM_BYTES:
+            raise ValueError("upstream response too large")
+        return body
+
+
+def _host_name(host: str) -> str:
+    """Strip a trailing :port from a Host header value, robust to IPv6.
+
+    The Host header can be any of: `[v6]:port`, `[v6]`, `host:port`, `host`, or a
+    bare unbracketed IPv6 literal (`::1`, `fe80::1`). We must NOT mistake the
+    colons inside an unbracketed v6 for a port separator, nor fabricate a closing
+    bracket for a malformed `[::1`. Returns the lower-cased hostname (brackets
+    preserved for bracketed forms, so it matches the `[::1]` entry in the
+    allowlist; a bare `::1` stays bare to match the `::1` entry)."""
+    host = (host or "").strip().lower()
+    if host.startswith("["):
+        # Bracketed IPv6: take exactly up to (and including) the closing bracket.
+        # No `]` -> malformed; return as-is so it simply fails the allowlist match
+        # rather than being silently "repaired" into something that could match.
+        end = host.find("]")
+        return host if end == -1 else host[:end + 1]
+    # Unbracketed: a single colon is host:port; multiple colons is a bare IPv6
+    # literal (no port) and must be left intact.
+    if host.count(":") == 1:
+        return host.rsplit(":", 1)[0]
+    return host
 
 
 def _host_of(url: str) -> str:
@@ -457,6 +537,15 @@ class Handler(BaseHTTPRequestHandler):
             if not frameable:
                 self.send_header("X-Frame-Options", "DENY")
             self.send_header("Referrer-Policy", "no-referrer")
+        elif ctype == "image/svg+xml":
+            # SVG is an active document (it can carry <script>/external refs), so a
+            # raw SVG hit directly in a tab is an XSS vector. Lock it down: no
+            # scripts/fetches at all, inline styles only (legit decorative SVGs),
+            # sandboxed, and force inline display rather than letting it act as a
+            # top-level navigable document.
+            self.send_header("Content-Security-Policy",
+                "default-src 'none'; style-src 'unsafe-inline'; sandbox")
+            self.send_header("Content-Disposition", "inline")
         self.end_headers()
         if self.command != "HEAD":
             self.wfile.write(data)
@@ -474,12 +563,7 @@ class Handler(BaseHTTPRequestHandler):
         host = (self.headers.get("Host") or "").strip().lower()
         if host in ALLOWED_HOSTS:                 # exact host:port (fast path)
             return True
-        # strip a trailing :port (but not the colons inside a bracketed IPv6 [::1])
-        if host.startswith("["):
-            hostname = host.split("]", 1)[0] + "]"
-        else:
-            hostname = host.rsplit(":", 1)[0] if host.count(":") == 1 else host
-        return hostname in ALLOWED_HOSTNAMES
+        return _host_name(host) in ALLOWED_HOSTNAMES
 
     # JSON POST routes: path -> handler-method name. do_POST dispatches the
     # uniform JSON endpoints from this one table, and POST_PATHS is derived from
@@ -604,6 +688,11 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"error": "bbox [s,w,n,e] + zmin/zmax required"}, 400)
         if not (0 <= zmin <= zmax <= 19):
             return self.send_json({"error": "need 0 <= zmin <= zmax <= 19"}, 400)
+        # Validate the bbox itself (mirrors api_flyto's coordinate guard): reject
+        # out-of-range or swapped corners before computing the tile list, which
+        # would otherwise silently degenerate or cover the wrong area.
+        if not (-90 <= s <= n <= 90 and -180 <= w <= e <= 180):
+            return self.send_json({"error": "bbox must be [s,w,n,e] with -90<=s<=n<=90 and -180<=w<=e<=180"}, 400)
         tiles = list(tiles_in_bbox(s, w, n, e, zmin, zmax))
         if len(tiles) > PREFETCH_MAX_TILES:
             return self.send_json({"error": f"{len(tiles)} tiles exceeds the {PREFETCH_MAX_TILES} "
@@ -632,9 +721,14 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 failed += 1                       # surfaced in the `failed` count
         remaining = len(tiles) - processed
+        # `done` must be honest: a run is complete only when every tile was
+        # processed AND none failed. `processed` counts started tiles (including
+        # failures), so `remaining == 0` alone would report done:true even with
+        # failed>0 — the client would never resume to retry the failures.
+        done = (processed == len(tiles) and failed == 0)
         return self.send_json({"ok": True, "layer": layer, "tiles": len(tiles),
                                "fetched": fetched, "cached": cached, "failed": failed,
-                               "remaining": remaining, "done": remaining == 0})
+                               "remaining": remaining, "done": done})
 
     # ---- generic cached GET proxy: /api/pget?u=<allowlisted url> ---------
     def api_pget(self, query):
@@ -700,7 +794,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'")
                 self.send_header("X-Frame-Options", "DENY")
                 self.end_headers()
-                self.wfile.write(body)
+                if self.command != "HEAD":        # HEAD must not carry a body
+                    self.wfile.write(body)
                 return
             # frameable: the SPA docks wiki pages in a panel iframe (same-origin).
             return self.serve_static(WIKI_SITE, path[len("/wiki"):].lstrip("/"), frameable=True)
@@ -812,6 +907,7 @@ class Handler(BaseHTTPRequestHandler):
         if suffix not in EXIF_SUFFIXES:
             suffix = ".jpg"
         with tempfile.NamedTemporaryFile(prefix="geosint_", suffix=suffix, delete=False) as f:
+            _chmod_600(f.name)            # owner-only: uploaded image is private
             f.write(raw)
             return Path(f.name)
 
@@ -833,12 +929,15 @@ class Handler(BaseHTTPRequestHandler):
             tmp = self._write_exif_temp(raw)
             proc = subprocess.run(
                 [str(exiftool), "-json", "-a", "-G1", "-api", "largefilesupport=1", str(tmp)],
-                capture_output=True, timeout=EXIF_TOOL_TIMEOUT,
+                capture_output=True, timeout=EXIF_TOOL_TIMEOUT, stdin=subprocess.DEVNULL,
             )
             if proc.returncode not in (0, 1):  # 1 = minor warnings
                 err = proc.stderr.decode("utf-8", "replace")[:500]
+                # Keep the detailed stderr only in the operator log — it can echo
+                # the temp file path/name. The client gets a generic message
+                # (matches the success path's deliberate System:/SourceFile scrub).
                 self._warn("/api/exif", "exiftool", f"exit {proc.returncode}: {err}")
-                return self.send_json({"error": err}, 500)
+                return self.send_json({"error": "exiftool could not process this file"}, 500)
             data = json.loads(proc.stdout.decode("utf-8", "replace"))
             tags = data[0] if data else {}
             tags.pop("SourceFile", None)
@@ -911,6 +1010,7 @@ class Handler(BaseHTTPRequestHandler):
             # main vs preview gps/time — read the preview's own metadata
             main_gps, main_time = self._exif_gps_time(exiftool, tmp)
             with tempfile.NamedTemporaryFile(prefix="geosint_prev_", suffix=".jpg", delete=False) as pf:
+                _chmod_600(pf.name)       # owner-only: extracted preview is private
                 pf.write(body)
                 prev_tmp = Path(pf.name)
             prev_gps, prev_time = self._exif_gps_time(exiftool, prev_tmp)
@@ -961,8 +1061,9 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if key == "sherloq":
                 # path is sherloq's own venv python; run its GUI script directly
+                _reap_children()             # opportunistic zombie sweep (POSIX)
                 gui = ROOT / "tools" / "sherloq" / "gui" / "sherloq.py"
-                subprocess.Popen([str(path), str(gui)], cwd=str(gui.parent))
+                subprocess.Popen([str(path), str(gui)], cwd=str(gui.parent), **_DETACH)
             else:
                 _launch_app(path)            # .bat/.app/exe/binary handled per-OS
             return self.send_json({"ok": True, "launched": str(path)})
@@ -999,6 +1100,7 @@ class Handler(BaseHTTPRequestHandler):
         # and lets another local user read the target coordinate.
         with tempfile.NamedTemporaryFile(prefix="geosint_flyto_", suffix=".kml",
                                          mode="w", encoding="utf-8", delete=False) as f:
+            _chmod_600(f.name)            # owner-only: the KML embeds the target coordinate
             f.write(kml)
             kml_path = Path(f.name)
         _open_document_with(gep, kml_path)       # opens the KML in GE Pro, cross-platform
