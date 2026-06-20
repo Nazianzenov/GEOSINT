@@ -500,6 +500,12 @@ except Exception:                       # pragma: no cover - frozen/standalone f
                 for y in range(min(y0, y1), max(y0, y1) + 1):
                     yield z, x, y
 
+# Domain modules extracted from the Handler (#88): ExifTool orchestration + the
+# cached-proxy core. Pure-stdlib and required by the exif/proxy endpoints, so
+# import hard (no frozen fallback).
+from geosint import exif as exif_domain
+from geosint import proxy as proxy_domain
+
 
 # Opener that refuses to follow 3xx redirects. The /api/pget and /tiles proxies
 # only fetch allowlisted hosts; without this, an allowlisted host (or a DNS/MITM
@@ -756,6 +762,20 @@ class Handler(BaseHTTPRequestHandler):
         if self.command != "HEAD":
             self.wfile.write(body)
 
+    def render(self, result):
+        """Map a DomainResult (from geosint/exif.py, geosint/proxy.py) to an HTTP
+        response. The domain function already decided what is safe for the client;
+        here we only route: unsafe `log_detail` -> _warn (operator log), the safe
+        `client_msg` -> the response body. This is the thin-handler seam (#88)."""
+        if not result.ok:
+            if result.log_detail:
+                self._warn("", result.log_where or "", result.log_detail)
+            return self.send_json({"error": result.client_msg}, result.status)
+        if result.body is not None:          # raw-bytes success (proxied image/JSON)
+            return self.send_cached_body(result.body, result.ctype,
+                                         result.cache_state or "miss", result.browser_ttl)
+        return self.send_json(result.data, result.status)
+
     # ---- cached tile proxy: /tiles/<layer>/<z>/<x>/<y> -------------------
     def api_tile(self, path):
         # SEC-01: refuse an explicit cross-site drive-by before any cache read or
@@ -777,18 +797,12 @@ class Handler(BaseHTTPRequestHandler):
         if not (0 <= x < n and 0 <= y < n):
             return self.send_json({"error": "tile coords out of range"}, 400)
         f = TILE_CACHE / layer / str(z) / str(x) / f"{y}.png"
-        if cache_fresh(f, TILE_TTL):
-            return self.send_cached_body(f.read_bytes(), "image/png", "hit", TILE_TTL)
         url = TILE_LAYERS[layer].format(z=z, x=x, y=y)
-        try:
-            body = upstream_get(url, timeout=20)
-            atomic_write(f, body)
-            return self.send_cached_body(body, "image/png", "miss", TILE_TTL)
-        except Exception as e:
-            self._warn("/tiles", _host_of(url), e)
-            if f.is_file():                          # stale beats nothing
-                return self.send_cached_body(f.read_bytes(), "image/png", "stale", 3600)
-            return self.send_json({"error": "tile upstream unreachable"}, 502)
+        return self.render(proxy_domain.fetch_cached(
+            f, url, TILE_TTL, "image/png", timeout=20,
+            fetch=upstream_get, cache_fresh=cache_fresh, atomic_write=atomic_write,
+            log_where=_host_of(url), browser_ttl=TILE_TTL, stale_browser_ttl=3600,
+            error_msg="tile upstream unreachable"))
 
     # ---- API: prefetch a bbox of tiles for offline use ------------------
     def api_prefetch(self, payload):
@@ -859,18 +873,10 @@ class Handler(BaseHTTPRequestHandler):
         if ttl is None:
             return self.send_json({"error": "url not allowlisted"}, 403)
         f = PGET_CACHE / (hashlib.sha1(url.encode()).hexdigest() + ".json")
-        if cache_fresh(f, ttl):
-            return self.send_cached_body(f.read_bytes(), "application/json; charset=utf-8", "hit")
-        try:
-            body = upstream_get(url, timeout=30)
-            json.loads(body)
-            atomic_write(f, body)
-            return self.send_cached_body(body, "application/json; charset=utf-8", "miss")
-        except Exception as e:
-            self._warn("/api/pget", _host_of(url), e)
-            if f.is_file():
-                return self.send_cached_body(f.read_bytes(), "application/json; charset=utf-8", "stale")
-            return self.send_json({"error": f"upstream failed: {str(e)[:160]}"}, 502)
+        return self.render(proxy_domain.fetch_cached(
+            f, url, ttl, "application/json; charset=utf-8", timeout=30,
+            fetch=upstream_get, cache_fresh=cache_fresh, atomic_write=atomic_write,
+            validate=json.loads, log_where=_host_of(url), error_msg="upstream failed"))
 
     # ---- routes --------------------------------------------------------
     def do_GET(self):
@@ -1039,7 +1045,9 @@ class Handler(BaseHTTPRequestHandler):
     # ---- API: ExifTool deep metadata dump -------------------------------
     def api_exif(self, raw: bytes):
         """Run local ExifTool on an uploaded image; body = raw bytes,
-        X-Filename header used only for the temp file extension."""
+        X-Filename header used only for the temp file extension. The request
+        validation + tool probe stay here (they are HTTP-shaped); the ExifTool
+        orchestration + scrubbing live in geosint/exif.run_exif (#88)."""
         # Validate the request (400/413) before probing for the tool (409), so a
         # bad request reports the bad request, not "tool missing".
         if not raw:
@@ -1049,41 +1057,7 @@ class Handler(BaseHTTPRequestHandler):
         exiftool = find_exiftool()
         if exiftool is None:
             return self.send_json({"error": "ExifTool not found. Install: winget install OliverBetz.ExifTool"}, 409)
-        tmp = None
-        try:
-            tmp = self._write_exif_temp(raw)
-            proc = subprocess.run(
-                [str(exiftool), "-json", "-a", "-G1", "-api", "largefilesupport=1", str(tmp)],
-                capture_output=True, timeout=EXIF_TOOL_TIMEOUT, stdin=subprocess.DEVNULL,
-            )
-            if proc.returncode not in (0, 1):  # 1 = minor warnings
-                err = proc.stderr.decode("utf-8", "replace")[:500]
-                # Keep the detailed stderr only in the operator log — it can echo
-                # the temp file path/name. The client gets a generic message
-                # (matches the success path's deliberate System:/SourceFile scrub).
-                self._warn("/api/exif", "exiftool", f"exit {proc.returncode}: {err}")
-                return self.send_json({"error": "exiftool could not process this file"}, 500)
-            data = json.loads(proc.stdout.decode("utf-8", "replace"))
-            tags = data[0] if data else {}
-            tags.pop("SourceFile", None)
-            # System group leaks the temp file's path/name — drop it entirely
-            tags = {k: v for k, v in tags.items() if not k.startswith("System:")}
-            return self.send_json({"ok": True, "exiftool": str(exiftool), "tags": tags})
-        except subprocess.TimeoutExpired as e:
-            self._warn("/api/exif", "exiftool", e)
-            return self.send_json({"error": "exiftool timed out"}, 504)
-        except (OSError, json.JSONDecodeError, ValueError) as e:
-            # Keep the exception text (which can embed the ExifTool path on a spawn
-            # OSError) only in the operator log; the client gets a generic message,
-            # matching the bad-exit branch above.
-            self._warn("/api/exif", "exiftool", e)
-            return self.send_json({"error": "exiftool could not process this file"}, 500)
-        finally:
-            if tmp:
-                try:
-                    tmp.unlink()
-                except OSError:
-                    pass
+        return self.render(exif_domain.run_exif(raw, exiftool, self._write_exif_temp))
 
     # ---- API: extract the largest embedded preview/thumbnail -------------
     # Embedded previews are often the *uncropped* original — when an image is
@@ -1093,20 +1067,12 @@ class Handler(BaseHTTPRequestHandler):
     # raw image bytes; the forensic analysis rides in X-* response headers.
     PREVIEW_TAGS = ("JpgFromRaw", "PreviewImage", "OtherImage", "ThumbnailImage")
 
-    def _exif_gps_time(self, exiftool, path):
-        """Return (gps 'lat,lon' or None, DateTimeOriginal/CreateDate or None)."""
-        try:
-            proc = subprocess.run(
-                [str(exiftool), "-json", "-n", "-GPSLatitude", "-GPSLongitude",
-                 "-DateTimeOriginal", "-CreateDate", str(path)],
-                capture_output=True, timeout=20, stdin=subprocess.DEVNULL,
-            )
-            d = (json.loads(proc.stdout.decode("utf-8", "replace")) or [{}])[0]
-        except (OSError, json.JSONDecodeError, ValueError, subprocess.TimeoutExpired):
-            return None, None
-        lat, lon = d.get("GPSLatitude"), d.get("GPSLongitude")
-        gps = f"{lat},{lon}" if (lat is not None and lon is not None) else None
-        return gps, (d.get("DateTimeOriginal") or d.get("CreateDate"))
+    def _write_private_temp(self, body: bytes) -> Path:
+        """Owner-only (0600) temp file for an extracted preview (it is private)."""
+        with tempfile.NamedTemporaryFile(prefix="geosint_prev_", suffix=".jpg", delete=False) as pf:
+            _chmod_600(pf.name)
+            pf.write(body)
+            return Path(pf.name)
 
     def api_exif_preview(self, raw: bytes):
         if not raw:
@@ -1116,66 +1082,36 @@ class Handler(BaseHTTPRequestHandler):
         exiftool = find_exiftool()
         if exiftool is None:
             return self.send_json({"error": "ExifTool not found. Install: winget install OliverBetz.ExifTool"}, 409)
-        tmp = prev_tmp = None
-        try:
-            tmp = self._write_exif_temp(raw)
-            # find the first preview tag that has bytes, extract it to stdout
-            chosen, body = None, b""
-            for tag in self.PREVIEW_TAGS:
-                try:
-                    p = subprocess.run([str(exiftool), "-b", "-" + tag, str(tmp)],
-                                       capture_output=True, timeout=EXIF_TOOL_TIMEOUT, stdin=subprocess.DEVNULL)
-                except subprocess.TimeoutExpired as e:
-                    self._warn("/api/exif-preview", "exiftool", e)
-                    return self.send_json({"error": "exiftool timed out"}, 504)
-                if p.returncode in (0, 1) and p.stdout:
-                    chosen, body = tag, p.stdout
-                    break
-            if not body:
-                return self.send_json({"ok": True, "has_preview": False,
-                                       "msg": "no embedded preview/thumbnail in this image"}, 200)
+        # Domain: extract the preview + the GPS/time-mismatch forensic analysis
+        # (geosint/exif). The X-* header construction is genuinely HTTP, so it
+        # stays here — we render the structured analysis into the response.
+        res = exif_domain.analyze_preview(raw, exiftool, self._write_exif_temp,
+                                          self._write_private_temp, self.PREVIEW_TAGS)
+        if not res.ok or not res.data.get("has_preview"):
+            return self.render(res)        # error, or the "no preview" 200 JSON
 
-            # main vs preview gps/time — read the preview's own metadata
-            main_gps, main_time = self._exif_gps_time(exiftool, tmp)
-            with tempfile.NamedTemporaryFile(prefix="geosint_prev_", suffix=".jpg", delete=False) as pf:
-                _chmod_600(pf.name)       # owner-only: extracted preview is private
-                pf.write(body)
-                prev_tmp = Path(pf.name)
-            prev_gps, prev_time = self._exif_gps_time(exiftool, prev_tmp)
-            gps_mismatch = bool(main_gps and prev_gps and main_gps != prev_gps)
-            time_mismatch = bool(main_time and prev_time and main_time != prev_time)
-
-            ctype = "image/jpeg" if body[:2] == b"\xff\xd8" else "application/octet-stream"
-            # These values come from attacker-controlled EXIF — strip CR/LF and
-            # cap length so they can't split the response / inject headers.
-            def _hv(v):
-                return re.sub(r"[\r\n]", " ", str(v))[:80]
-            self.send_response(200)
-            self.send_header("Content-Type", ctype)
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("X-Content-Type-Options", "nosniff")
-            self.send_header("Cache-Control", "no-store")
-            self.send_header("X-Preview-Tag", _hv(chosen))
-            self.send_header("X-Preview-Bytes", str(len(body)))
-            if main_gps:  self.send_header("X-Main-GPS", _hv(main_gps))
-            if prev_gps:  self.send_header("X-Preview-GPS", _hv(prev_gps))
-            if main_time: self.send_header("X-Main-Time", _hv(main_time))
-            if prev_time: self.send_header("X-Preview-Time", _hv(prev_time))
-            self.send_header("X-GPS-Mismatch", "1" if gps_mismatch else "0")
-            self.send_header("X-Time-Mismatch", "1" if time_mismatch else "0")
-            self.end_headers()
-            if self.command != "HEAD":
-                self.wfile.write(body)
-        except (OSError, ValueError) as e:
-            self._warn("/api/exif-preview", "exiftool", e)
-            return self.send_json({"error": str(e)[:500]}, 500)
-        finally:
-            for t in (tmp, prev_tmp):
-                if t:
-                    try:
-                        t.unlink()
-                    except OSError:
-                        pass
+        a = res.data
+        body = a["body"]
+        # EXIF-derived header values are attacker-controlled — strip CR/LF and cap
+        # length so they can't split the response / inject headers.
+        def _hv(v):
+            return re.sub(r"[\r\n]", " ", str(v))[:80]
+        self.send_response(200)
+        self.send_header("Content-Type", a["ctype"])
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Preview-Tag", _hv(a["tag"]))
+        self.send_header("X-Preview-Bytes", str(a["bytes"]))
+        if a["main_gps"]:  self.send_header("X-Main-GPS", _hv(a["main_gps"]))
+        if a["prev_gps"]:  self.send_header("X-Preview-GPS", _hv(a["prev_gps"]))
+        if a["main_time"]: self.send_header("X-Main-Time", _hv(a["main_time"]))
+        if a["prev_time"]: self.send_header("X-Preview-Time", _hv(a["prev_time"]))
+        self.send_header("X-GPS-Mismatch", "1" if a["gps_mismatch"] else "0")
+        self.send_header("X-Time-Mismatch", "1" if a["time_mismatch"] else "0")
+        self.end_headers()
+        if self.command != "HEAD":
+            self.wfile.write(body)
 
     # ---- API: launch a local GUI tool -----------------------------------
     def api_launch(self, payload):
