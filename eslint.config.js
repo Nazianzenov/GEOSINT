@@ -15,6 +15,15 @@ const vendorGlobals = {
   GeoSearch: "readonly",
 };
 
+// App facade + the per-overlay data namespaces (#85 / #87). The facade
+// (app-facade.js) gives panels a named surface over the shared state spine; the
+// data overlays are self-contained IIFEs exposed as these globals. Declared
+// readonly so no-undef resolves their use across the (separately-linted) files.
+const appGlobals = {
+  App: "readonly", DataPresets: "readonly",
+  Overpass: "readonly", Gbif: "readonly", Cables: "readonly", Prefetch: "readonly",
+};
+
 // Shared helpers DEFINED in app/js/common.js (loaded first). Declaring them as
 // globals lets no-undef resolve their use in app.js / sun.js / search.js;
 // common.js itself is linted without these so its own `const` declarations are
@@ -110,9 +119,10 @@ module.exports = [
     // — so no-undef is off for this set (common.js/coreutils.js/chrono.js/sun.js/
     // search.js keep it). Every other rule (unused vars, cond-assign, …) applies.
     ...base,
-    files: ["app/js/app.js", "app/js/core.js", "app/js/map.js", "app/js/case.js",
-            "app/js/dossier.js", "app/js/palette.js", "app/js/modules/*.js"],
-    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals, ...coreUtilsGlobals, ...chronoGlobals } },
+    files: ["app/js/app.js", "app/js/core.js", "app/js/app-facade.js", "app/js/map.js",
+            "app/js/case.js", "app/js/dossier.js", "app/js/palette.js",
+            "app/js/modules/**/*.js"],
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...appGlobals, ...commonGlobals, ...coreUtilsGlobals, ...chronoGlobals } },
     rules: { ...sharedRules, "no-undef": "off", "no-unused-vars": "off" },
   },
 ];

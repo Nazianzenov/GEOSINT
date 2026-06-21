@@ -14,6 +14,10 @@ const WMO = {
 function initWeather() {
   $("#wx-date").value = new Date().toISOString().slice(0, 10);
   $("#wx-fetch").addEventListener("click", fetchWeather);
+  // Wind/weather-map launchers — these read the weather panel's own inputs
+  // (#wx-wind-layer / #wx-date), so they live here, not in the Data module (#87).
+  $("#wx-windy").addEventListener("click", () => openWindMap("windy"));
+  $("#wx-nullschool").addEventListener("click", () => openWindMap("nullschool"));
 }
 
 async function fetchWeather() {
@@ -73,5 +77,22 @@ function renderWeather(j, date, isArchive, note = "") {
     <a class="btn" target="_blank" href="https://zoom.earth/maps/satellite/#view=${lat.toFixed(3)},${lng.toFixed(3)},8z/date=${date},12:00,+0">Zoom Earth (sat archive) ⇗</a>
     <a class="btn" target="_blank" href="https://worldview.earthdata.nasa.gov/?v=${(lng - 4).toFixed(2)},${(lat - 3).toFixed(2)},${(lng + 4).toFixed(2)},${(lat + 3).toFixed(2)}&t=${date}">NASA Worldview ⇗</a>
     <a class="btn" target="_blank" href="https://www.windy.com/${lat.toFixed(3)}/${lng.toFixed(3)}">Windy ⇗</a>`;
+}
+
+// Wind/weather maps open on their own sites (the embedded iframe was unstable —
+// Windy's player crashes on fast timeline scrubbing). For an area, state.point is
+// the Nominatim centroid. Windy accepts a UTC YYYY-MM-DD-HH time in the hash.
+function openWindMap(site) {
+  const p = state.point || state.map.getCenter();
+  const lat = p.lat.toFixed(3), lon = p.lng.toFixed(3);
+  if (site === "nullschool") {                       // current conditions only
+    window.open(`https://earth.nullschool.net/#current/wind/surface/level/orthographic=${lon},${lat},2000`, "_blank");
+    return;
+  }
+  const overlay = $("#wx-wind-layer").value || "wind";
+  const d = $("#wx-date").value;                      // YYYY-MM-DD from the weather panel
+  // Windy URL: ?overlay,YYYY-MM-DD-HH,lat,lon,zoom (UTC; midday on the chosen date)
+  const t = d ? `${d}-12,` : "";
+  window.open(`https://www.windy.com/?${overlay},${t}${lat},${lon},6`, "_blank");
 }
 
