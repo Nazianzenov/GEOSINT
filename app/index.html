@@ -408,12 +408,16 @@ Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
 <script src="vendor/exifr.umd.js"></script>
 <script src="vendor/geocoords.js"></script>
 <script src="vendor/minisearch.umd.js"></script>
-<!-- Ordered by dependency: common helpers → core state → map → search → panel
-     modules → case engine → palette → bootstrap. Classic <script>s sharing
-     global scope (no bundler); see app.js for the module map (#31). -->
+<!-- Ordered by dependency: common helpers → core state → App facade → map →
+     search → panel modules → case engine → palette → bootstrap. Classic
+     <script>s sharing global scope (no bundler). The App facade (#85) gives the
+     data modules a named surface (App.state/setPoint/status/…) over the shared
+     spine; the data overlays (#87) are self-contained IIFEs that talk through it.
+     See app.js for the module map (#31). -->
 <script src="js/coreutils.js"></script>
 <script src="js/common.js"></script>
 <script src="js/core.js"></script>
+<script src="js/app-facade.js"></script>
 <script src="js/map.js"></script>
 <script src="js/search.js"></script>
 <script src="js/chrono.js"></script>
@@ -421,7 +425,13 @@ Saved with ⭳ SAVE into the .geosint.json case file."></textarea>
 <script src="js/modules/weather.js"></script>
 <script src="js/modules/image.js"></script>
 <script src="js/modules/tools.js"></script>
-<script src="js/modules/data.js"></script>
+<!-- Data layers — split per-overlay (#87): config + IIFE modules, then panel wiring. -->
+<script src="js/modules/data/presets.js"></script>
+<script src="js/modules/data/overpass.js"></script>
+<script src="js/modules/data/gbif.js"></script>
+<script src="js/modules/data/cables.js"></script>
+<script src="js/modules/data/prefetch.js"></script>
+<script src="js/modules/data/data.js"></script>
 <script src="js/modules/anno.js"></script>
 <script src="js/case.js"></script>
 <script src="js/dossier.js"></script>
