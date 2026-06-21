@@ -42,9 +42,9 @@ function buildCommands() {
     C("Coords", "Open Google Earth here", () => window.open(`https://earth.google.com/web/@${p.lat},${p.lng},0a,2000d,35y,0h,0t,0r`));
   }
 
-  // every tool (launchTool self-explains with a status if no active point)
-  (typeof TOOLS !== "undefined" ? TOOLS : []).forEach((t) =>
-    C("Tool", `Open ${t.name}`, () => launchTool(t)));
+  // every tool (Tools.launch self-explains with a status if no active point)
+  (typeof Tools !== "undefined" ? Tools.list : []).forEach((t) =>
+    C("Tool", `Open ${t.name}`, () => Tools.launch(t)));
 
   return cmds;
 }
