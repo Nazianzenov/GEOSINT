@@ -20,6 +20,8 @@ window.App = {
   setPoint(ll, opts) { return setPoint(ll, opts); },
   logObservation(o) { return logObservation(o); },
   status(msg, isErr, ms) { return status(msg, isErr, ms); },
+  markDirty() { return markDirty(); },
+  copyText(t) { return copyText(t); },
 
   // ── helpers (common.js — already defined when this evaluates) ──
   esc, fetchT, cachedFetch, cacheNote, fmtDD,
