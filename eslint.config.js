@@ -22,6 +22,7 @@ const vendorGlobals = {
 const appGlobals = {
   App: "readonly", DataPresets: "readonly",
   Overpass: "readonly", Gbif: "readonly", Cables: "readonly", Prefetch: "readonly",
+  Tools: "readonly",
 };
 
 // Shared helpers DEFINED in app/js/common.js (loaded first). Declaring them as
