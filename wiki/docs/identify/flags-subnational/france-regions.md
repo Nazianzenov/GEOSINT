@@ -20,6 +20,7 @@ Subnational flags pin a photo *inside* France. **Flag-only reference** for now �
 <figure><img src="../../../assets/flags/fr/normandy.svg" loading="lazy" alt="Flag of Normandy"><figcaption>Normandy</figcaption></figure>
 <figure><img src="../../../assets/flags/fr/nouvelle_aquitaine.svg" loading="lazy" alt="Flag of Nouvelle-Aquitaine"><figcaption>Nouvelle-Aquitaine</figcaption></figure>
 <figure><img src="../../../assets/flags/fr/occitania.svg" loading="lazy" alt="Flag of Occitania"><figcaption>Occitania</figcaption></figure>
+<figure><img src="../../../assets/flags/fr/pays_de_la_loire.svg" loading="lazy" alt="Flag of Pays de la Loire"><figcaption>Pays de la Loire</figcaption></figure>
 <figure><img src="../../../assets/flags/fr/provence_alpes_cote_dazur.svg" loading="lazy" alt="Flag of Provence-Alpes-Côte d'Azur"><figcaption>Provence-Alpes-Côte d'Azur</figcaption></figure>
 <figure><img src="../../../assets/flags/fr/guadeloupe.svg" loading="lazy" alt="Flag of Guadeloupe"><figcaption>Guadeloupe</figcaption></figure>
 <figure><img src="../../../assets/flags/fr/martinique.svg" loading="lazy" alt="Flag of Martinique"><figcaption>Martinique</figcaption></figure>
