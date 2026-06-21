@@ -23,6 +23,7 @@ const appGlobals = {
   App: "readonly", DataPresets: "readonly",
   Overpass: "readonly", Gbif: "readonly", Cables: "readonly", Prefetch: "readonly",
   Sun: "readonly", Weather: "readonly", ImageIntel: "readonly", Tools: "readonly",
+  Anno: "readonly",
 };
 
 // Shared helpers DEFINED in app/js/common.js (loaded first). Declaring them as
