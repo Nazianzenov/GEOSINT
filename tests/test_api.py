@@ -241,7 +241,7 @@ def test_prefetch_contract_done_when_complete(monkeypatch, tmp_path):
     # #29: a small bbox that finishes within the budget reports the full contract
     # with done:true / remaining:0. Stub the upstream so no real network is hit,
     # and redirect the tile cache to a temp dir so the test leaves no artifacts.
-    monkeypatch.setattr(server, "upstream_get", lambda url, timeout=20: b"\x89PNG\r\n")
+    monkeypatch.setattr(server, "upstream_get", lambda url, timeout=20, feature=None: b"\x89PNG\r\n")
     monkeypatch.setattr(server, "TILE_CACHE", tmp_path / "tiles")
     st, _, body = jpost("/api/prefetch", {"layer": "osm", "bbox": [0, 0, 0.01, 0.01],
                                           "zmin": 1, "zmax": 1})
@@ -268,7 +268,7 @@ def test_prefetch_done_false_when_a_tile_fails(monkeypatch, tmp_path):
     # #91: `done` must be (processed==len(tiles) AND failed==0). A run where every
     # tile fails has processed==len(tiles) but failed>0, so it must report
     # done:false (the client resumes/retries) — not done:true on remaining==0.
-    def boom(url, timeout=20):
+    def boom(url, timeout=20, feature=None):
         raise OSError("upstream down")
     monkeypatch.setattr(server, "upstream_get", boom)
     monkeypatch.setattr(server, "TILE_CACHE", tmp_path / "tiles")
@@ -306,7 +306,7 @@ def test_pget_miss_then_hit(monkeypatch, tmp_path):
     # always be emitted (proxied OSINT data must not get heuristic browser caching).
     monkeypatch.setattr(server, "PGET_CACHE", tmp_path / "pget")
     monkeypatch.setattr(server, "upstream_get",
-                        lambda url, timeout=30: b'{"elevation":[123]}')
+                        lambda url, timeout=30, feature=None: b'{"elevation":[123]}')
     url = "https://api.open-meteo.com/v1/elevation?latitude=0&longitude=0"
     q = "/api/pget?u=" + urllib.parse.quote(url, safe="")
     st1, h1, b1 = req("GET", q)
@@ -488,6 +488,161 @@ def test_cache_cap_skips_inflight_temp_files(monkeypatch, tmp_path):
     os.utime(tmpf, (1, 1))                        # very old, but must be ignored
     server._enforce_cache_cap()
     assert tmpf.exists()                         # in-flight temp untouched
+
+
+# ── OPSEC egress settings (Axis A) ──────────────────────────────────────────
+def test_opsec_get_shape():
+    st, _, body = req("GET", "/api/opsec")
+    assert st == 200
+    j = json.loads(body)
+    assert "config" in j and "features" in j
+    assert set(j["features"]) == set(server.egress_domain.FEATURES)
+    # default routing is all-direct (behaviour unchanged until the analyst opts in)
+    assert all(j["config"]["routes"][f] == "direct" for f in server.egress_domain.FEATURES)
+
+
+def test_status_includes_opsec():
+    st, _, body = req("GET", "/api/status")
+    assert st == 200
+    assert "opsec" in json.loads(body)
+
+
+def test_opsec_set_requires_csrf():
+    st, _, body = jpost("/api/opsec", {"config": {}}, csrf=False)
+    assert st == 403
+    assert b"X-GeOSINT" in body
+
+
+def test_opsec_set_bad_payload_400():
+    st, _, _ = jpost("/api/opsec", {"nope": 1})
+    assert st == 400
+
+
+def test_opsec_round_trip(monkeypatch, tmp_path):
+    # POST persists a route change to a temp opsec.json and GET reflects it; the
+    # password is masked in the response but stored for real on disk. No network:
+    # provider stays null so no verification fires.
+    monkeypatch.setattr(server, "OPSEC_CONFIG_PATH", tmp_path / "opsec.json")
+    server._opsec_cfg[0] = None
+    cfg = {"version": 1,
+           "routes": {"tiles": "direct", "geocode": "tor", "weather": "direct",
+                      "overpass": "direct", "gbif": "direct", "media": "direct"},
+           "proxies": {"res1": {"scheme": "http", "host": "p.example", "port": 8080,
+                                "user": "u", "pass": "secret"}},
+           "vpn": {"provider": None, "verify": True},
+           "tor": {"host": "127.0.0.1", "port": 9050}, "ua": "neutral"}
+    st, _, body = jpost("/api/opsec", {"config": cfg})
+    assert st == 200
+    j = json.loads(body)
+    assert j["ok"] is True
+    assert j["config"]["routes"]["geocode"] == "tor"
+    assert j["config"]["ua"] == "neutral"
+    assert j["config"]["proxies"]["res1"]["pass"] == "********"     # masked in response
+    st2, _, body2 = req("GET", "/api/opsec")
+    assert json.loads(body2)["config"]["routes"]["geocode"] == "tor"
+    saved = json.loads((tmp_path / "opsec.json").read_text())
+    assert saved["proxies"]["res1"]["pass"] == "secret"            # real secret on disk
+    server._opsec_cfg[0] = None        # reset cache for later tests
+
+
+def test_opsec_masked_password_kept_on_resave(monkeypatch, tmp_path):
+    # Re-saving with the masked sentinel must KEEP the stored secret, not wipe it.
+    monkeypatch.setattr(server, "OPSEC_CONFIG_PATH", tmp_path / "opsec.json")
+    server._opsec_cfg[0] = None
+    base = {"version": 1, "routes": {}, "proxies": {
+        "res1": {"scheme": "http", "host": "p.example", "port": 8080, "user": "u", "pass": "secret"}},
+        "vpn": {"provider": None, "verify": True}, "tor": {"host": "127.0.0.1", "port": 9050}, "ua": "default"}
+    jpost("/api/opsec", {"config": base})
+    base["proxies"]["res1"]["pass"] = "********"        # UI sends the mask back unchanged
+    jpost("/api/opsec", {"config": base})
+    saved = json.loads((tmp_path / "opsec.json").read_text())
+    assert saved["proxies"]["res1"]["pass"] == "secret"
+    server._opsec_cfg[0] = None
+
+
+# ── GBIF density-tile proxy (leak closure) ──────────────────────────────────
+def test_gbif_tile_cross_site_refused():
+    st, _, _ = req("GET", "/api/gbif/tile/3/1/1?taxonKey=212",
+                   headers={"Sec-Fetch-Site": "cross-site"})
+    assert st == 403
+
+
+def test_gbif_tile_bad_coords_400():
+    st, _, _ = req("GET", "/api/gbif/tile/x/1/1?taxonKey=212")
+    assert st == 400
+
+
+def test_gbif_tile_missing_taxon_400():
+    st, _, _ = req("GET", "/api/gbif/tile/3/1/1")
+    assert st == 400
+
+
+def test_gbif_tile_bad_zoom_400():
+    st, _, _ = req("GET", "/api/gbif/tile/99/0/0?taxonKey=212")
+    assert st == 400
+
+
+def test_gbif_tile_success_proxied(monkeypatch, tmp_path):
+    # Validates + fetches via upstream_get(feature="gbif") and caches as image/png.
+    monkeypatch.setattr(server, "GBIF_TILE_CACHE", tmp_path / "gbif")
+    seen = {}
+
+    def fake(url, timeout=20, feature=None):
+        seen["url"] = url
+        seen["feature"] = feature
+        return b"\x89PNG\r\n"
+    monkeypatch.setattr(server, "upstream_get", fake)
+    st, h, _ = req("GET", "/api/gbif/tile/3/1/2?taxonKey=212&bin=hex&hexPerTile=100"
+                          "&style=purpleYellow-noborder.poly")
+    assert st == 200
+    assert h.get("Content-Type") == "image/png"
+    assert seen["feature"] == "gbif"
+    assert seen["url"].startswith("https://api.gbif.org/v2/map/occurrence/density/3/1/2")
+
+
+# ── wiki reference-image proxy (leak closure) ───────────────────────────────
+def test_img_missing_param_400():
+    st, _, _ = req("GET", "/api/img")
+    assert st == 400
+
+
+def test_img_bad_scheme_400():
+    st, _, _ = req("GET", "/api/img?u=ftp://x/y.jpg")
+    assert st == 400
+
+
+def test_img_non_allowlisted_host_403():
+    u = urllib.parse.quote("https://evil.example.com/x.jpg", safe="")
+    st, _, _ = req("GET", "/api/img?u=" + u)
+    assert st == 403
+
+
+def test_img_cross_site_refused():
+    u = urllib.parse.quote("https://geohints.com/x.jpg", safe="")
+    st, _, _ = req("GET", "/api/img?u=" + u, headers={"Sec-Fetch-Site": "cross-site"})
+    assert st == 403
+
+
+def test_img_allowlisted_host_proxied(monkeypatch, tmp_path):
+    monkeypatch.setattr(server, "IMG_CACHE", tmp_path / "img")
+    seen = {}
+
+    def fake(url, timeout=20, feature=None):
+        seen["feature"] = feature
+        return b"\xff\xd8\xff"        # jpeg magic-ish bytes
+    monkeypatch.setattr(server, "upstream_get", fake)
+    u = urllib.parse.quote("https://geohints.com/storage/x.jpg", safe="")
+    st, h, _ = req("GET", "/api/img?u=" + u)
+    assert st == 200
+    assert h.get("Content-Type", "").startswith("image/")
+    assert seen["feature"] == "media"
+
+
+# ── img-src CSP: tightened for the SPA (everything proxied) ──────────────────
+def test_app_csp_img_src_tightened():
+    st, h, _ = req("GET", "/app/index.html")
+    assert st == 200
+    assert "img-src 'self' data: blob:;" in h.get("Content-Security-Policy", "")
 
 
 # ── redacted dossier logic is JS, but the case-format guard is shared — n/a ──

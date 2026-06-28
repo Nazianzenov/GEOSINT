@@ -1,0 +1,13 @@
+# OPTIONAL OPSEC extras — ONLY needed for SOCKS5 / Tor egress routing (Axis A).
+#
+# The running server is pure-stdlib by default; this dependency is imported lazily
+# and ONLY when you set a feature's route to "tor" or to a SOCKS5 proxy in the
+# OPSEC settings page (HTTP/HTTPS proxies and the VPN/direct lanes need nothing
+# extra). Install only if you use those routes:
+#
+#   pip install -r requirements-opsec.txt
+#
+# PySocks provides the SOCKS handler urllib lacks (and `sockshandler`, which ships
+# with it, gives the urllib opener integration). socks5h is used so DNS resolves
+# at the proxy/Tor exit, not via the local resolver (no DNS leak).
+PySocks>=1.7,<2

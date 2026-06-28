@@ -297,6 +297,14 @@ class SearchUI {
     });
   }
 
+  // Remote reference images are fetched through the LOCAL server (/api/img) so the
+  // browser never hotlinks them straight to a third party (geohints.com etc.) — a
+  // leak that used to fire on every wiki search, revealing the analyst's IP +
+  // viewing activity. Local/relative URLs (data:, /assets, /api) pass through.
+  imgProxy(u) {
+    return /^https?:\/\//i.test(u || "") ? "/api/img?u=" + encodeURIComponent(u) : u;
+  }
+
   photoGrid(items, cap) {
     const wrap = document.createElement("div");
     const grid = document.createElement("div");
@@ -312,7 +320,7 @@ class SearchUI {
         // an empty <img> (it shows as a black box) — show them as a text tile instead.
         if (c.img) {
           grid.insertAdjacentHTML("beforeend",
-            `<div class="pcard"><img src="${esc(c.img)}" loading="lazy" alt="">
+            `<div class="pcard"><img src="${esc(this.imgProxy(c.img))}" loading="lazy" alt="">
              <div class="cap"><b>${title}</b><span>${links}</span></div></div>`);
         } else {
           grid.insertAdjacentHTML("beforeend",
@@ -355,7 +363,7 @@ class SearchUI {
       div.className = "fcard";
       div.innerHTML =
         `<b>${esc(c.t)}</b>${where && where !== c.t ? ` <span class="muted">(${esc(where)})</span>` : ""}
-         ${c.img ? `<br><img src="${esc(c.img)}" alt="${esc(c.t || "reference image")}" loading="lazy" style="max-width:300px;border-radius:4px;margin:6px 0">` : ""}
+         ${c.img ? `<br><img src="${esc(this.imgProxy(c.img))}" alt="${esc(c.t || "reference image")}" loading="lazy" style="max-width:300px;border-radius:4px;margin:6px 0">` : ""}
          <div>${hl(esc(c.x || ""))}</div>
          <div class="src">${this.pageLinkHtml(c) || '<span class="muted">no source page</span>'}${mapLink}${logLink}</div>`;
       this.wireActions(div);

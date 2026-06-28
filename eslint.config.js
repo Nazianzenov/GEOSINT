@@ -115,6 +115,14 @@ module.exports = [
     languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...commonGlobals, ...coreUtilsGlobals, ...chronoGlobals } },
   },
   {
+    // The standalone OPSEC settings page (settings.js) is self-contained: it
+    // defines its own tiny $ / esc and talks to /api/opsec over fetch. Lint it
+    // with no-undef ON (to catch typos) against the browser globals only.
+    ...base,
+    files: ["app/js/settings.js"],
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser } },
+  },
+  {
     // The workbench is ONE program split across app.js + modules/*.js (classic
     // <script>s sharing global scope, #31). They legitimately cross-reference
     // each other's top-level functions/consts, which a per-file linter can't see

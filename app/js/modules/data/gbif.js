@@ -25,8 +25,13 @@ window.Gbif = (function () {
       // opacity 0.55 lets the basemap show through so it doesn't bury the map.
       // GBIF density tiles are 512 px, so set tileSize 512 + zoomOffset -1 (the
       // default 256 squashed each tile into a quarter-slot and broke alignment).
+      // Density tiles are proxied + cached + OPSEC-routed through the LOCAL server
+      // (/api/gbif/tile) rather than fetched straight from api.gbif.org by the
+      // browser — which used to leak the analyst's IP + browser UA + species of
+      // interest to GBIF on every pan/zoom. Same density params; the server
+      // allowlists them and routes the fetch per the OPSEC "gbif" setting.
       const tl = L.tileLayer(
-        `https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?taxonKey=${key}&bin=hex&hexPerTile=100&style=purpleYellow-noborder.poly`,
+        `/api/gbif/tile/{z}/{x}/{y}?taxonKey=${key}&bin=hex&hexPerTile=100&style=purpleYellow-noborder.poly`,
         { opacity: 0.55, tileSize: 512, zoomOffset: -1, attribution: "Occurrences © GBIF" }).addTo(map);
       tl._caseName = shown;                       // remembered for case-file save/restore
       st.gbifLayers[key] = tl;
