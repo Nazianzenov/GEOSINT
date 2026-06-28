@@ -23,6 +23,9 @@ import/
 # runtime caches that regenerate themselves
 cache/
 
+# OPSEC egress config — may hold proxy credentials; per-machine, never commit
+opsec.json
+
 # local-only: gallery scraping/parsing stays off the repo
 tools/import_geohints.py
 

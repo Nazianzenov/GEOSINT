@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GeOSINT — OPSEC egress settings</title>
+<link rel="stylesheet" href="css/app.css">
+<style>
+  .opsec-main { max-width: 920px; margin: 0 auto; padding: 18px 20px 60px; }
+  .opsec-main h1 { margin: 6px 0 2px; }
+  .opsec-sec { border: 1px solid var(--line, #232a3b); border-radius: 8px; padding: 14px 16px; margin: 16px 0; }
+  .opsec-sec h2 { margin: 0 0 10px; font-size: 15px; }
+  .opsec-main table { width: 100%; border-collapse: collapse; }
+  .opsec-main td { padding: 5px 6px; border-bottom: 1px solid var(--line, #1a2030); vertical-align: middle; }
+  .opsec-main select, .opsec-main input { background: #11151f; color: inherit; border: 1px solid #2a3344; border-radius: 5px; padding: 4px 6px; }
+  .prow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 6px 0; padding: 6px; border: 1px solid #1a2030; border-radius: 6px; }
+  .prow input.px-host { min-width: 150px; } .prow input.px-port { width: 80px; }
+  .muted { color: #8a93a6; font-size: 12px; }
+  #msg { padding: 8px 10px; border-radius: 6px; margin: 10px 0; background: #11151f; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  label.inline { display: inline-flex; gap: 6px; align-items: center; }
+</style>
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">◢ Ge<span class="brand-o">OSINT</span><span class="brand-sub">OPSEC</span></div>
+  <div style="flex:1"></div>
+  <a class="wiki-btn" href="/app/" title="Back to the workbench">← workbench</a>
+</header>
+
+<main class="opsec-main">
+  <h1>OPSEC egress routing</h1>
+  <p class="muted">
+    Choose how each kind of outbound request leaves your machine. The default is
+    <b>direct</b> (your real IP). Settings are stored locally (<code>opsec.json</code>,
+    owner-only) and never leave your machine; the only network call this page makes
+    is the egress check you run, through the route you're testing.
+  </p>
+  <div id="msg" hidden></div>
+
+  <section class="opsec-sec">
+    <h2>Per-feature routing</h2>
+    <table><tbody id="routes"></tbody></table>
+    <div class="row" style="margin-top:10px">
+      <button id="recommended" class="btn">Apply recommended preset</button>
+      <span class="muted">VPN lane for high-traffic tiles/overpass/weather/GBIF (e.g. ProtonVPN, unlimited); residential proxy or Tor reserved for your most sensitive, low-traffic lookups (geocoding).</span>
+    </div>
+  </section>
+
+  <section class="opsec-sec">
+    <h2>VPN</h2>
+    <div class="row">
+      <label class="inline">provider
+        <select id="vpn-provider">
+          <option value="">— none —</option>
+          <option value="protonvpn">ProtonVPN</option>
+          <option value="generic">Generic VPN</option>
+        </select>
+      </label>
+      <label class="inline"><input type="checkbox" id="vpn-verify"> fail closed if not verified</label>
+      <button id="check" class="btn">Check egress now</button>
+    </div>
+    <p id="check-result" class="muted"></p>
+    <p class="muted">
+      A system VPN (e.g. ProtonVPN) routes <i>all</i> OS traffic — it isn't a
+      per-app proxy. The "VPN" lane sends a feature out your normal route and
+      <b>verifies your exit IP is the chosen provider</b>; with "fail closed" on, a
+      VPN-routed feature is blocked when the provider can't be confirmed (so it
+      can't leak). ProtonVPN has no SOCKS proxy by design (SOCKS5 is unencrypted) —
+      this is why VPN is verify-the-tunnel rather than a proxy URL.
+    </p>
+  </section>
+
+  <section class="opsec-sec">
+    <h2>Proxies (residential / SOCKS)</h2>
+    <div id="proxies"></div>
+    <button id="add-proxy" class="btn" style="margin-top:8px">+ add proxy</button>
+    <p class="muted">HTTP/HTTPS proxies (e.g. Webshare residential) work out of the box. SOCKS5 proxies and Tor need PySocks — <code>pip install -r requirements-opsec.txt</code>, then restart the server.</p>
+  </section>
+
+  <section class="opsec-sec">
+    <h2>Tor</h2>
+    <div class="row">
+      <label class="inline">host <input id="tor-host" size="14"></label>
+      <label class="inline">port <input id="tor-port" type="number" min="1" max="65535"></label>
+      <span class="muted">Set any feature's route to <b>Tor</b> to use socks5h://host:port (DNS resolved at the exit — no DNS leak).</span>
+    </div>
+  </section>
+
+  <section class="opsec-sec">
+    <h2>Outbound User-Agent</h2>
+    <div class="row">
+      <select id="ua-mode">
+        <option value="default">Honest — GeOSINT-Workbench/version (polite to OSM/Overpass)</option>
+        <option value="neutral">Neutral — Mozilla/5.0 (doesn't broadcast tool + version)</option>
+        <option value="custom">Custom…</option>
+      </select>
+      <input id="ua-custom" size="40" hidden placeholder="custom User-Agent">
+    </div>
+  </section>
+
+  <div class="row" style="margin-top:18px">
+    <button id="save" class="btn accent">Save</button>
+    <span class="muted">Saving takes effect immediately for new requests and re-checks the VPN exit.</span>
+  </div>
+</main>
+
+<script src="js/settings.js"></script>
+</body>
+</html>

@@ -7,6 +7,29 @@ versioning (`server.py --version`, surfaced in `/api/status`).
 ## [Unreleased]
 
 ### Added
+- **OPSEC egress routing + browser-direct leak closures (Axis A; pairs with #131):**
+  a new per-feature outbound-routing layer (`geosint/egress.py`) plus an **OPSEC
+  settings page** (`/app/settings.html`) let each host-class — map tiles, geocoding
+  (Nominatim), weather/elevation (Open-Meteo), Overpass, GBIF, wiki reference
+  images — be sent **direct, through a verified system VPN, a residential HTTP/SOCKS
+  proxy, or Tor** (`socks5h`, via the optional `PySocks` dep in
+  `requirements-opsec.txt`; the default install stays pure-stdlib). Adds a
+  configurable/neutral outbound **User-Agent** (so the tool+version isn't broadcast
+  on every request), a per-route **egress-IP / VPN-exit verification** check, and a
+  **fail-closed VPN gate** (a VPN-routed feature is blocked unless the exit is
+  confirmed on the chosen provider — e.g. ProtonVPN). Config persists to a
+  chmod-600 `opsec.json`; proxy credentials are never logged and are masked in API
+  responses. Routing funnels through the single server egress chokepoint
+  (`upstream_get` + the Overpass loop), preserving the redirect-refusing
+  anti-SSRF opener. Also **closes the two browser-direct leaks** the egress audit
+  found: GBIF occurrence-density tiles (were fetched straight from `api.gbif.org`
+  by the browser, leaking IP/UA + species of interest) now go through a cached,
+  routed `/api/gbif/tile` proxy; wiki-search reference images (hotlinked to
+  third parties, auto-loading on scroll) now go through an allowlisted, routed
+  `/api/img` proxy — so the SPA's CSP `img-src` is tightened to `'self' data:
+  blob:` (the wiki's own documented hotlinked galleries keep `https:`). The
+  generalized fail-closed offline/airplane mode + global kill-switch are tracked
+  separately in #131 (Axis C).
 - **Multi-agent code-review sprint (#68):** institutionalised the previously
   ad-hoc review loop as a Claude Code workflow — a manager orchestrates
   read-only `security`/`architect`/`developer` reviewers that cross-critique,

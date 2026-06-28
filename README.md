@@ -133,6 +133,14 @@ wiki/site/         built wiki (generated)
   engine and hand it the image.
 - Nominatim/Open-Meteo queries necessarily reveal the coordinates you're investigating to
   those services; for sensitive casework, route the browser through your usual opsec setup.
+- **Built-in egress routing (⛨ OPSEC settings).** Each kind of outbound point lookup —
+  map tiles, geocoding, weather/elevation, Overpass, GBIF, wiki reference images — can be
+  sent **direct, through a verified system VPN, a residential proxy, or Tor**, so the
+  coordinates you investigate need not leave from your real IP. The settings page can
+  **verify your exit IP** and *fail closed* on a VPN-routed feature when the tunnel can't
+  be confirmed. GBIF overlay tiles and wiki reference images are now proxied through the
+  local server (previously browser-direct). SOCKS5/Tor needs the optional
+  `requirements-opsec.txt` (`pip install -r requirements-opsec.txt`).
 - **Publishing the Docker port.** The container binds `0.0.0.0` *inside* the container,
   so your real exposure is decided by **how you publish the port**. On an untrusted
   network the ONLY safe form is to bind host loopback:

@@ -51,6 +51,8 @@ CACHE = DATA_ROOT / "cache"
 OVERPASS_CACHE = CACHE / "overpass"
 TILE_CACHE = CACHE / "tiles"
 PGET_CACHE = CACHE / "pget"
+GBIF_TILE_CACHE = CACHE / "gbif"        # browser used to hit api.gbif.org direct (#leak)
+IMG_CACHE = CACHE / "img"               # wiki-search reference images, now proxied
 # Global on-disk cache ceiling. Per-response writes are already bounded
 # (MAX_UPSTREAM_BYTES) and prefetch is capped per request, but nothing bounded the
 # *total* — sustained tile/pget proxying or repeated prefetch resumes could fill
@@ -88,6 +90,18 @@ TILE_LAYERS = {
     "opentopo": "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
 }
 TILE_TTL = 30 * 86400
+# GBIF occurrence-density overlay + wiki reference images: previously fetched
+# browser-direct (leaking the analyst's IP/UA to api.gbif.org / geohints.com).
+# Now proxied through the server (cached + routed via the OPSEC egress layer).
+GBIF_TILE_TTL = 7 * 86400        # occurrence density refreshes; a week is plenty
+IMG_TTL = 30 * 86400
+# Allowlisted GBIF density-tile parameters (the URL is server-built from these, so
+# the {z}/{x}/{y} path parser can't be steered to an arbitrary host/path).
+GBIF_TILE_STYLES = {
+    "purpleYellow-noborder.poly", "purpleYellow.poly", "classic.poly",
+    "classic-noborder.poly", "green.poly", "orangeHeat.point", "classic.point",
+}
+GBIF_TILE_BINS = {"hex", "square", "point"}
 # Offline tile prefetch (/api/prefetch). MAX_TILES is the politeness/disk cap on
 # one request's bbox; BUDGET bounds its wall-clock so the request can't hold a
 # server thread for minutes — when it runs out, the response reports `remaining`
@@ -505,6 +519,7 @@ except Exception:                       # pragma: no cover - frozen/standalone f
 # import hard (no frozen fallback).
 from geosint import exif as exif_domain
 from geosint import proxy as proxy_domain
+from geosint import egress as egress_domain
 
 
 # Opener that refuses to follow 3xx redirects. The /api/pget and /tiles proxies
@@ -520,10 +535,47 @@ _no_redirect_opener = urllib.request.build_opener(_NoRedirect)
 # Hard ceiling on any single proxied response, so an upstream can't exhaust RAM/disk.
 MAX_UPSTREAM_BYTES = 64 * 1024 * 1024
 
+# ---- OPSEC egress routing (Axis A — geosint/egress.py) ----------------------
+# Per-feature outbound routing (direct / VPN-verified / residential proxy / Tor)
+# lives in geosint/egress.py; here we hold the active config and a thin helper
+# that resolves a feature to (opener, UA) and enforces the fail-closed VPN gate.
+# The config is read from opsec.json (next to the cache, chmod 600) and reloaded
+# on POST /api/opsec. Default config = every feature "direct" => behaviour is
+# byte-for-byte the pre-OPSEC server until the analyst opts in.
+OPSEC_CONFIG_PATH = DATA_ROOT / "opsec.json"
+_opsec_cfg = [None]
+_opsec_lock = threading.Lock()
 
-def upstream_get(url: str, timeout=30) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with _no_redirect_opener.open(req, timeout=timeout) as r:
+
+def current_opsec():
+    if _opsec_cfg[0] is None:
+        _opsec_cfg[0] = egress_domain.load_config(OPSEC_CONFIG_PATH)
+    return _opsec_cfg[0]
+
+
+def reload_opsec():
+    _opsec_cfg[0] = egress_domain.load_config(OPSEC_CONFIG_PATH)
+    egress_domain.reset_openers()
+    return _opsec_cfg[0]
+
+
+def _egress(feature):
+    """Resolve a feature to (opener, user_agent) for this request, enforcing the
+    fail-closed VPN gate. Raises egress.EgressError when the route is blocked or
+    misconfigured — every caller already treats a raised fetch as a clean upstream
+    failure (cache-or-error), so a blocked route degrades gracefully, never leaks."""
+    cfg = current_opsec()
+    allowed, reason = egress_domain.egress_allowed(feature, cfg)
+    if not allowed:
+        raise egress_domain.EgressError(reason)
+    opener = egress_domain.opener_for(egress_domain.resolve(feature, cfg), cfg, _NoRedirect)
+    return opener, egress_domain.ua_for(cfg, UA)
+
+
+def upstream_get(url: str, timeout=30, feature="tiles") -> bytes:
+    opener, ua = _egress(feature)             # per-feature route + UA + VPN gate
+    req = urllib.request.Request(url, headers={"User-Agent": ua})
+    with opener.open(req, timeout=timeout) as r:
         # Read one byte past the ceiling so we can DETECT an oversize body and
         # raise — rather than silently truncating it. Truncating would cache a
         # corrupt (partial) tile/JSON; raising makes every caller treat it as a
@@ -564,6 +616,33 @@ def _host_of(url: str) -> str:
         return urlparse(url).netloc or "?"
     except ValueError:
         return "?"
+
+
+_img_hosts = [None]
+
+
+def _img_host_allow():
+    """Allowlist of image hosts the /api/img proxy may fetch, so it can't be turned
+    into an open image-fetch SSRF. Derived once from the hosts actually referenced
+    by the shipped search index (first-party-curated reference imagery), plus a few
+    well-known fallbacks. Lazy + cached (the index is large)."""
+    if _img_hosts[0] is None:
+        hosts = {"geohints.com", "upload.wikimedia.org", "commons.wikimedia.org"}
+        try:
+            txt = (APP_DIR / "data" / "search-index.json").read_text(
+                encoding="utf-8", errors="ignore")
+            for m in re.finditer(r'"img"\s*:\s*"https?://([^/"]+)', txt):
+                hosts.add(m.group(1).lower())
+        except OSError:
+            pass
+        _img_hosts[0] = hosts
+    return _img_hosts[0]
+
+
+def _img_host_ok(host):
+    host = (host or "").lower()
+    return bool(host) and any(host == h or host.endswith("." + h)
+                              for h in _img_host_allow())
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -612,11 +691,18 @@ class Handler(BaseHTTPRequestHandler):
         #   clickjacking surface this opens is negligible.
         if ctype == "text/html":
             frame_ancestors = "'self'" if frameable else "'none'"
+            # Wiki (frameable) pages legitimately hotlink remote identification-
+            # gallery images, so they keep https: in img-src. The SPA/app pages now
+            # proxy every remote image — GBIF density tiles via /api/gbif/tile and
+            # wiki-search reference images via /api/img — so they tighten img-src to
+            # self/data/blob: no arbitrary https image host can be contacted, closing
+            # the browser-direct image leaks the egress audit flagged.
+            img_src = "'self' data: blob: https:" if frameable else "'self' data: blob:"
             self.send_header("Content-Security-Policy",
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline'; "
                 "style-src 'self' 'unsafe-inline'; "
-                "img-src 'self' data: blob: https:; "
+                f"img-src {img_src}; "
                 "connect-src 'self' https:; "
                 f"frame-ancestors {frame_ancestors}; base-uri 'self'")
             # X-Frame-Options can't express "self only" portably; emit DENY only when
@@ -693,12 +779,14 @@ class Handler(BaseHTTPRequestHandler):
         "/api/overpass": "api_overpass",
         "/api/qgis": "api_qgis",
         "/api/prefetch": "api_prefetch",
+        "/api/opsec": "api_opsec_set",
     }
     # Raw-bytes POST routes (handled before JSON parsing — they take image bytes).
     POST_RAW_PATHS = {"/api/exif", "/api/exif-preview"}
 
     # Known routes per method, for 405 (path exists but wrong verb) vs 404.
-    GET_PATHS = {"/", "/index.html", "/api/pget", "/wiki", "/api/status", "/api/health"}
+    GET_PATHS = {"/", "/index.html", "/api/pget", "/wiki", "/api/status",
+                 "/api/health", "/api/opsec", "/api/opsec/check", "/api/img"}
     POST_PATHS = POST_RAW_PATHS | POST_JSON_ROUTES.keys()
 
     def send_405(self, allow):
@@ -711,7 +799,8 @@ class Handler(BaseHTTPRequestHandler):
     def _not_found_or_405(self, path, this_method):
         """Emit 405+Allow when the path is valid under another verb, else 404."""
         if this_method != "GET" and (path in self.GET_PATHS or path.startswith("/app")
-                                     or path.startswith("/wiki") or path.startswith("/tiles/")):
+                                     or path.startswith("/wiki") or path.startswith("/tiles/")
+                                     or path.startswith("/api/gbif/tile/")):
             return self.send_405("GET, HEAD")
         if this_method != "POST" and path in self.POST_PATHS:
             return self.send_405("POST")
@@ -800,7 +889,8 @@ class Handler(BaseHTTPRequestHandler):
         url = TILE_LAYERS[layer].format(z=z, x=x, y=y)
         return self.render(proxy_domain.fetch_cached(
             f, url, TILE_TTL, "image/png", timeout=20,
-            fetch=upstream_get, cache_fresh=cache_fresh, atomic_write=atomic_write,
+            fetch=lambda u, timeout: upstream_get(u, timeout, feature="tiles"),
+            cache_fresh=cache_fresh, atomic_write=atomic_write,
             log_where=_host_of(url), browser_ttl=TILE_TTL, stale_browser_ttl=3600,
             error_msg="tile upstream unreachable"))
 
@@ -844,7 +934,7 @@ class Handler(BaseHTTPRequestHandler):
                 cached += 1
                 continue
             try:
-                body = upstream_get(TILE_LAYERS[layer].format(z=z, x=x, y=y), timeout=20)
+                body = upstream_get(TILE_LAYERS[layer].format(z=z, x=x, y=y), timeout=20, feature="tiles")
                 atomic_write(f, body)
                 fetched += 1
                 time.sleep(0.05)                  # gentle on the tile server
@@ -872,11 +962,129 @@ class Handler(BaseHTTPRequestHandler):
         ttl = next((t for prefix, t in PGET_ALLOW if url.startswith(prefix)), None)
         if ttl is None:
             return self.send_json({"error": "url not allowlisted"}, 403)
+        # Map the allowlisted upstream to its OPSEC feature so each can be routed
+        # independently (e.g. geocoding via Tor, weather direct).
+        feat = ("geocode" if "nominatim" in url else
+                "gbif" if "gbif.org" in url else "weather")
         f = PGET_CACHE / (hashlib.sha1(url.encode()).hexdigest() + ".json")
         return self.render(proxy_domain.fetch_cached(
             f, url, ttl, "application/json; charset=utf-8", timeout=30,
-            fetch=upstream_get, cache_fresh=cache_fresh, atomic_write=atomic_write,
+            fetch=lambda u, timeout: upstream_get(u, timeout, feature=feat),
+            cache_fresh=cache_fresh, atomic_write=atomic_write,
             validate=json.loads, log_where=_host_of(url), error_msg="upstream failed"))
+
+    # ---- OPSEC egress settings (Axis A) --------------------------------
+    def api_opsec_get(self):
+        """Return the active OPSEC egress config (proxy passwords masked)."""
+        if self._is_cross_site():
+            return self.send_json({"error": "cross-site request refused"}, 403)
+        return self.send_json({"config": egress_domain.masked(current_opsec()),
+                               "features": list(egress_domain.FEATURES)})
+
+    def api_opsec_set(self, payload):
+        """Persist a new OPSEC config (X-GeOSINT-gated). A password that comes back
+        masked keeps the stored secret; the file is written chmod 600; openers are
+        reset so new routing takes effect at once. Best-effort verify so the VPN
+        gate has fresh state — the save never fails on the verification."""
+        cfg = payload.get("config") if isinstance(payload, dict) else None
+        if not isinstance(cfg, dict):
+            return self.send_json({"error": "config object required"}, 400)
+        with _opsec_lock:
+            merged = egress_domain.merge_secrets(cfg, current_opsec())
+            try:
+                egress_domain.save_config(OPSEC_CONFIG_PATH, merged, atomic_write=atomic_write)
+            except OSError as e:
+                self._warn("/api/opsec", "save", e)
+                return self.send_json({"error": "could not save OPSEC config"}, 500)
+            reload_opsec()
+        check = None
+        if current_opsec()["vpn"]["provider"]:
+            try:
+                check = egress_domain.check_egress(current_opsec(), _NoRedirect,
+                                                   now=time.monotonic())
+            except egress_domain.EgressError as e:
+                self._warn("/api/opsec", "verify", e)
+        return self.send_json({"ok": True,
+                               "config": egress_domain.masked(current_opsec()),
+                               "check": check})
+
+    def api_opsec_check(self):
+        """Verify the current egress: fetch the provider IP-echo through the VPN/
+        direct opener and report apparent IP / country / org / on_vpn."""
+        if self._is_cross_site():
+            return self.send_json({"error": "cross-site request refused"}, 403)
+        try:
+            return self.send_json(egress_domain.check_egress(
+                current_opsec(), _NoRedirect, now=time.monotonic()))
+        except egress_domain.EgressError as e:
+            self._warn("/api/opsec/check", "egress", e)
+            return self.send_json({"ok": False, "error": "egress check failed"}, 502)
+
+    # ---- GBIF density-tile proxy (closes the browser-direct GBIF leak) ----
+    def api_gbif_tile(self, path, query):
+        """Proxy + cache GBIF occurrence-density tiles that the browser used to
+        fetch straight from api.gbif.org (leaking the analyst's IP/UA + species of
+        interest). Routed via the OPSEC 'gbif' feature; params are allowlisted so
+        the {z}/{x}/{y} path can't be steered to another host."""
+        if self._is_cross_site():
+            return self.send_json({"error": "cross-site request refused"}, 403)
+        parts = path.strip("/").split("/")          # api, gbif, tile, z, x, y
+        if len(parts) != 6 or not all(re.fullmatch(r"\d+", p) for p in parts[3:6]):
+            return self.send_json({"error": "bad gbif tile path"}, 400)
+        z, x, y = (int(p) for p in parts[3:6])
+        if not (0 <= z <= 19):
+            return self.send_json({"error": "bad zoom"}, 400)
+        n = 1 << z
+        if not (0 <= x < n and 0 <= y < n):
+            return self.send_json({"error": "tile coords out of range"}, 400)
+        qs = urllib.parse.parse_qs(query)
+        taxon = qs.get("taxonKey", [""])[0]
+        if not re.fullmatch(r"\d{1,12}", taxon):
+            return self.send_json({"error": "bad taxonKey"}, 400)
+        bin_ = qs.get("bin", ["hex"])[0]
+        if bin_ not in GBIF_TILE_BINS:
+            bin_ = "hex"
+        hpt = qs.get("hexPerTile", ["100"])[0]
+        if not re.fullmatch(r"\d{1,4}", hpt):
+            hpt = "100"
+        style = qs.get("style", ["purpleYellow-noborder.poly"])[0]
+        if style not in GBIF_TILE_STYLES:
+            style = "purpleYellow-noborder.poly"
+        url = (f"https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png"
+               f"?taxonKey={taxon}&bin={bin_}&hexPerTile={hpt}&style={style}")
+        f = GBIF_TILE_CACHE / taxon / bin_ / str(z) / str(x) / f"{y}.png"
+        return self.render(proxy_domain.fetch_cached(
+            f, url, GBIF_TILE_TTL, "image/png", timeout=20,
+            fetch=lambda u, timeout: upstream_get(u, timeout, feature="gbif"),
+            cache_fresh=cache_fresh, atomic_write=atomic_write,
+            log_where="api.gbif.org", browser_ttl=GBIF_TILE_TTL, stale_browser_ttl=3600,
+            error_msg="GBIF tiles unreachable"))
+
+    # ---- wiki reference-image proxy (closes the hotlinked-image leak) -----
+    def api_img(self, query):
+        """Proxy + cache a wiki-search reference image so the browser no longer
+        hotlinks it straight to a third party (geohints.com etc.) on every search.
+        Host is suffix-allowlisted (to the hosts the shipped index references) so
+        this can't become an open image-fetch SSRF; routed via the 'media' feature."""
+        if self._is_cross_site():
+            return self.send_json({"error": "cross-site request refused"}, 403)
+        u = urllib.parse.parse_qs(query).get("u", [""])[0]
+        if not u:
+            return self.send_json({"error": "missing 'u' parameter"}, 400)
+        if not u.startswith(("http://", "https://")):
+            return self.send_json({"error": "bad url"}, 400)
+        if not _img_host_ok(urlparse(u).hostname):
+            return self.send_json({"error": "image host not allowlisted"}, 403)
+        ctype = mimetypes.guess_type(u)[0] or "image/jpeg"
+        if not ctype.startswith("image/"):
+            ctype = "image/jpeg"
+        f = IMG_CACHE / (hashlib.sha1(u.encode()).hexdigest() + ".img")
+        return self.render(proxy_domain.fetch_cached(
+            f, u, IMG_TTL, ctype, timeout=20,
+            fetch=lambda url, timeout: upstream_get(url, timeout, feature="media"),
+            cache_fresh=cache_fresh, atomic_write=atomic_write,
+            log_where=_host_of(u), browser_ttl=IMG_TTL, stale_browser_ttl=3600,
+            error_msg="image upstream unreachable"))
 
     # ---- routes --------------------------------------------------------
     def do_GET(self):
@@ -896,6 +1104,14 @@ class Handler(BaseHTTPRequestHandler):
             return self.api_tile(path)
         if path == "/api/pget":
             return self.api_pget(parsed.query)
+        if path.startswith("/api/gbif/tile/"):
+            return self.api_gbif_tile(path, parsed.query)
+        if path == "/api/img":
+            return self.api_img(parsed.query)
+        if path == "/api/opsec":
+            return self.api_opsec_get()
+        if path == "/api/opsec/check":
+            return self.api_opsec_check()
         if path == "/wiki":
             return self.redirect("/wiki/")
         if path == "/api/status":
@@ -904,6 +1120,7 @@ class Handler(BaseHTTPRequestHandler):
                 "platform": PLATFORM,
                 "tools": tool_status(),
                 "wiki_built": (WIKI_SITE / "index.html").is_file(),
+                "opsec": egress_domain.masked(current_opsec()),   # routes only; creds masked
             })
         if path.startswith("/app"):
             return self.serve_static(APP_DIR, path[len("/app"):].lstrip("/"))
@@ -1007,11 +1224,20 @@ class Handler(BaseHTTPRequestHandler):
         if _preferred_mirror[0] in mirrors:          # last healthy mirror first
             mirrors.remove(_preferred_mirror[0])
             mirrors.insert(0, _preferred_mirror[0])
+        # OPSEC: resolve the "overpass" route (residential proxy / Tor / VPN gate)
+        # once before the failover loop. A blocked or misconfigured route skips the
+        # network entirely and falls through to the stale-cache / error path below,
+        # so the bbox in the query body is never sent on a disallowed egress.
+        try:
+            opener, ua = _egress("overpass")
+        except egress_domain.EgressError as e:
+            opener, ua, mirrors = None, None, []
+            last_err = str(e)[:200]
         for mirror in mirrors:
             try:
                 req = urllib.request.Request(mirror, data=data,
-                                             headers={"User-Agent": UA})
-                with _no_redirect_opener.open(req, timeout=OVERPASS_TIMEOUT) as resp:
+                                             headers={"User-Agent": ua})
+                with opener.open(req, timeout=OVERPASS_TIMEOUT) as resp:
                     # Read one byte past the ceiling to DETECT an oversize body and
                     # raise (caught below), rather than silently truncating — same
                     # contract as upstream_get(). Avoids caching a partial response.
@@ -1210,6 +1436,13 @@ def main():
               f"http://localhost:{args.port}/ or pass --allow-host <name>. Do NOT publish "
               f"this port to an untrusted network (prefer "
               f"`-p 127.0.0.1:{args.port}:{args.port}` in Docker).")
+
+    # Load the OPSEC egress config (opsec.json) up front so the first request
+    # doesn't pay the read, and surface any active routing in the startup banner.
+    opsec0 = reload_opsec()
+    _routed = {f: r for f, r in opsec0["routes"].items() if r != "direct"}
+    if _routed or opsec0["ua"] != "default":
+        print(f"[geosint] OPSEC egress routing: {_routed or '(per-UA only)'}  ua={opsec0['ua']}")
 
     try:
         srv = ThreadingHTTPServer((args.host, args.port), Handler)
