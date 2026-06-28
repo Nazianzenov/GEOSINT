@@ -6,7 +6,11 @@
 <title>GeOSINT — OPSEC egress settings</title>
 <link rel="stylesheet" href="css/app.css">
 <style>
-  .opsec-main { max-width: 920px; margin: 0 auto; padding: 18px 20px 60px; }
+  /* app.css locks the SPA viewport (body is a fixed-height flex column with
+     overflow:hidden); make THIS page's <main> the scroll container so the long
+     settings form scrolls while the top bar stays put. */
+  .opsec-main { max-width: 920px; margin: 0 auto; padding: 18px 20px 60px;
+                flex: 1 1 auto; min-height: 0; overflow-y: auto; }
   .opsec-main h1 { margin: 6px 0 2px; }
   .opsec-sec { border: 1px solid var(--line, #232a3b); border-radius: 8px; padding: 14px 16px; margin: 16px 0; }
   .opsec-sec h2 { margin: 0 0 10px; font-size: 15px; }
@@ -59,6 +63,11 @@
       </label>
       <label class="inline"><input type="checkbox" id="vpn-verify"> fail closed if not verified</label>
       <button id="check" class="btn">Check egress now</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label class="inline">expected exit
+        <input id="vpn-match" size="24" placeholder="org / ASN / IP keyword (optional)"></label>
+      <span class="muted">Leave blank to auto-detect (ProtonVPN-owned servers match via AS62371 / “Proton”). If auto-detect fails on a partner server or another VPN, run a check and paste a distinctive word from the Org/AS shown.</span>
     </div>
     <p id="check-result" class="muted"></p>
     <p class="muted">

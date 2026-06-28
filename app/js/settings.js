@@ -63,6 +63,7 @@ function render() {
      <td><select data-feat="${esc(f)}">${routeOptions(CFG.routes[f] || "direct")}</select></td></tr>`).join("");
   $("#vpn-provider").value = CFG.vpn.provider || "";
   $("#vpn-verify").checked = !!CFG.vpn.verify;
+  $("#vpn-match").value = CFG.vpn.match || "";
   renderProxies();
   $("#tor-host").value = CFG.tor.host;
   $("#tor-port").value = CFG.tor.port;
@@ -96,7 +97,8 @@ function collect() {
   const ua = uaMode === "custom" ? ($("#ua-custom").value.trim() || "default") : uaMode;
   return {
     version: 1, routes, proxies,
-    vpn: { provider: $("#vpn-provider").value || null, verify: $("#vpn-verify").checked },
+    vpn: { provider: $("#vpn-provider").value || null, verify: $("#vpn-verify").checked,
+           match: $("#vpn-match").value.trim() },
     tor: { host: $("#tor-host").value.trim() || "127.0.0.1", port: Number($("#tor-port").value) || 9050 },
     ua,
   };
@@ -104,9 +106,16 @@ function collect() {
 
 function describeCheck(j) {
   if (!j || j.ok === false) return "egress check failed (is the route reachable?)";
-  const onVpn = j.on_vpn === true ? `✓ on ${j.provider || "VPN"}`
-    : j.on_vpn === false ? `✗ NOT on ${j.provider || "VPN"} — VPN-routed features are blocked`
-      : "(provider not auto-verifiable — judge from the org below)";
+  const label = j.provider || "VPN";
+  let onVpn;
+  if (j.on_vpn === true) {
+    onVpn = `✓ on ${label}`;
+  } else if (j.on_vpn === false) {
+    onVpn = `✗ NOT on ${label} — VPN-routed features are blocked. If this IS your VPN, ` +
+            'copy a distinctive word from the Org/AS above into "expected exit" and Save.';
+  } else {
+    onVpn = '(can’t auto-verify — if this is your VPN, set "expected exit" to a word from the Org/AS above)';
+  }
   return `IP ${j.ip || "?"} · ${j.country || "?"} · ${j.org || "?"} · ${onVpn}`;
 }
 

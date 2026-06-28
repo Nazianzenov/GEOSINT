@@ -49,16 +49,20 @@ FEATURES = ("tiles", "geocode", "weather", "overpass", "gbif", "media")
 # Routes that need SOCKS (and therefore PySocks).
 _SOCKS_SCHEMES = ("socks5", "socks5h", "socks4")
 
-# IP-echo endpoints used by check_egress(), per VPN provider preset. These are the
-# ONLY extra hosts this feature can reach, and only when a check is requested.
-ECHO_ENDPOINTS = {
-    # Proton's own location API reports the public IP + ISP; on Proton the ISP/org
-    # reads as Proton, which is how we confirm the tunnel is actually up.
-    "protonvpn": "https://api.protonvpn.ch/vpn/location",
-    # Generic: a keyless IP/org/ASN echo. http-only on the free tier (it only
-    # reveals the IP we are testing anyway, through the route under test).
-    "generic": "http://ip-api.com/json/?fields=status,country,query,org,isp,as",
-}
+# Neutral IP/ASN echo endpoints used by check_egress(), tried in order until one
+# answers. These are the ONLY extra hosts this feature can reach, and only when a
+# check is requested. We deliberately do NOT use Proton's own API
+# (api.protonvpn.ch rejects generic clients with HTTP 422); a neutral echo that
+# returns the org/ASN works for any provider and lets us recognise ProtonVPN by
+# its ASN (AS62371) or name — and the analyst can set an explicit `vpn.match`
+# signature for partner servers / any other VPN.
+ECHO_ENDPOINTS = [
+    # ipinfo.io: keyless, https; `org` is "AS<num> <name>" (e.g. "AS62371 Proton AG").
+    ("https://ipinfo.io/json", "ipinfo"),
+    # ip-api.com fallback: keyless, http on the free tier (reveals only the IP we
+    # are deliberately testing, through the route under test).
+    ("http://ip-api.com/json/?fields=status,country,query,org,isp,as", "ipapi"),
+]
 
 DEFAULT_CONFIG = {
     "version": 1,
@@ -67,8 +71,9 @@ DEFAULT_CONFIG = {
     # page's "Recommended" preset is what moves features onto the VPN lane.
     "routes": {f: "direct" for f in FEATURES},
     # provider: None | "protonvpn" | "generic"; verify: fail closed on vpn routes
-    # when the provider can't be confirmed.
-    "vpn": {"provider": None, "verify": True},
+    # when the exit can't be confirmed; match: optional user-supplied signature
+    # (org / ASN / IP keyword) that overrides auto-detection (works for any VPN).
+    "vpn": {"provider": None, "verify": True, "match": ""},
     # id -> {scheme: http|https|socks5|socks5h, host, port, user, pass}
     "proxies": {},
     # Tor SOCKS endpoint (only used by the "tor" route).
@@ -138,6 +143,7 @@ def normalize(cfg):
         prov = vpn.get("provider")
         out["vpn"]["provider"] = prov if prov in ("protonvpn", "generic") else None
         out["vpn"]["verify"] = bool(vpn.get("verify", True))
+        out["vpn"]["match"] = str(vpn.get("match") or "")[:80]
     tor = cfg.get("tor")
     if isinstance(tor, dict):
         out["tor"]["host"] = str(tor.get("host") or "127.0.0.1").strip() or "127.0.0.1"
@@ -286,37 +292,56 @@ def opener_for(route, cfg, no_redirect_cls):
 _verify_state = {}       # provider -> {"on_vpn": bool|None, "ip", "country", "org", "at": monotonic}
 
 
-def _provider_match(provider, ip, org, isp, country):
-    blob = f"{org} {isp}".lower()
-    if provider == "protonvpn":
-        return "proton" in blob
-    return None          # generic: cannot auto-confirm; the UI shows ip/org to judge
+def _provider_match(vpn, info):
+    """Decide whether the observed exit looks like the configured VPN. A
+    user-supplied `match` substring (org / ASN / IP keyword) is authoritative and
+    provider-agnostic; otherwise ProtonVPN is recognised by its ASN (AS62371) or
+    name. Returns True/False, or None when there's nothing to match against (a
+    generic VPN with no `match` — the UI shows the org for the analyst to judge)."""
+    blob = (f"{info.get('ip', '')} {info.get('org', '')} "
+            f"{info.get('isp', '')} {info.get('as', '')}").lower()
+    match = (vpn.get("match") or "").strip().lower()
+    if match:
+        return match in blob
+    if vpn.get("provider") == "protonvpn":
+        return ("proton" in blob) or ("as62371" in blob)
+    return None
+
+
+def _parse_echo(kind, data):
+    """Normalise an IP-echo response to {ip, country, org, isp, as}."""
+    if kind == "ipinfo":
+        org = str(data.get("org") or "")              # "AS<num> <name>"
+        return {"ip": str(data.get("ip") or ""), "country": str(data.get("country") or ""),
+                "org": org, "isp": org, "as": org}
+    return {"ip": str(data.get("query") or ""), "country": str(data.get("country") or ""),
+            "org": str(data.get("org") or ""), "isp": str(data.get("isp") or ""),
+            "as": str(data.get("as") or "")}
 
 
 def check_egress(cfg, no_redirect_cls, *, now, timeout=12):
-    """Fetch the IP-echo for the configured VPN provider THROUGH the vpn/direct
-    opener and record whether the machine appears to be on that provider. Returns
-    a dict {ok, ip, country, org, on_vpn, provider}. Updates _verify_state. Network
-    call (to the provider's echo only); safe to call from a request handler."""
-    provider = cfg["vpn"]["provider"] or "generic"
-    url = ECHO_ENDPOINTS.get(provider, ECHO_ENDPOINTS["generic"])
+    """Fetch the current exit IP/org THROUGH the vpn/direct opener (trying the echo
+    endpoints in order) and record whether the machine appears to be on the
+    configured VPN. Returns {ok, provider, on_vpn, ip, country, org, isp, as};
+    updates _verify_state. Network call (to a neutral echo only); safe from a
+    request handler."""
     opener = opener_for("vpn", cfg, no_redirect_cls)   # vpn lane == direct transport
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": NEUTRAL_UA})
-        with opener.open(req, timeout=timeout) as r:
-            data = json.loads(r.read(65536).decode("utf-8", "replace"))
-    except Exception as e:
-        raise EgressError(str(e))
-    ip = str(data.get("IP") or data.get("query") or data.get("ip") or "")
-    country = str(data.get("Country") or data.get("country") or "")
-    org = str(data.get("ISP") or data.get("Org") or data.get("org") or data.get("isp") or "")
-    isp = str(data.get("ISP") or data.get("isp") or "")
-    on_vpn = _provider_match(cfg["vpn"]["provider"], ip, org, isp, country)
-    _verify_state[cfg["vpn"]["provider"] or "generic"] = {
-        "on_vpn": on_vpn, "ip": ip, "country": country, "org": org, "at": now,
-    }
-    return {"ok": True, "ip": ip, "country": country, "org": org,
-            "on_vpn": on_vpn, "provider": cfg["vpn"]["provider"]}
+    info, last = None, None
+    for url, kind in ECHO_ENDPOINTS:
+        try:
+            req = urllib.request.Request(
+                url, headers={"User-Agent": NEUTRAL_UA, "Accept": "application/json"})
+            with opener.open(req, timeout=timeout) as r:
+                data = json.loads(r.read(65536).decode("utf-8", "replace"))
+            info = _parse_echo(kind, data)
+            break
+        except Exception as e:
+            last = e
+    if info is None:
+        raise EgressError(str(last) if last else "no IP-echo reachable")
+    on_vpn = _provider_match(cfg["vpn"], info)
+    _verify_state[cfg["vpn"]["provider"] or "generic"] = {**info, "on_vpn": on_vpn, "at": now}
+    return {"ok": True, "provider": cfg["vpn"]["provider"], "on_vpn": on_vpn, **info}
 
 
 def egress_allowed(feature, cfg):
@@ -332,13 +357,16 @@ def egress_allowed(feature, cfg):
     if route != "vpn" or not cfg["vpn"].get("verify", True):
         return True, ""
     provider = cfg["vpn"]["provider"]
-    if provider is None:
-        return False, "VPN lane selected but no provider chosen — set one in OPSEC settings"
-    if provider == "generic":
-        return True, ""          # cannot auto-verify a generic VPN; allowed (UI warns)
-    st = _verify_state.get(provider)
+    has_match = bool((cfg["vpn"].get("match") or "").strip())
+    # Nothing to verify against: no named provider AND no expected-exit signature.
+    if provider is None and not has_match:
+        return False, "VPN lane selected but no provider / expected exit set — configure it in OPSEC settings"
+    # A generic VPN with no signature can't be auto-verified; allow it (the UI warns).
+    if provider == "generic" and not has_match:
+        return True, ""
+    st = _verify_state.get(provider or "generic")
     if not st:
-        return False, f"{provider} not verified yet — run an egress check in OPSEC settings"
+        return False, "VPN not verified yet — run an egress check in OPSEC settings"
     if st.get("on_vpn") is True:
         return True, ""
-    return False, f"egress is NOT going through {provider} — request blocked (fail-closed)"
+    return False, "egress is NOT going through the expected VPN — request blocked (fail-closed)"
