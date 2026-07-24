@@ -116,7 +116,39 @@ def test_egress_allowed_vpn_gate():
     # generic provider can't be auto-verified -> allowed (the UI warns)
     cfg = egress.normalize({"routes": {"tiles": "vpn"}, "vpn": {"provider": "generic", "verify": True}})
     assert egress.egress_allowed("tiles", cfg)[0] is True
+    # ...but a generic VPN WITH an explicit expected-exit signature is enforced
+    cfg = egress.normalize({"routes": {"tiles": "vpn"},
+                            "vpn": {"provider": "generic", "verify": True, "match": "M247"}})
+    assert egress.egress_allowed("tiles", cfg)[0] is False     # no check yet -> blocked
+    egress._verify_state["generic"] = {"on_vpn": True, "at": 0}
+    assert egress.egress_allowed("tiles", cfg)[0] is True
     egress._verify_state.clear()
+
+
+def test_normalize_keeps_vpn_match():
+    assert egress.normalize({"vpn": {"match": "AS62371"}})["vpn"]["match"] == "AS62371"
+    assert egress.normalize({})["vpn"]["match"] == ""
+
+
+def test_provider_match():
+    proton = {"provider": "protonvpn", "match": ""}
+    assert egress._provider_match(proton, {"org": "AS62371 Proton AG"}) is True    # name
+    assert egress._provider_match(proton, {"org": "AS62371 Datacamp"}) is True     # ASN
+    assert egress._provider_match(proton, {"org": "AS9009 M247 Europe SRL"}) is False
+    # an explicit match overrides (works for partner servers / any VPN)
+    m = {"provider": "generic", "match": "M247"}
+    assert egress._provider_match(m, {"org": "AS9009 M247 Europe SRL"}) is True
+    assert egress._provider_match(m, {"org": "AS3320 Deutsche Telekom"}) is False
+    # generic, no match -> None (can't auto-confirm)
+    assert egress._provider_match({"provider": "generic", "match": ""}, {"org": "x"}) is None
+
+
+def test_parse_echo_shapes():
+    a = egress._parse_echo("ipinfo", {"ip": "1.2.3.4", "country": "CH", "org": "AS62371 Proton AG"})
+    assert a["ip"] == "1.2.3.4" and a["as"] == a["org"] and "Proton" in a["org"]
+    b = egress._parse_echo("ipapi", {"query": "5.6.7.8", "country": "US",
+                                     "org": "O", "isp": "I", "as": "AS1"})
+    assert b["ip"] == "5.6.7.8" and b["isp"] == "I" and b["as"] == "AS1"
 
 
 def test_save_and_load_round_trip(tmp_path):
