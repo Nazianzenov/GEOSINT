@@ -44,6 +44,21 @@ versioning (`server.py --version`, surfaced in `/api/status`).
   informal local specialist agents (api-/pen-/ux-tester, usage-sme).
 
 ### Fixed
+- **Console no longer flooded with tracebacks when a client disconnects (#134):**
+  a dropped keep-alive connection — closing the tab, navigating away, a probe
+  hanging up — used to print a ~10-line `ConnectionResetError` traceback
+  (`WinError 10054` on Windows) to the foreground console `run.bat` keeps open,
+  so routine browsing looked like a crash and buried the `[geosint]` request log.
+  The server now runs on a `QuietThreadingHTTPServer` whose `handle_error`
+  suppresses exactly `ConnectionReset`/`BrokenPipe`/`ConnectionAborted`; every
+  other exception keeps its traceback, so genuine handler bugs stay loud.
+- **Favicon (#135):** the workbench shipped no icon, so browsers 404'd on
+  `/favicon.ico` on every page load and tabs rendered blank. Adds
+  `app/favicon.svg` (a reticle in the app palette, legible at 16 px), a
+  `<link rel="icon">` on all five HTML entry points (workbench, search, sun
+  studio, graph, OPSEC settings), and a `/favicon.ico` → `/app/favicon.svg`
+  redirect for the root probe browsers make regardless of the link tag. The wiki
+  is unaffected — MkDocs Material already serves its own favicon.
 - **GBIF species overlay legibility (#63):** the occurrence-density overlay now
   renders a **fine hex-binned density field** (`bin=hex&hexPerTile=100`,
   `purpleYellow-noborder.poly`, 0.55 opacity) instead of fixed-pixel dots. The old
