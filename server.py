@@ -1100,6 +1100,11 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"error": "bad host"}, 403)
         if path in ("/", "/index.html"):
             return self.redirect("/app/")
+        # Browsers probe the site root for a favicon whether or not our pages
+        # carry a <link rel="icon"> (#135) — point them at the real asset so a
+        # 404 doesn't land in the operator's log on every page load.
+        if path == "/favicon.ico":
+            return self.redirect("/app/favicon.svg")
         if path.startswith("/tiles/"):
             return self.api_tile(path)
         if path == "/api/pget":
@@ -1397,6 +1402,24 @@ class Handler(BaseHTTPRequestHandler):
         return self.send_json({"ok": True, "kml": str(kml_path)})
 
 
+class QuietThreadingHTTPServer(ThreadingHTTPServer):
+    """ThreadingHTTPServer that doesn't cry wolf over routine disconnects (#134).
+
+    A client dropping a keep-alive connection — closing the tab, navigating away,
+    a probe that hangs up — surfaces here as ConnectionReset/BrokenPipe/
+    ConnectionAborted from `rfile.readline`. The stdlib default prints a full
+    traceback to stderr, which is the *foreground console* the operator watches
+    (`run.bat` keeps it open), so normal browsing looks like a crash and buries
+    the real request log. Swallow only those three; anything else keeps its
+    traceback, since a genuine handler bug must stay loud."""
+
+    _BENIGN = (ConnectionResetError, BrokenPipeError, ConnectionAbortedError)
+
+    def handle_error(self, request, client_address):
+        if not isinstance(sys.exc_info()[1], self._BENIGN):
+            super().handle_error(request, client_address)
+
+
 def main():
     ap = argparse.ArgumentParser(description="GeOSINT Workbench server")
     ap.add_argument("--port", type=int, default=8650)
@@ -1445,7 +1468,7 @@ def main():
         print(f"[geosint] OPSEC egress routing: {_routed or '(per-UA only)'}  ua={opsec0['ua']}")
 
     try:
-        srv = ThreadingHTTPServer((args.host, args.port), Handler)
+        srv = QuietThreadingHTTPServer((args.host, args.port), Handler)
     except OSError:
         print(f"Port {args.port} is already in use — the Workbench is probably already "
               f"running at http://127.0.0.1:{args.port}/app/ (or pass --port to use another).")

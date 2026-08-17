@@ -18,23 +18,24 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import server  # noqa: E402
 
-from http.server import ThreadingHTTPServer  # noqa: E402
-
 PORT = None
 HOST = "127.0.0.1"
+SRV = None
 
 
 @pytest.fixture(scope="module", autouse=True)
 def live_server():
-    global PORT
+    global PORT, SRV
     # mirror main()'s allowlist setup without parsing argv / opening a browser
     s = socket.socket(); s.bind((HOST, 0)); PORT = s.getsockname()[1]; s.close()
     server.ALLOWED_HOSTS = {f"{HOST}:{PORT}", f"localhost:{PORT}", HOST, "localhost"}
     server.ALLOWED_HOSTNAMES = {"127.0.0.1", "localhost", "[::1]", "::1"}
-    srv = ThreadingHTTPServer((HOST, PORT), server.Handler)
-    t = threading.Thread(target=srv.serve_forever, daemon=True); t.start()
+    # the shipping server class, so the error-handling tests below exercise what
+    # main() actually runs
+    SRV = server.QuietThreadingHTTPServer((HOST, PORT), server.Handler)
+    t = threading.Thread(target=SRV.serve_forever, daemon=True); t.start()
     yield
-    srv.shutdown()
+    SRV.shutdown()
 
 
 def req(method, path, body=None, headers=None, raw=False):
@@ -57,6 +58,23 @@ def req(method, path, body=None, headers=None, raw=False):
 def jpost(path, body, csrf=True):
     h = {"X-GeOSINT": "1"} if csrf else {}
     return req("POST", path, body=body, headers=h)
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k):
+        return None
+
+
+def get_no_redirect(path):
+    """GET without following the redirect, so a 3xx is observable (`req` uses
+    urlopen, which follows them transparently)."""
+    r = urllib.request.Request(f"http://{HOST}:{PORT}{path}",
+                               headers={"Host": f"{HOST}:{PORT}"})
+    try:
+        with urllib.request.build_opener(_NoRedirect).open(r, timeout=10) as resp:
+            return resp.status, dict(resp.headers)
+    except urllib.error.HTTPError as e:
+        return e.code, dict(e.headers)
 
 
 # ── status ────────────────────────────────────────────────────────────────
@@ -186,6 +204,54 @@ def test_svg_mimetype_registered(tmp_path):
     f = tmp_path / "flag.svg"
     f.write_text("<svg xmlns='http://www.w3.org/2000/svg'></svg>")
     assert mimetypes.guess_type(str(f))[0] == "image/svg+xml"
+
+
+# ── favicon: root probe is routed, not 404'd (#135) ─────────────────────────
+def test_favicon_ico_redirects_to_the_asset():
+    # browsers probe /favicon.ico regardless of the <link rel="icon"> in our
+    # pages; that probe must not land a 404 in the operator's log
+    st, h = get_no_redirect("/favicon.ico")
+    assert st == 302
+    assert h["Location"] == "/app/favicon.svg"
+
+
+def test_favicon_asset_is_served_as_svg():
+    st, h, body = req("GET", "/app/favicon.svg")
+    assert st == 200
+    assert h["Content-Type"] == "image/svg+xml"
+    assert body.startswith(b"<svg")
+
+
+def test_app_pages_declare_the_icon():
+    # every HTML entry point, so no tab renders blank
+    for page in ("/app/", "/app/search.html", "/app/sun.html",
+                 "/app/graph.html", "/app/settings.html"):
+        st, _, body = req("GET", page)
+        assert st == 200, page
+        assert b'rel="icon"' in body, page
+
+
+# ── benign client disconnects don't spam the console (#134) ──────────────────
+@pytest.mark.parametrize("exc", [ConnectionResetError, BrokenPipeError,
+                                 ConnectionAbortedError])
+def test_client_disconnect_is_silent(exc, capsys):
+    # a dropped keep-alive connection is routine (closed tab, navigation away);
+    # the stdlib default would print a full traceback to the foreground console
+    try:
+        raise exc("client went away")
+    except exc:
+        SRV.handle_error(None, (HOST, 0))
+    assert capsys.readouterr().err == ""
+
+
+def test_real_errors_still_print_a_traceback(capsys):
+    # the suppression must be narrow: a genuine handler bug stays loud
+    try:
+        raise ValueError("boom")
+    except ValueError:
+        SRV.handle_error(None, (HOST, 0))
+    err = capsys.readouterr().err
+    assert "ValueError" in err and "boom" in err
 
 
 # ── exif: input validated before tool presence (400 before 409) ─────────────
