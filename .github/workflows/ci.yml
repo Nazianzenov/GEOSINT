@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read             # CI only reads the repo
+
 jobs:
   tests:
     strategy:
@@ -78,4 +81,5 @@ jobs:
             [ "$code" = "200" ] && break; sleep 1
           done
           curl -fsS http://localhost:8650/api/status | grep -q '"platform": "Linux"'
+          curl -fsS -o /dev/null http://localhost:8650/app/data/search-index.json   # the image ships search
           docker rm -f geosint-ci

@@ -27,6 +27,7 @@ if (-not (Test-Path ".venv\Scripts\mkdocs.exe")) {
 # wiki is already built unless --rebuild, and aborts only on a required step.
 $rebuildArg = if ($RebuildWiki) { "--rebuild" } else { $null }
 & $py tools\build_all.py --python $py --mkdocs ".venv\Scripts\mkdocs.exe" $rebuildArg
+if ($LASTEXITCODE) { exit $LASTEXITCODE }   # a required step failed: stop, like run.sh / python -m geosint
 
 Write-Host "[geosint] Starting server on port $Port" -ForegroundColor Green
 & $py server.py --port $Port

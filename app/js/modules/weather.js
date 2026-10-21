@@ -36,7 +36,7 @@ window.Weather = (function () {
       ? "https://archive-api.open-meteo.com/v1/archive"
       : "https://api.open-meteo.com/v1/forecast";
     const hourly = "temperature_2m,relative_humidity_2m,precipitation,snowfall,snow_depth,cloud_cover,wind_speed_10m,wind_direction_10m,weather_code";
-    const url = `${base}?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&start_date=${date}&end_date=${date}&hourly=${hourly}&timezone=auto`;
+    const url = `${base}?latitude=${lat.toFixed(4)}&longitude=${wrapLng(lng).toFixed(4)}&start_date=${date}&end_date=${date}&hourly=${hourly}&timezone=auto`;
     $("#wx-meta").textContent = "fetching…";
     try {
       const r = await App.cachedFetch(url);

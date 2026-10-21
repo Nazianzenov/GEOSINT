@@ -34,7 +34,11 @@ function buildDossier(redact = false) {
   const redLabel = (kind, label) => {
     if (!redact) return label;
     if (kind === "image") return "image evidence";
-    if (/^https?:\/\//i.test(String(label || ""))) return "external finding";
+    const s = String(label || "");
+    if (/^https?:\/\//i.test(s)) return "external finding";
+    // Coordinates (a pasted "48.85837, 2.29448", DMS, MGRS, Plus Code) or an OSM
+    // object id pin the exact place that redaction coarsens everywhere else.
+    if (coordsFromText(s) || parseCoords(s) || /\bOSM (node|way|relation)\/\d+/i.test(s)) return "location finding";
     return label;
   };
 
@@ -56,7 +60,7 @@ function buildDossier(redact = false) {
   const annos = state.annos || [];
   const annoBlock = annos.length ? `<table class="kv">
       <tr><th>type</th><th>text</th><th>location</th></tr>
-      ${annos.map((a) => `<tr><td>${esc(a.type)}</td><td>${esc(a.text)}</td>
+      ${annos.map((a) => `<tr><td>${esc(a.type)}</td><td>${esc(redLabel(a.type, a.text))}</td>
         <td>${esc(coord(a.ll[0], a.ll[1]))}</td></tr>`).join("")}
     </table>` : `<p class="muted">No annotations.</p>`;
 
@@ -96,10 +100,11 @@ function buildDossier(redact = false) {
 
   const ev = timelineEvents();
   // Timeline labels go through the same shared redaction rule as the artifact /
-  // relationship blocks (redLabel): image events -> "image evidence", URL labels
-  // -> "external finding". (timelineEvents sets label = source||text||kind.)
-  const evLabel = (e) => redLabel(e.kind, e.label);
-  const evDetail = (e) => (redact && e.kind === "image") ? "" : e.detail;   // camera make/model is sourcing
+  // relationship blocks (redLabel). timelineEvents sets label = source||text||kind;
+  // redacted, the finding's own text leads (like the artifact block) and the
+  // detail — that same text, or the camera make/model — is dropped.
+  const evLabel = (e) => redLabel(e.kind, (redact && e.text) || e.label);
+  const evDetail = (e) => (redact && e.kind !== "context") ? "" : e.detail;
   const tlBlock = ev.length ? `<table class="kv">
       <tr><th>time</th><th>event</th><th>location</th></tr>
       ${ev.map((e) => `<tr><td class="mono">${esc(String(e.t).replace("T", " ").slice(0, 16))}</td>

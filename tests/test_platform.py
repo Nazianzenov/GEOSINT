@@ -171,7 +171,7 @@ def test_body_caps_are_named_constants():
     assert server.EXIF_MAX_BYTES == 200 * 1024 * 1024
     assert server.JSON_MAX_BYTES == 2 * 1024 * 1024
     assert server.EXIF_MAX_BYTES > server.JSON_MAX_BYTES
-    assert server.EXIF_TOOL_TIMEOUT > 0
+    assert server.exif_domain.EXIF_TOOL_TIMEOUT > 0
 
 
 # ── upstream failure logging (#28) — OPSEC: host only, never coords ──────────

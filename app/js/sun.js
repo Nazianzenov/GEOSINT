@@ -3,9 +3,10 @@
    object/shadow lengths on an uploaded photo. No dependency on the OSM data layers. */
 "use strict";
 
-/* $, $$, esc, cachedFetch, fmtDD, toDMS, fmtDMS, cardinal, compassAz,
-   parseCoords, project, drawSunChart are shared from app/js/common.js
-   (loaded before this script). */
+/* The place search, sun readout, solver UI and date inputs are shared with the
+   workbench panel (initPlaceSearch / renderSunReadout / solveShadows /
+   initSunInputs in app/js/common.js, loaded before this script). The Studio keeps
+   its own map, photo measuring and the "send to case" hand-off. */
 
 const state = {
   loc: null,            // L.LatLng — the photo's location
@@ -48,163 +49,33 @@ function setLoc(ll, opts = {}) {
 
 /* ════════════════════════ location search ══════════════════════ */
 function initLocSearch() {
-  const input = $("#loc-search"), box = $("#loc-results");
-  let t;
-  input.addEventListener("input", () => {
-    clearTimeout(t);
-    const q = input.value.trim();
-    if (!q) { box.hidden = true; return; }
-    const ll = parseCoords(q);
-    if (ll) {
-      box.innerHTML = `<div class="search-item sel">→ Go to coordinates<small>${fmtDD(ll)} · ${fmtDMS(ll)}</small></div>`;
-      box.hidden = false;
-      box.firstChild.onclick = () => { setLoc(ll, { fly: true }); box.hidden = true; input.blur(); };
-      return;
-    }
-    t = setTimeout(async () => {
-      try {
-        const r = await cachedFetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=7&accept-language=en&q=${encodeURIComponent(q)}`);
-        const raw = await r.json();
-        const RANK = { relation: 3, way: 2, node: 1 }, seen = new Map();
-        for (const d of raw) {
-          const key = `${d.addresstype}|${(+d.lat).toFixed(4)},${(+d.lon).toFixed(4)}|${d.display_name}`;
-          const prev = seen.get(key);
-          if (!prev || (RANK[d.osm_type] || 0) > (RANK[prev.osm_type] || 0)) seen.set(key, d);
-        }
-        const data = [...seen.values()];
-        box.innerHTML = data.length
-          ? data.map((d, i) => `<div class="search-item" data-i="${i}"><b>${esc(d.name || d.display_name.split(",")[0])}</b><span class="tag">${esc(d.addresstype || d.type || "")}</span><small>${esc(d.display_name)}</small></div>`).join("")
-          : `<div class="search-item">no results</div>`;
-        box.hidden = false;
-        box.querySelectorAll("[data-i]").forEach((el) => el.onclick = () => {
-          const d = data[+el.dataset.i];
-          setLoc(L.latLng(+d.lat, +d.lon), { fly: true, zoom: d.addresstype === "country" ? 6 : 14 });
-          box.hidden = true; input.blur();
-        });
-      } catch { box.innerHTML = `<div class="search-item">Nominatim unreachable</div>`; box.hidden = false; }
-    }, 450);
-  });
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { const f = box.querySelector(".search-item"); if (f) f.click(); }
-    if (e.key === "Escape") { box.hidden = true; input.blur(); }
-  });
-  document.addEventListener("click", (e) => { if (!e.target.closest(".search-wrap")) box.hidden = true; });
+  initPlaceSearch($("#loc-search"), $("#loc-results"), (ll, d) =>
+    setLoc(ll, { fly: true, zoom: d && d.addresstype === "country" ? 6 : 14 }));
 }
 
 /* ════════════════════════ date / time ══════════════════════════ */
-function initDate() {
-  const sel = $("#sun-offset");
-  fillUtcOffsets(sel);
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  $("#sun-dt").value = now.toISOString().slice(0, 16);
-  $("#sun-dt").addEventListener("change", recompute);
-  sel.addEventListener("change", recompute);
-}
-/* sunDate, fmtClock, fillUtcOffsets, compassAz are in common.js */
+function initDate() { initSunInputs(recompute); }
 
 /* ════════════════════════ sun geometry ═════════════════════════ */
 function renderGeometry() {
-  state.sunLayer.clearLayers();
   if (!state.loc) {
+    state.sunLayer.clearLayers();
     $("#sun-cards").innerHTML = `<p class="hint">⚠ Set the photo location (search, or click the map).</p>`;
     $("#sun-events").innerHTML = $("#sun-moon").innerHTML = $("#sun-links").innerHTML = "";
     const cv = $("#sun-chart"); cv.getContext("2d").clearRect(0, 0, cv.width, cv.height);
     return;
   }
-  const sd = sunDate(); if (!sd) return;
-  const { lat, lng } = state.loc;
-  const pos = SunCalc.getPosition(sd.date, lat, lng);
-  const alt = pos.altitude * 180 / Math.PI;
-  const az = compassAz(pos.azimuth);
-  const shadowAz = (az + 180) % 360;
-  const ratio = alt > 0.2 ? (1 / Math.tan(pos.altitude)) : null;
-
-  $("#sun-cards").innerHTML = `
-    <div class="card"><div class="v">${az.toFixed(1)}°</div><div class="k">sun azimuth (${cardinal(az)})</div></div>
-    <div class="card"><div class="v">${alt.toFixed(1)}°</div><div class="k">elevation ${alt < 0 ? "(night)" : ""}</div></div>
-    <div class="card"><div class="v">${ratio ? ratio.toFixed(2) + "×" : "—"}</div><div class="k">shadow ÷ height</div></div>
-    <div class="card"><div class="v">${shadowAz.toFixed(0)}° ${cardinal(shadowAz)}</div><div class="k">shadow points to</div></div>`;
-
-  const t = SunCalc.getTimes(sd.date, lat, lng);
-  const rows = [["Civil dawn", t.dawn], ["Sunrise", t.sunrise], ["Golden hour ends", t.goldenHourEnd],
-    ["Solar noon", t.solarNoon], ["Golden hour starts", t.goldenHour], ["Sunset", t.sunset], ["Civil dusk", t.dusk]];
-  $("#sun-events").innerHTML = rows.map(([k, v]) => `<tr><td>${k}</td><td>${fmtClock(v, sd.off)}</td></tr>`).join("");
-
-  const mi = SunCalc.getMoonIllumination(sd.date);
-  const phases = ["New moon","Waxing crescent","First quarter","Waxing gibbous","Full moon","Waning gibbous","Last quarter","Waning crescent"];
-  const mpos = SunCalc.getMoonPosition(sd.date, lat, lng);
-  $("#sun-moon").innerHTML = `
-    <tr><td>Phase</td><td>${phases[Math.round(mi.phase * 8) % 8]}</td></tr>
-    <tr><td>Illumination</td><td>${(mi.fraction * 100).toFixed(0)}%</td></tr>
-    <tr><td>Moon altitude</td><td>${(mpos.altitude * 180 / Math.PI).toFixed(1)}°</td></tr>`;
-
-  if (alt > 0) {
-    const p = state.loc;
-    // shadow direction (compare against the satellite imagery to read off the true azimuth)
-    state.sunLayer.addLayer(L.polyline([p, project(p, shadowAz, 60)], { color: "#30363f", weight: 5, opacity: .9 }));
-    state.sunLayer.addLayer(L.polyline([p, project(p, az, 60)], { color: "#4cc2ff", weight: 2, dashArray: "4 5", opacity: .8 }));
-  }
-  drawSunChart(sd, lat, lng);
-
-  const dstr = `${sd.Y}.${String(sd.M).padStart(2, "0")}.${String(sd.D).padStart(2, "0")}`;
-  const tstr = $("#sun-dt").value.split("T")[1];
-  $("#sun-links").innerHTML = `
-    <a class="btn" target="_blank" href="https://www.suncalc.org/#/${lat.toFixed(5)},${lng.toFixed(5)},15/${dstr}/${tstr}/1/3">SunCalc.org ⇗</a>
-    <a class="btn" target="_blank" href="https://shademap.app/@${lat.toFixed(5)},${lng.toFixed(5)},15z">ShadeMap ⇗</a>
-    <a class="btn" target="_blank" href="https://www.peakfinder.com/?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}">PeakFinder horizon ⇗</a>`;
+  renderSunReadout(state.loc, state.sunLayer);
 }
-
-/* drawSunChart is in common.js (shared with the workbench Sun module) */
 
 /* ════════════════════════════ solver ═══════════════════════════ */
-/* The shadow solver (shadowAt / shadowFit / solve) is the shared, DOM-free
-   CHRONO engine in app/js/chrono.js (issue #84). The Studio keeps only its own
-   rendering, two-shadow inputs and the "send to case" hand-off. */
-
-// wrap-aware HH:MM (two-shadow's m+dt2 can push a window past midnight)
-function hmClock(mins) {
-  const w = ((mins % 1440) + 1440) % 1440;
-  return `${String(Math.floor(w / 60)).padStart(2, "0")}:${String(w % 60).padStart(2, "0")}`;
-}
-
 function runSolver() {
-  const out = $("#solver-out");
-  if (!state.loc) { out.innerHTML = `<p class="nomatch">Set the photo location first.</p>`; return; }
-  const azT = parseFloat($("#solver-az").value);
-  const ratioT = parseFloat($("#solver-ratio").value);
-  const tol = parseFloat($("#solver-tol").value) || 8;
-  if (isNaN(azT) && isNaN(ratioT)) { out.innerHTML = `<p class="hint">Measure object + shadow on the image, or type a shadow azimuth / ratio, to solve for the time.</p>`; return; }
-  // optional second reading taken Δ minutes after the first (two-shadow mode)
-  const az2 = parseFloat($("#solver-az2").value);
-  const ratio2 = parseFloat($("#solver-ratio2").value);
-  const dt2 = parseFloat($("#solver-dt2").value);
-  const sd = sunDate(); const { lat, lng } = state.loc;
-
-  const res = CHRONO.solve({ sd, lat, lng, azT, ratioT, tol, second: { az2, ratio2, dt2 } });
-
-  if (res.status === "inconsistent") {
-    out.innerHTML = `<p class="nomatch">✗ <b>Claim inconsistent (${res.confidence} confidence)</b> — no time on this
-      date matches at this location, within ±${tol}° tolerance.</p>` + sendToCaseBtn();
-    state.solverResult = { status: "inconsistent", confidence: res.confidence, tol, twoShadow: res.twoShadow,
-      windows: [], loc: { lat, lng }, dt: $("#sun-dt").value };
-    wireSendToCase();
-    return;
-  }
-
-  const header = res.twoShadow
-    ? `<p class="hint">Two-shadow mode: times where both readings fit (1st reading's time shown; 2nd is ${dt2 > 0 ? "+" : ""}${dt2} min later).</p>`
-    : "";
-  out.innerHTML = header + res.windows.map((w) =>
-    `<div class="match">✓ ${hmClock(w.startMin)}–${hmClock(w.endMin)} local
-      (best ${hmClock(w.bestMin)} · shadow→${w.shAz.toFixed(0)}° · ${w.ratio.toFixed(2)}×)</div>`).join("") +
-    `<div class="solver-conf conf-${res.confidence}">Confidence: <b>${res.confidence}</b> — ${res.why} (tolerance ±${tol}°).</div>` +
-    sendToCaseBtn();
-  state.solverResult = {
-    status: "match", confidence: res.confidence, why: res.why, tol, twoShadow: res.twoShadow,
-    windows: res.windows.map((w) => `${hmClock(w.startMin)}–${hmClock(w.endMin)}`),
-    loc: { lat, lng }, dt: $("#sun-dt").value,
-  };
+  if (!state.loc) { $("#solver-out").innerHTML = `<p class="nomatch">Set the photo location first.</p>`; return; }
+  const r = solveShadows(state.loc,
+    "Measure object + shadow on the image, or type a shadow azimuth / ratio, to solve for the time.");
+  if (!r) return;
+  state.solverResult = { ...r, loc: { lat: state.loc.lat, lng: state.loc.lng }, dt: $("#sun-dt").value };
+  $("#solver-out").insertAdjacentHTML("beforeend", sendToCaseBtn());
   wireSendToCase();
 }
 
@@ -212,7 +83,6 @@ function runSolver() {
    shared localStorage key (the Studio is a separate tab/document). The workbench
    picks it up on focus/load and logs it as an artifact + sets state.solverResult.
    100% local — same-origin localStorage, nothing uploaded. */
-const STUDIO_HANDOFF_KEY = "geosint:studio-finding";
 function sendToCaseBtn() {
   return `<button class="btn accent" id="send-to-case" style="margin-top:8px"
     title="Send this chronolocation result + location to the main workbench case">＋ Send to case</button>
@@ -279,11 +149,7 @@ async function loadImage(file) {
       setLoc(L.latLng(ex.latitude, ex.longitude), { fly: true, zoom: 16 });
       status("EXIF GPS → location set");
     }
-    if (ex && ex.DateTimeOriginal) {
-      const d = new Date(ex.DateTimeOriginal), pad = (x) => String(x).padStart(2, "0");
-      $("#sun-dt").value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      recompute();
-    }
+    if (exifToSunInputs(ex)) recompute();
   } catch { /* no/!parseable EXIF — fine, this is a measurement tool */ }
 }
 

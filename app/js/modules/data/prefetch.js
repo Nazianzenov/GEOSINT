@@ -15,7 +15,7 @@ window.Prefetch = (function () {
     const layer = $("#pf-layer").value;
     const body = {
       layer,
-      bbox: [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()],
+      bbox: wrapBbox(b.getSouth(), b.getWest(), b.getNorth(), b.getEast()),   // Leaflet doesn't wrap
       zmin: z, zmax: Math.min(19, z + depth),
     };
     // Each /api/prefetch call is wall-clock bounded server-side; on a large area it
@@ -49,5 +49,3 @@ window.Prefetch = (function () {
 
   return { prefetchTiles };
 })();
-
-window.prefetchTiles = Prefetch.prefetchTiles;

@@ -52,4 +52,3 @@ def test_server_reexports_match_module():
     import server
     assert server.tiles_in_bbox(0, 0, 5, 5, 3, 3) is not None
     assert list(server.tiles_in_bbox(0, 0, 5, 5, 3, 3)) == list(tiles.tiles_in_bbox(0, 0, 5, 5, 3, 3))
-    assert server._lonlat_to_tile(2.29, 48.85, 12) == tiles.lonlat_to_tile(2.29, 48.85, 12)

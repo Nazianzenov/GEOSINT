@@ -161,7 +161,7 @@ window.Tools = (function () {
       try {
         const r = await App.fetchT("/api/flyto", {
           method: "POST", headers: { "Content-Type": "application/json", "X-GeOSINT": "1" },
-          body: JSON.stringify({ lat: p.lat, lng: p.lng, name: App.fmtDD(p) }),
+          body: JSON.stringify({ lat: p.lat, lng: wrapLng(p.lng), name: App.fmtDD(p) }),
         });
         const j = await r.json();
         if (j.error) App.status(j.error, true, 8000);
@@ -172,7 +172,7 @@ window.Tools = (function () {
     if (!t.url) return;
     const needsPt = t.url.length > 0;
     if (needsPt && !p) return App.status(NO_POINT_MSG, true);
-    window.open(needsPt ? t.url(p.lat.toFixed(5), p.lng.toFixed(5), z) : t.url(), "_blank");
+    window.open(needsPt ? t.url(p.lat.toFixed(5), wrapLng(p.lng).toFixed(5), z) : t.url(), "_blank");
   }
 
   return { list: TOOLS, renderTools, launch };

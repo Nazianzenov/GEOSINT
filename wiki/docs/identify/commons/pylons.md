@@ -20,11 +20,11 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/pylons/fr/fr_4.jpg" loading="lazy" alt="Electricity pylons — France"><figcaption>France</figcaption></figure>
 <figure><img src="../../../assets/pylons/fr/fr_5.jpg" loading="lazy" alt="Electricity pylons — France"><figcaption>France</figcaption></figure>
 <figure><img src="../../../assets/pylons/fr/fr_6.jpg" loading="lazy" alt="Electricity pylons — France"><figcaption>France</figcaption></figure>
-<figure><img src="../../../assets/pylons/de/de_1.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany · <a href="/app/index.html#ll=52.351631,13.281011" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/pylons/de/de_1.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany</figcaption></figure>
 <figure><img src="../../../assets/pylons/de/de_2.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany</figcaption></figure>
-<figure><img src="../../../assets/pylons/de/de_3.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany · <a href="/app/index.html#ll=51.050804,13.717986" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/pylons/de/de_4.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany · <a href="/app/index.html#ll=52.493853,13.779425" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/pylons/de/de_5.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany · <a href="/app/index.html#ll=54.849952,9.195493" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/pylons/de/de_3.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany</figcaption></figure>
+<figure><img src="../../../assets/pylons/de/de_4.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany</figcaption></figure>
+<figure><img src="../../../assets/pylons/de/de_5.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany</figcaption></figure>
 <figure><img src="../../../assets/pylons/de/de_6.jpg" loading="lazy" alt="Electricity pylons — Germany"><figcaption>Germany</figcaption></figure>
 <figure><img src="../../../assets/pylons/gb/gb_1.jpg" loading="lazy" alt="Electricity pylons — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
 <figure><img src="../../../assets/pylons/gb/gb_2.jpg" loading="lazy" alt="Electricity pylons — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
@@ -124,8 +124,8 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/pylons/cn/cn_1.jpg" loading="lazy" alt="Electricity pylons — China"><figcaption>China · <a href="/app/index.html#ll=28.057808,120.873224" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/pylons/cn/cn_2.jpg" loading="lazy" alt="Electricity pylons — China"><figcaption>China</figcaption></figure>
 <figure><img src="../../../assets/pylons/cn/cn_3.jpg" loading="lazy" alt="Electricity pylons — China"><figcaption>China · <a href="/app/index.html#ll=34.423983,115.271461" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/pylons/cn/cn_4.jpg" loading="lazy" alt="Electricity pylons — China"><figcaption>China</figcaption></figure>
-<figure><img src="../../../assets/pylons/cn/cn_5.jpg" loading="lazy" alt="Electricity pylons — China"><figcaption>China</figcaption></figure>
+<figure><img src="../../../assets/pylons/cn/cn_4.jpg" loading="lazy" alt="Electricity pylons — China"><figcaption>China · <a href="/app/index.html#ll=28.069557,103.917103" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/pylons/cn/cn_5.jpg" loading="lazy" alt="Electricity pylons — China"><figcaption>China · <a href="/app/index.html#ll=22.867068,113.67327" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/pylons/cn/cn_6.jpg" loading="lazy" alt="Electricity pylons — China"><figcaption>China</figcaption></figure>
 <figure><img src="../../../assets/pylons/kr/kr_1.jpg" loading="lazy" alt="Electricity pylons — South Korea"><figcaption>South Korea</figcaption></figure>
 <figure><img src="../../../assets/pylons/kr/kr_2.jpg" loading="lazy" alt="Electricity pylons — South Korea"><figcaption>South Korea</figcaption></figure>
@@ -183,10 +183,10 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/pylons/eg/eg_4.jpg" loading="lazy" alt="Electricity pylons — Egypt"><figcaption>Egypt</figcaption></figure>
 <figure><img src="../../../assets/pylons/eg/eg_5.jpg" loading="lazy" alt="Electricity pylons — Egypt"><figcaption>Egypt · <a href="/app/index.html#ll=23.971667,32.886111" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/pylons/eg/eg_6.jpg" loading="lazy" alt="Electricity pylons — Egypt"><figcaption>Egypt · <a href="/app/index.html#ll=23.971667,32.886111" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/pylons/ma/ma_1.jpg" loading="lazy" alt="Electricity pylons — Morocco"><figcaption>Morocco</figcaption></figure>
-<figure><img src="../../../assets/pylons/ma/ma_2.jpg" loading="lazy" alt="Electricity pylons — Morocco"><figcaption>Morocco · <a href="/app/index.html#ll=31.167764,-8.070975" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/pylons/ma/ma_1.jpg" loading="lazy" alt="Electricity pylons — Morocco"><figcaption>Morocco · <a href="/app/index.html#ll=32.934958,-8.061917" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/pylons/ma/ma_2.jpg" loading="lazy" alt="Electricity pylons — Morocco"><figcaption>Morocco · <a href="/app/index.html#ll=32.935494,-8.065144" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/pylons/ma/ma_3.jpg" loading="lazy" alt="Electricity pylons — Morocco"><figcaption>Morocco</figcaption></figure>
-<figure><img src="../../../assets/pylons/ma/ma_4.jpg" loading="lazy" alt="Electricity pylons — Morocco"><figcaption>Morocco</figcaption></figure>
+<figure><img src="../../../assets/pylons/ma/ma_4.jpg" loading="lazy" alt="Electricity pylons — Morocco"><figcaption>Morocco · <a href="/app/index.html#ll=31.167764,-8.070975" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/pylons/ma/ma_5.jpg" loading="lazy" alt="Electricity pylons — Morocco"><figcaption>Morocco</figcaption></figure>
 <figure><img src="../../../assets/pylons/ma/ma_6.jpg" loading="lazy" alt="Electricity pylons — Morocco"><figcaption>Morocco</figcaption></figure>
 <figure><img src="../../../assets/pylons/ke/ke_1.jpg" loading="lazy" alt="Electricity pylons — Kenya"><figcaption>Kenya · <a href="/app/index.html#ll=-3.36718167,38.939825" target="_blank">map</a></figcaption></figure>

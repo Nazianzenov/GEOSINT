@@ -27,11 +27,11 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/roadsigns/de/de_5.jpg" loading="lazy" alt="Road signs — Germany"><figcaption>Germany · <a href="/app/index.html#ll=51.080255,13.297355" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/de/de_6.jpg" loading="lazy" alt="Road signs — Germany"><figcaption>Germany · <a href="/app/index.html#ll=51.07718167,13.30542167" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/gb/gb_1.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/gb/gb_2.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/gb/gb_3.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=51.684231,0.418227" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/gb/gb_4.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=55.62768,-3.2437" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/gb/gb_5.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=53.17321,-0.828492" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/gb/gb_6.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=51.6471032,-4.03600638" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/gb/gb_2.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=55.62768,-3.2437" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/gb/gb_3.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=53.17321,-0.828492" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/gb/gb_4.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=51.6471032,-4.03600638" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/gb/gb_5.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/gb/gb_6.jpg" loading="lazy" alt="Road signs — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=52.95515,-1.185386" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/it/it_1.jpg" loading="lazy" alt="Road signs — Italy"><figcaption>Italy</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/it/it_2.jpg" loading="lazy" alt="Road signs — Italy"><figcaption>Italy</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/it/it_3.jpg" loading="lazy" alt="Road signs — Italy"><figcaption>Italy</figcaption></figure>
@@ -68,30 +68,30 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/roadsigns/be/be_4.jpg" loading="lazy" alt="Road signs — Belgium"><figcaption>Belgium</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/be/be_5.jpg" loading="lazy" alt="Road signs — Belgium"><figcaption>Belgium · <a href="/app/index.html#ll=47.65099954,6.86983466" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/be/be_6.jpg" loading="lazy" alt="Road signs — Belgium"><figcaption>Belgium · <a href="/app/index.html#ll=50.991502,3.566995" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/pl/pl_1.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.149272,17.712756" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/pl/pl_2.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.149272,17.712756" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/pl/pl_1.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/pl/pl_2.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.116904,17.694125" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/pl/pl_3.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/pl/pl_4.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.149272,17.712756" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/pl/pl_5.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.116904,17.694125" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/pl/pl_6.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.116756,17.694023" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/se/se_1.jpg" loading="lazy" alt="Road signs — Sweden"><figcaption>Sweden</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/pl/pl_4.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.117265,17.694061" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/pl/pl_5.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland · <a href="/app/index.html#ll=51.316013,15.669097" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/pl/pl_6.jpg" loading="lazy" alt="Road signs — Poland"><figcaption>Poland</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/se/se_1.jpg" loading="lazy" alt="Road signs — Sweden"><figcaption>Sweden · <a href="/app/index.html#ll=59.3282,17.911677" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/se/se_2.jpg" loading="lazy" alt="Road signs — Sweden"><figcaption>Sweden</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/se/se_3.jpg" loading="lazy" alt="Road signs — Sweden"><figcaption>Sweden</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/se/se_4.jpg" loading="lazy" alt="Road signs — Sweden"><figcaption>Sweden</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/se/se_5.jpg" loading="lazy" alt="Road signs — Sweden"><figcaption>Sweden</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/se/se_6.jpg" loading="lazy" alt="Road signs — Sweden"><figcaption>Sweden</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/no/no_1.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway · <a href="/app/index.html#ll=63.019438,7.369316" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/no/no_1.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway · <a href="/app/index.html#ll=59.91217667,10.75011333" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/no/no_2.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway · <a href="/app/index.html#ll=59.91217667,10.75011333" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/no/no_3.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway · <a href="/app/index.html#ll=59.91217667,10.75011333" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/no/no_4.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway · <a href="/app/index.html#ll=59.926506,10.814314" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/no/no_5.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway · <a href="/app/index.html#ll=59.926436,10.814111" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/no/no_3.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway · <a href="/app/index.html#ll=59.926506,10.814314" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/no/no_4.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway · <a href="/app/index.html#ll=59.926436,10.814111" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/no/no_5.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/no/no_6.jpg" loading="lazy" alt="Road signs — Norway"><figcaption>Norway</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/fi/fi_1.jpg" loading="lazy" alt="Road signs — Finland"><figcaption>Finland</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/fi/fi_2.jpg" loading="lazy" alt="Road signs — Finland"><figcaption>Finland</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/fi/fi_3.jpg" loading="lazy" alt="Road signs — Finland"><figcaption>Finland</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/fi/fi_4.jpg" loading="lazy" alt="Road signs — Finland"><figcaption>Finland</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/fi/fi_4.jpg" loading="lazy" alt="Road signs — Finland"><figcaption>Finland · <a href="/app/index.html#ll=70.07032413,27.60296391" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/fi/fi_5.jpg" loading="lazy" alt="Road signs — Finland"><figcaption>Finland</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/fi/fi_6.jpg" loading="lazy" alt="Road signs — Finland"><figcaption>Finland · <a href="/app/index.html#ll=70.07032413,27.60296391" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/fi/fi_6.jpg" loading="lazy" alt="Road signs — Finland"><figcaption>Finland</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/cz/cz_1.jpg" loading="lazy" alt="Road signs — Czech Republic"><figcaption>Czech Republic · <a href="/app/index.html#ll=49.0803728,16.3492636" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/cz/cz_2.jpg" loading="lazy" alt="Road signs — Czech Republic"><figcaption>Czech Republic · <a href="/app/index.html#ll=48.977372,14.465681" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/cz/cz_3.jpg" loading="lazy" alt="Road signs — Czech Republic"><figcaption>Czech Republic · <a href="/app/index.html#ll=49.960288,14.104316" target="_blank">map</a></figcaption></figure>
@@ -99,10 +99,10 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/roadsigns/cz/cz_5.jpg" loading="lazy" alt="Road signs — Czech Republic"><figcaption>Czech Republic · <a href="/app/index.html#ll=49.861741,14.112167" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/cz/cz_6.jpg" loading="lazy" alt="Road signs — Czech Republic"><figcaption>Czech Republic</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/pt/pt_1.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/pt/pt_2.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal · <a href="/app/index.html#ll=39.260969,-9.285053" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/pt/pt_3.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal · <a href="/app/index.html#ll=38.71009,-9.13249306" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/pt/pt_4.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal · <a href="/app/index.html#ll=41.2637,-7.94235" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/pt/pt_5.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/pt/pt_2.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal · <a href="/app/index.html#ll=41.444288,-8.291323" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/pt/pt_3.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal · <a href="/app/index.html#ll=39.260969,-9.285053" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/pt/pt_4.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal · <a href="/app/index.html#ll=38.71009,-9.13249306" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/pt/pt_5.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal · <a href="/app/index.html#ll=41.2637,-7.94235" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/pt/pt_6.jpg" loading="lazy" alt="Road signs — Portugal"><figcaption>Portugal</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/ru/ru_1.jpg" loading="lazy" alt="Road signs — Russia"><figcaption>Russia · <a href="/app/index.html#ll=55.432647,43.671092" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/ru/ru_2.jpg" loading="lazy" alt="Road signs — Russia"><figcaption>Russia</figcaption></figure>
@@ -112,27 +112,22 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/roadsigns/ru/ru_6.jpg" loading="lazy" alt="Road signs — Russia"><figcaption>Russia</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/ua/ua_1.jpg" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine · <a href="/app/index.html#ll=47.365455,35.52412" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/ua/ua_2.jpg" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine · <a href="/app/index.html#ll=45.342,28.833353" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/ua/ua_3.jpg" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/ua/ua_4.png" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/ua/ua_5.jpg" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine · <a href="/app/index.html#ll=50.447967,30.529176" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/ua/ua_6.jpg" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine · <a href="/app/index.html#ll=50.447988,30.529187" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/ua/ua_3.png" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/ua/ua_4.jpg" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine · <a href="/app/index.html#ll=50.447967,30.529176" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/ua/ua_5.jpg" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine · <a href="/app/index.html#ll=50.447988,30.529187" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/ua/ua_6.jpg" loading="lazy" alt="Road signs — Ukraine"><figcaption>Ukraine · <a href="/app/index.html#ll=50.447291,30.5305" target="_blank">map</a></figcaption></figure>
 </div>
 
 ### Asia
 
 <div class="gh-gallery">
-<figure><img src="../../../assets/roadsigns/jp/jp_1.jpg" loading="lazy" alt="Road signs — Japan"><figcaption>Japan · <a href="/app/index.html#ll=34.708672,137.376952" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/jp/jp_2.jpg" loading="lazy" alt="Road signs — Japan"><figcaption>Japan · <a href="/app/index.html#ll=34.706453,137.383438" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/jp/jp_3.png" loading="lazy" alt="Road signs — Japan"><figcaption>Japan</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/jp/jp_4.png" loading="lazy" alt="Road signs — Japan"><figcaption>Japan</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/jp/jp_5.jpg" loading="lazy" alt="Road signs — Japan"><figcaption>Japan</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/jp/jp_6.png" loading="lazy" alt="Road signs — Japan"><figcaption>Japan</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/jp/jp_1.png" loading="lazy" alt="Road signs — Japan"><figcaption>Japan</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/cn/cn_1.jpg" loading="lazy" alt="Road signs — China"><figcaption>China</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/cn/cn_2.jpg" loading="lazy" alt="Road signs — China"><figcaption>China</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/cn/cn_3.jpg" loading="lazy" alt="Road signs — China"><figcaption>China · <a href="/app/index.html#ll=29.049675,119.792267" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/cn/cn_4.jpg" loading="lazy" alt="Road signs — China"><figcaption>China · <a href="/app/index.html#ll=34.737325,113.622825" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/cn/cn_5.jpg" loading="lazy" alt="Road signs — China"><figcaption>China · <a href="/app/index.html#ll=37.968214,120.716611" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/cn/cn_6.jpg" loading="lazy" alt="Road signs — China"><figcaption>China · <a href="/app/index.html#ll=37.984533,120.694075" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/cn/cn_2.jpg" loading="lazy" alt="Road signs — China"><figcaption>China · <a href="/app/index.html#ll=29.049675,119.792267" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/cn/cn_3.jpg" loading="lazy" alt="Road signs — China"><figcaption>China · <a href="/app/index.html#ll=34.737325,113.622825" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/cn/cn_4.jpg" loading="lazy" alt="Road signs — China"><figcaption>China · <a href="/app/index.html#ll=37.968214,120.716611" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/cn/cn_5.jpg" loading="lazy" alt="Road signs — China"><figcaption>China · <a href="/app/index.html#ll=37.984533,120.694075" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/cn/cn_6.jpg" loading="lazy" alt="Road signs — China"><figcaption>China · <a href="/app/index.html#ll=31.207039,121.439728" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/kr/kr_1.jpg" loading="lazy" alt="Road signs — South Korea"><figcaption>South Korea</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/kr/kr_2.jpg" loading="lazy" alt="Road signs — South Korea"><figcaption>South Korea</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/kr/kr_3.jpg" loading="lazy" alt="Road signs — South Korea"><figcaption>South Korea</figcaption></figure>
@@ -157,8 +152,8 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/roadsigns/id/id_4.jpg" loading="lazy" alt="Road signs — Indonesia"><figcaption>Indonesia</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/id/id_5.jpg" loading="lazy" alt="Road signs — Indonesia"><figcaption>Indonesia</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/id/id_6.jpg" loading="lazy" alt="Road signs — Indonesia"><figcaption>Indonesia · <a href="/app/index.html#ll=-6.946023,107.383204" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/tr/tr_1.jpg" loading="lazy" alt="Road signs — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=40.171971,30.145186" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/tr/tr_2.png" loading="lazy" alt="Road signs — Turkey"><figcaption>Turkey</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/tr/tr_1.jpg" loading="lazy" alt="Road signs — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=38.42376,43.24204" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/tr/tr_2.jpg" loading="lazy" alt="Road signs — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=40.171971,30.145186" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/tr/tr_3.png" loading="lazy" alt="Road signs — Turkey"><figcaption>Turkey</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/tr/tr_4.png" loading="lazy" alt="Road signs — Turkey"><figcaption>Turkey</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/tr/tr_5.png" loading="lazy" alt="Road signs — Turkey"><figcaption>Turkey</figcaption></figure>
@@ -166,9 +161,9 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/roadsigns/il/il_1.jpg" loading="lazy" alt="Road signs — Israel"><figcaption>Israel · <a href="/app/index.html#ll=32.518272,35.001294" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/il/il_2.jpg" loading="lazy" alt="Road signs — Israel"><figcaption>Israel · <a href="/app/index.html#ll=31.2308,34.334289" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/il/il_3.jpg" loading="lazy" alt="Road signs — Israel"><figcaption>Israel</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/il/il_4.jpg" loading="lazy" alt="Road signs — Israel"><figcaption>Israel · <a href="/app/index.html#ll=32.858654,35.336387" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/il/il_5.jpg" loading="lazy" alt="Road signs — Israel"><figcaption>Israel · <a href="/app/index.html#ll=32.004581,34.872642" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/il/il_6.jpg" loading="lazy" alt="Road signs — Israel"><figcaption>Israel</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/il/il_4.jpg" loading="lazy" alt="Road signs — Israel"><figcaption>Israel</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/il/il_5.jpg" loading="lazy" alt="Road signs — Israel"><figcaption>Israel · <a href="/app/index.html#ll=32.858654,35.336387" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/il/il_6.jpg" loading="lazy" alt="Road signs — Israel"><figcaption>Israel · <a href="/app/index.html#ll=32.004581,34.872642" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/tw/tw_1.jpg" loading="lazy" alt="Road signs — Taiwan"><figcaption>Taiwan · <a href="/app/index.html#ll=25.03769445,121.54614681" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/tw/tw_2.jpg" loading="lazy" alt="Road signs — Taiwan"><figcaption>Taiwan · <a href="/app/index.html#ll=25.03774099,121.54348275" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/tw/tw_3.jpg" loading="lazy" alt="Road signs — Taiwan"><figcaption>Taiwan · <a href="/app/index.html#ll=25.03327041,121.54197963" target="_blank">map</a></figcaption></figure>
@@ -227,11 +222,11 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/roadsigns/ca/ca_4.jpg" loading="lazy" alt="Road signs — Canada"><figcaption>Canada</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/ca/ca_5.jpg" loading="lazy" alt="Road signs — Canada"><figcaption>Canada · <a href="/app/index.html#ll=43.645513,-79.369614" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/ca/ca_6.jpg" loading="lazy" alt="Road signs — Canada"><figcaption>Canada</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/mx/mx_1.jpg" loading="lazy" alt="Road signs — Mexico"><figcaption>Mexico · <a href="/app/index.html#ll=29.32416,-100.93166" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/mx/mx_1.jpg" loading="lazy" alt="Road signs — Mexico"><figcaption>Mexico · <a href="/app/index.html#ll=24.06855,-104.670167" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/mx/mx_2.jpg" loading="lazy" alt="Road signs — Mexico"><figcaption>Mexico</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/mx/mx_3.jpg" loading="lazy" alt="Road signs — Mexico"><figcaption>Mexico</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/mx/mx_4.jpg" loading="lazy" alt="Road signs — Mexico"><figcaption>Mexico</figcaption></figure>
-<figure><img src="../../../assets/roadsigns/mx/mx_5.jpg" loading="lazy" alt="Road signs — Mexico"><figcaption>Mexico · <a href="/app/index.html#ll=32.537784,-117.033479" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/roadsigns/mx/mx_5.jpg" loading="lazy" alt="Road signs — Mexico"><figcaption>Mexico</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/mx/mx_6.jpg" loading="lazy" alt="Road signs — Mexico"><figcaption>Mexico</figcaption></figure>
 </div>
 
@@ -266,7 +261,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/roadsigns/au/au_2.jpg" loading="lazy" alt="Road signs — Australia"><figcaption>Australia</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/au/au_3.jpg" loading="lazy" alt="Road signs — Australia"><figcaption>Australia</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/au/au_4.jpg" loading="lazy" alt="Road signs — Australia"><figcaption>Australia · <a href="/app/index.html#ll=-33.84432665,147.7427082" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/roadsigns/au/au_5.jpg" loading="lazy" alt="Road signs — Australia"><figcaption>Australia</figcaption></figure>
+<figure><img src="../../../assets/roadsigns/au/au_5.jpg" loading="lazy" alt="Road signs — Australia"><figcaption>Australia · <a href="/app/index.html#ll=-34.929914,138.603103" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/roadsigns/au/au_6.jpg" loading="lazy" alt="Road signs — Australia"><figcaption>Australia</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/nz/nz_1.jpg" loading="lazy" alt="Road signs — New Zealand"><figcaption>New Zealand</figcaption></figure>
 <figure><img src="../../../assets/roadsigns/nz/nz_2.jpg" loading="lazy" alt="Road signs — New Zealand"><figcaption>New Zealand</figcaption></figure>

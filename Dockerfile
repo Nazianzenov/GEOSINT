@@ -39,11 +39,11 @@ COPY geosint ./geosint
 COPY server.py ./
 
 # Build the wiki + search index at image-build time so the container starts ready.
-# Data-refresh steps are best-effort (network may be unavailable during build).
-RUN python tools/fetch_datasets.py || true \
- && python tools/build_flora.py || true \
- && mkdocs build -f wiki/mkdocs.yml \
- && python tools/build_search_index.py || true
+# The datasets and the localized wiki pages are committed, so nothing is fetched
+# here: re-running the fetchers rewrote the flora pages to hotlink Wikimedia (an
+# analyst-IP leak the committed pages avoid). Any failure fails the build.
+RUN mkdocs build -f wiki/mkdocs.yml \
+ && python tools/build_search_index.py
 
 # ── runtime image: drop the mkdocs toolchain, keep the built site ──
 FROM python:3.12-slim

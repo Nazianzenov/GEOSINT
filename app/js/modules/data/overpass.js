@@ -36,7 +36,7 @@ window.Overpass = (function () {
       return App.status(`zoom in to at least level ${minZoom} for "${label}" (current: ${map.getZoom()})`, true, 6000);
     }
     const b = map.getBounds();
-    const bbox = [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()].map((v) => v.toFixed(4)).join(",");
+    const bbox = wrapBbox(b.getSouth(), b.getWest(), b.getNorth(), b.getEast()).map((v) => v.toFixed(4)).join(",");
     const q = `[out:json][timeout:20];(${selectors.map((s) => `${s}(${bbox});`).join("")});out center 600;`;
     const t0 = Date.now();
     const ctrl = new AbortController();
@@ -87,6 +87,16 @@ window.Overpass = (function () {
     }
   }
 
+  /* Drop the plotted features (the CLEAR button, and loading another case). */
+  function clear() {
+    const st = App.state;
+    st.dataLayer.clearLayers();
+    st.lastData = null;
+    st._plotted = [];
+    $("#data-status").textContent = "";
+    syncQgis();
+  }
+
   /* ── QGIS hand-off (the plotted features and/or the active point) ── */
 
   /* Enable the QGIS button only when QGIS is installed; relabel by what we'd send. */
@@ -129,12 +139,9 @@ window.Overpass = (function () {
     } catch { App.status("local server unreachable", true); }
   }
 
-  return { run, cancel, setLoading, syncQgis, openInQgis };
+  return { run, cancel, clear, syncQgis, openInQgis };
 })();
 
 /* Cross-file / test entry points kept on window (callers in app.js, map.js,
    core.js, case.js and the data wiring still reference these bare names). */
-window.runOverpass = Overpass.run;
-window.cancelOverpass = Overpass.cancel;
 window.syncQgisButton = Overpass.syncQgis;
-window.openInQgis = Overpass.openInQgis;

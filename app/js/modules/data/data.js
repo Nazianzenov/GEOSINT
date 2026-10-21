@@ -20,13 +20,7 @@ function initData() {
     Overpass.run([`nwr["${m[1]}"="${m[2]}"]`], `${m[1]}=${m[2]}`, 10);
   });
   $("#data-clear").addEventListener("click", () => {
-    if (Overpass.cancel("query cancelled.")) return;   // if a query is running, CLEAR cancels it
-    const st = App.state;
-    st.dataLayer.clearLayers();
-    st.lastData = null;
-    st._plotted = [];
-    $("#data-status").textContent = "";
-    Overpass.syncQgis();
+    if (!Overpass.cancel("query cancelled.")) Overpass.clear();   // if a query is running, CLEAR cancels it
   });
   $("#cables-toggle").addEventListener("click", Cables.toggle);
   $("#cables-qgis").addEventListener("click", Cables.toQgis);

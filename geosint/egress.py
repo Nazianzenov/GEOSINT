@@ -135,7 +135,9 @@ def normalize(cfg):
             r = routes.get(f)
             if r in ("direct", "vpn", "tor"):
                 out["routes"][f] = r
-            elif isinstance(r, str) and r.startswith("proxy:") and r[6:] in proxies:
+            elif isinstance(r, str) and r.startswith("proxy:") and r[6:]:
+                # Kept even when that proxy is missing/invalid: opener_for() then
+                # raises and the feature fails closed — never silently "direct".
                 out["routes"][f] = r
             # else: keep the default ("direct")
     vpn = cfg.get("vpn")
@@ -220,9 +222,11 @@ _openers = {}        # signature -> urllib OpenerDirector
 
 
 def reset_openers():
-    """Drop the cached openers — called after the config changes so a new route
-    (proxy host/port) takes effect immediately."""
+    """Drop the cached openers and VPN verifications — called after the config
+    changes so a new route (proxy host/port) takes effect immediately and a check
+    made under the old config can't keep the VPN gate open."""
     _openers.clear()
+    _verify_state.clear()
 
 
 def _socks_handler(scheme, host, port, user, pwd):
@@ -290,6 +294,8 @@ def opener_for(route, cfg, no_redirect_cls):
 # Last egress-check result per provider, set by check_egress() and read (without
 # touching the network) by egress_allowed() on the request hot path.
 _verify_state = {}       # provider -> {"on_vpn": bool|None, "ip", "country", "org", "at": monotonic}
+VERIFY_MAX_AGE = 120     # seconds a positive check is trusted; the server re-checks after
+VERIFY_RETRY = 15        # seconds before re-checking after a failed / negative check
 
 
 def _provider_match(vpn, info):
@@ -337,36 +343,61 @@ def check_egress(cfg, no_redirect_cls, *, now, timeout=12):
             break
         except Exception as e:
             last = e
+    key = cfg["vpn"]["provider"] or "generic"
     if info is None:
+        _verify_state[key] = {"on_vpn": None, "at": now}   # a failed check closes the gate too
         raise EgressError(str(last) if last else "no IP-echo reachable")
     on_vpn = _provider_match(cfg["vpn"], info)
-    _verify_state[cfg["vpn"]["provider"] or "generic"] = {**info, "on_vpn": on_vpn, "at": now}
+    _verify_state[key] = {**info, "on_vpn": on_vpn, "at": now}
     return {"ok": True, "provider": cfg["vpn"]["provider"], "on_vpn": on_vpn, **info}
 
 
-def egress_allowed(feature, cfg):
+def _gate(feature, cfg):
+    """How the VPN gate treats `feature`: "open" (not gated), "blocked" (VPN lane
+    with nothing to verify against) or "verify" (needs a recent positive check)."""
+    if resolve(feature, cfg) != "vpn" or not cfg["vpn"].get("verify", True):
+        return "open"
+    provider = cfg["vpn"]["provider"]
+    has_match = bool((cfg["vpn"].get("match") or "").strip())
+    if provider is None and not has_match:
+        return "blocked"
+    # A generic VPN with no signature can't be auto-verified; allow it (the UI warns).
+    if provider == "generic" and not has_match:
+        return "open"
+    return "verify"
+
+
+def check_due(feature, cfg, now):
+    """True when `feature` is gated on a VPN check that is missing or stale (older
+    than VERIFY_MAX_AGE after a pass, VERIFY_RETRY after a fail). The server then
+    re-runs check_egress() so a VPN that dropped after verification is caught."""
+    if _gate(feature, cfg) != "verify":
+        return False
+    st = _verify_state.get(cfg["vpn"]["provider"] or "generic")
+    if not st:
+        return True
+    return now - st["at"] >= (VERIFY_MAX_AGE if st.get("on_vpn") is True else VERIFY_RETRY)
+
+
+def egress_allowed(feature, cfg, *, now):
     """Pure, no-network gate on the request hot path. Returns (allowed, reason).
 
     Only the **vpn** route can fail closed (the user's "select ProtonVPN → if the
-    machine isn't on it, it won't work"). For a Proton-verified lane we require a
-    recent positive check; an explicit negative OR no check yet both block (fail
-    closed). 'direct', 'proxy:*' and 'tor' are not gated here (they either work at
-    the socket or fail like any upstream). The generalized offline/airplane mode +
-    periodic kill-switch are tracked in Axis C (issue #131)."""
-    route = resolve(feature, cfg)
-    if route != "vpn" or not cfg["vpn"].get("verify", True):
+    machine isn't on it, it won't work"). A verified lane needs a positive check
+    younger than VERIFY_MAX_AGE; an explicit negative, a failed check, no check yet
+    or an expired one all block (fail closed). 'direct', 'proxy:*' and 'tor' are not
+    gated here (they either work at the socket or fail like any upstream). The
+    generalized offline/airplane mode is tracked in Axis C (issue #131)."""
+    gate = _gate(feature, cfg)
+    if gate == "open":
         return True, ""
-    provider = cfg["vpn"]["provider"]
-    has_match = bool((cfg["vpn"].get("match") or "").strip())
-    # Nothing to verify against: no named provider AND no expected-exit signature.
-    if provider is None and not has_match:
+    if gate == "blocked":
         return False, "VPN lane selected but no provider / expected exit set — configure it in OPSEC settings"
-    # A generic VPN with no signature can't be auto-verified; allow it (the UI warns).
-    if provider == "generic" and not has_match:
-        return True, ""
-    st = _verify_state.get(provider or "generic")
+    st = _verify_state.get(cfg["vpn"]["provider"] or "generic")
     if not st:
         return False, "VPN not verified yet — run an egress check in OPSEC settings"
-    if st.get("on_vpn") is True:
-        return True, ""
-    return False, "egress is NOT going through the expected VPN — request blocked (fail-closed)"
+    if st.get("on_vpn") is not True:
+        return False, "egress is NOT going through the expected VPN — request blocked (fail-closed)"
+    if now - st["at"] >= VERIFY_MAX_AGE:
+        return False, "VPN check expired and could not be renewed — request blocked (fail-closed)"
+    return True, ""

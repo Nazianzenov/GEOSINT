@@ -59,6 +59,9 @@ def page(base_url):
     except PWError as e:                       # browser build missing on this host
         pytest.skip(f"Playwright Chromium unavailable: {e}")
     pg = browser.new_page()
+    # applyCase asks before replacing unsaved work; the shared page is "dirty"
+    # after earlier tests, so accept (tests of the decline path stub confirm()).
+    pg.on("dialog", lambda d: d.accept())
     pg.goto(f"{base_url}/app/")
     # app.js defines its functions synchronously on load; wait for a late one.
     pg.wait_for_function("typeof buildDossier === 'function'", timeout=15000)
@@ -359,7 +362,8 @@ def test_custody_json_strips_thumbnails(page):
 def test_coreutils_namespace_surface(page):
     keys = page.evaluate(
         "() => Object.keys(CoreUtils).sort()")
-    assert keys == ["cardinal", "compassAz", "custodyCsv", "custodyJson", "fmtDMS", "toDMS"]
+    assert keys == ["cardinal", "compassAz", "custodyCsv", "custodyJson", "fmtDMS", "toDMS",
+                    "utcOffsetHours", "wrapBbox", "wrapLng"]
 
 
 def test_coreutils_todms_and_cardinal_are_pure(page):
@@ -597,3 +601,153 @@ def test_wiki_tab_with_no_page_loads_home(page):
         }"""
     )
     assert res == "/wiki/"
+
+
+# ── audit 2026-10-21 ────────────────────────────────────────────────────────
+def test_case_file_cannot_run_script_on_load(page):
+    # #138: a shared case file whose annotation `type` / artifact `id` carries markup
+    # must not execute on load (the anno popup is built eagerly; ids hit attributes).
+    res = page.evaluate(
+        """async () => {
+            window.__pwned = 0;
+            applyCase({
+                app: 'geosint-workbench', version: 2,
+                annos: [{ type: '<img src=x onerror="window.__pwned=1">', ll: [1, 2], text: 'x' },
+                        { type: 'pin', ll: [1, 2], text: 'ok' }],
+                artifacts: [{ id: '"><img src=x onerror="window.__pwned=2">', kind: 'obs', text: 'bad' },
+                            { id: 3, kind: 'obs', t: 5, text: 7, source: ['x'], ll: ['1', '2'] }],
+                measure: [], gbif: [], inputs: {},
+            });
+            await new Promise((r) => setTimeout(r, 300));     // let any <img onerror> fire
+            return { pwned: window.__pwned, annos: state.annos.map((a) => a.type),
+                     arts: state.artifacts.map((a) => [a.id, typeof a.text, a.source === undefined]) };
+        }"""
+    )
+    assert res["pwned"] == 0
+    assert res["annos"] == ["pin"]                       # unknown type dropped
+    assert res["arts"] == [[3, "undefined", True]]       # bad id dropped, fields coerced
+
+
+def test_rejected_case_file_keeps_the_autosave(page):
+    # #140: picking the custody export (or any non-case JSON) must not delete the
+    # crash-recovery snapshot.
+    res = page.evaluate(
+        """async () => {
+            localStorage.setItem('geosint:autosave', JSON.stringify({ app: 'geosint-workbench', notes: 'keep me' }));
+            const custody = custodyJson([{ id: 1, kind: 'obs', t: '2024-01-01', text: 'x' }]);
+            loadCase(new File([custody], 'custody-2024.json'));
+            await new Promise((r) => setTimeout(r, 300));
+            return { applied: applyCase(JSON.parse(custody)), kept: localStorage.getItem('geosint:autosave') };
+        }"""
+    )
+    assert res["applied"] is False
+    assert res["kept"] and "keep me" in res["kept"]
+
+
+def test_declining_the_replace_prompt_changes_nothing(page):
+    # #140: with unsaved work, applyCase asks first; "Cancel" leaves the case as is.
+    res = page.evaluate(
+        """() => {
+            const realConfirm = window.confirm;
+            window.confirm = () => false;
+            try {
+                document.querySelector('#case-notes').value = 'unsaved work';
+                markDirty();
+                const ok = applyCase({ app: 'geosint-workbench', notes: 'other case', measure: [], annos: [], gbif: [], inputs: {} });
+                return { ok, notes: document.querySelector('#case-notes').value };
+            } finally { window.confirm = realConfirm; }
+        }"""
+    )
+    assert res == {"ok": False, "notes": "unsaved work"}
+
+
+def test_loading_a_case_drops_the_previous_solver_result(page):
+    # #140: case B's dossier must not state case A's chronolocation finding.
+    res = page.evaluate(
+        """() => {
+            state.solverResult = { status: 'match', confidence: 'high', why: 'A', tol: 5, windows: ['10:00-10:10'] };
+            applyCase({ app: 'geosint-workbench', measure: [], annos: [], gbif: [], inputs: {} });
+            return { sr: state.solverResult, dossierHasA: buildDossier(false).includes('10:00-10:10') };
+        }"""
+    )
+    assert res["sr"] is None
+    assert res["dossierHasA"] is False
+
+
+def test_redacted_dossier_masks_coordinate_and_osm_labels(page):
+    # #139: a finding logged as coordinates, an annotation holding coordinates and a
+    # pinned OSM feature id all pin the exact place — redaction must hide them.
+    coord = "48.85837, 2.29448"
+    html = _build_dossier_with(page, redact=True, anno_text=coord,
+                               artifact={"id": 1, "kind": "obs", "t": "2024-01-01T00:00:00",
+                                         "text": coord, "source": coord, "ll": [48.85837, 2.29448]})
+    assert "48.85837" not in html and "2.29448" not in html
+    html = _build_dossier_with(page, redact=True,
+                               artifact={"id": 1, "kind": "obs", "t": "2024-01-01T00:00:00",
+                                         "text": "Tower (tourism=attraction)", "source": "OSM way/5013364"})
+    assert "5013364" not in html
+    assert "Tower (tourism=attraction)" in html          # the analytical label itself stays
+
+
+def test_date_line_helpers_and_case_round_trip(page):
+    # #143: Leaflet doesn't wrap longitudes — APIs get them folded, cases keep them.
+    res = page.evaluate(
+        """() => ({
+            w: [wrapLng(181.5), wrapLng(-181), wrapLng(10)],
+            straddle: wrapBbox(-18, 175, -16, 195),
+            east: wrapBbox(-18, 185, -16, 195),
+            world: wrapBbox(-60, -337, 60, 337),
+            kept: sanitizeCase({ app: 'geosint-workbench', point: { lat: -17.5, lng: 181.5 },
+                                 annos: [{ type: 'pin', ll: [-17.5, 181.5], text: 'Lau' }] }).case,
+        })"""
+    )
+    assert res["w"] == [-178.5, 179, 10]
+    assert res["straddle"] == [-18, -180, -16, -165]     # larger side of the date line
+    assert res["east"] == [-18, -175, -16, -165]
+    assert res["world"] == [-60, -180, 60, 180]
+    assert res["kept"]["point"] == {"lat": -17.5, "lng": 181.5}
+    assert len(res["kept"]["annos"]) == 1
+
+
+def test_exif_time_sets_the_photos_utc_offset(page):
+    # #143: a Sydney photo (+10:00) analysed anywhere must be solved at +10:00.
+    res = page.evaluate(
+        """() => {
+            const d = exifToSunInputs({ DateTimeOriginal: new Date(2023, 5, 15, 14, 30), OffsetTimeOriginal: '+10:00' });
+            return { ok: !!d, dt: document.querySelector('#sun-dt').value,
+                     off: document.querySelector('#sun-offset').value,
+                     half: utcOffsetHours('-03:30'), none: utcOffsetHours(undefined) };
+        }"""
+    )
+    assert res == {"ok": True, "dt": "2023-06-15T14:30", "off": "10", "half": -3.5, "none": None}
+
+
+@pytest.mark.parametrize("path", ["/app/", "/app/sun.html"])
+def test_sun_pages_load_and_render_without_errors(page, base_url, path):
+    # #145: the workbench panel and the Studio now share one Sun readout/solver
+    # (common.js) — both pages must boot and render it with no script errors.
+    ctx = page.context.browser.new_context()
+    pg = ctx.new_page()
+    errors = []
+    pg.on("pageerror", lambda e: errors.append(str(e)))
+    try:
+        pg.goto(f"{base_url}{path}")
+        pg.wait_for_function("typeof renderSunReadout === 'function' && document.readyState === 'complete'",
+                             timeout=15000)
+        res = pg.evaluate(
+            """(studio) => {
+                const p = L.latLng(48.8584, 2.2945);
+                if (studio) { setLoc(p); renderGeometry(); }   // setLoc's own render is debounced
+                else { setPoint(p); renderSun(); }
+                document.querySelector('#solver-az').value = '300';
+                document.querySelector('#solver-tol').value = '10';
+                const r = solveShadows(p, 'hint');
+                return { cards: document.querySelector('#sun-cards').textContent,
+                         solved: !!r && Array.isArray(r.windows) };
+            }""", path.endswith("sun.html"))
+        pg.wait_for_timeout(200)
+    finally:
+        ctx.close()
+    assert errors == []
+    assert "sun azimuth" in res["cards"]
+    assert res["solved"] is True

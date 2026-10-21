@@ -560,6 +560,31 @@ def test_opsec_masked_password_kept_on_resave(monkeypatch, tmp_path):
     server._opsec_cfg[0] = None
 
 
+def test_opsec_set_refuses_route_to_missing_proxy(monkeypatch, tmp_path):
+    # A route pointing at a proxy that was renamed / failed validation (port 0) must
+    # be refused, not silently saved as "direct" (the analyst's real IP).
+    monkeypatch.setattr(server, "OPSEC_CONFIG_PATH", tmp_path / "opsec.json")
+    server._opsec_cfg[0] = None
+    cfg = {"version": 1, "routes": {"geocode": "proxy:res1"},
+           "proxies": {"res1": {"scheme": "http", "host": "p.example", "port": 0}},
+           "vpn": {"provider": None, "verify": True}, "tor": {"host": "127.0.0.1", "port": 9050}, "ua": "default"}
+    st, _, body = jpost("/api/opsec", {"config": cfg})
+    assert st == 400
+    assert b"geocode" in body
+    assert not (tmp_path / "opsec.json").exists()      # nothing persisted
+    server._opsec_cfg[0] = None
+
+
+def test_post_without_csrf_header_is_refused_before_reading_the_body():
+    # A drive-by page can't make the server buffer a large body: the header check
+    # runs first, so a request announcing 100 MB (and sending none) is answered at once.
+    with socket.create_connection((HOST, PORT), timeout=5) as s:
+        s.sendall(f"POST /api/exif HTTP/1.1\r\nHost: {HOST}:{PORT}\r\n"
+                  f"Content-Length: {100 * 1024 * 1024}\r\n\r\n".encode())
+        head = s.recv(4096)
+    assert head.startswith(b"HTTP/1.1 403")
+
+
 # ── GBIF density-tile proxy (leak closure) ──────────────────────────────────
 def test_gbif_tile_cross_site_refused():
     st, _, _ = req("GET", "/api/gbif/tile/3/1/1?taxonKey=212",

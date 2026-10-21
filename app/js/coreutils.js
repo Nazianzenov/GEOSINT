@@ -29,6 +29,24 @@ const CoreUtils = (function () {
   }
   const fmtDMS = (ll) => `${toDMS(ll.lat, true)} ${toDMS(ll.lng, false)}`;
 
+  /* Longitude folded into [-180, 180). Leaflet doesn't wrap: a click east of the
+     date line reads e.g. 181.5, which the weather/elevation/OSM APIs reject. */
+  const wrapLng = (lng) => ((lng + 180) % 360 + 360) % 360 - 180;
+
+  /* A map view [s, w, n, e] as one bbox the APIs accept: shifted so its centre is
+     within ±180°, then clamped to [-180, 180]. A view straddling the date line
+     keeps its larger side; one wider than the world is clamped to it. */
+  function wrapBbox(s, w, n, e) {
+    const shift = 360 * Math.round((w + e) / 2 / 360);
+    return [s, Math.max(-180, w - shift), n, Math.min(180, e - shift)];
+  }
+
+  /* An EXIF OffsetTime* value ("+10:00", "-0530") -> hours (10, -5.5), or null. */
+  function utcOffsetHours(off) {
+    const m = /([+-])(\d{2}):?(\d{2})/.exec(String(off || ""));
+    return m ? (m[1] === "-" ? -1 : 1) * (+m[2] + (+m[3]) / 60) : null;
+  }
+
   /* SunCalc azimuth is 0=South; convert to compass 0=North. */
   const compassAz = (rad) => (rad * 180 / Math.PI + 180) % 360;
   const cardinal = (deg) =>
@@ -55,13 +73,16 @@ const CoreUtils = (function () {
                             exported: new Date().toISOString(), artifacts: slim }, null, 1);
   }
 
-  return { toDMS, fmtDMS, compassAz, cardinal, custodyCsv, custodyJson };
+  return { toDMS, fmtDMS, wrapLng, wrapBbox, utcOffsetHours, compassAz, cardinal, custodyCsv, custodyJson };
 })();
 
 /* Legacy bare globals: existing call sites in common.js / case.js / the Studio
    and the tests reference these by name. */
 const toDMS = CoreUtils.toDMS;
 const fmtDMS = CoreUtils.fmtDMS;
+const wrapLng = CoreUtils.wrapLng;
+const wrapBbox = CoreUtils.wrapBbox;
+const utcOffsetHours = CoreUtils.utcOffsetHours;
 const compassAz = CoreUtils.compassAz;
 const cardinal = CoreUtils.cardinal;
 const custodyCsv = CoreUtils.custodyCsv;

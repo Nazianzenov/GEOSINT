@@ -9,7 +9,6 @@ GeoHints/Wikimedia image cachers) sits on top of this so behaviour is uniform.
 
     get(url)            -> (bytes, content_type)
     get_json(url, ...)  -> parsed JSON (sets Accept; raises on non-JSON)
-    download(url, dest) -> bytes written (parent dir created)
 
 Tools that talk to a specific service add their own logic above this — they do
 not re-implement retries or rate limiting.
@@ -18,6 +17,7 @@ import json
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
@@ -69,7 +69,7 @@ def _retry_after_seconds(ra):
         return None
     ra = ra.strip()
     if ra.isdigit():
-        return float(ra)
+        return min(_RETRY_AFTER_MAX, float(ra))
     try:
         parsed = parsedate_to_datetime(ra)
         if parsed is None:
@@ -81,14 +81,25 @@ def _retry_after_seconds(ra):
     return max(0.0, min(_RETRY_AFTER_MAX, delta))
 
 
+# Hosts that failed every connection attempt (DNS failure, refused, unreachable)
+# earlier in this run: later calls fail at once instead of sleeping through the
+# same retries per URL — an offline build used to take hours. HTTP 429/5xx are
+# still retried `tries` times; a dead network gets NET_TRIES attempts per host.
+_dead_hosts = set()
+NET_TRIES = 3
+
+
 def get(url, timeout=40, accept=None, tries=6):
     """GET `url` politely. Returns (bytes, content_type). Retries 429/5xx with
     backoff that honours Retry-After (both delta-seconds and HTTP-date forms);
     raises on other HTTP errors / final fail."""
+    host = urllib.parse.urlsplit(url).hostname
+    if host in _dead_hosts:
+        raise urllib.error.URLError(f"{host} unreachable earlier in this run")
     headers = {"User-Agent": UA}
     if accept:
         headers["Accept"] = accept
-    last = None
+    last, net_fails = None, 0
     for attempt in range(tries):
         _throttle()
         try:
@@ -103,8 +114,11 @@ def get(url, timeout=40, accept=None, tries=6):
             wait = ra if ra is not None else min(60, 5 * (attempt + 1) ** 2)
             time.sleep(wait)
         except urllib.error.URLError as e:
-            last = e
-            time.sleep(5 * (attempt + 1))
+            last, net_fails = e, net_fails + 1
+            if net_fails >= NET_TRIES:
+                _dead_hosts.add(host)
+                break
+            time.sleep(5 * net_fails)
     raise last if last else RuntimeError(f"request failed after retries: {url}")
 
 
@@ -113,12 +127,3 @@ def get_json(url, timeout=60, accept="application/json"):
     data, _ = get(url, timeout=timeout, accept=accept)
     return json.loads(data.decode("utf-8"))
 
-
-def download(url, dest, timeout=60):
-    """Fetch `url` and write the bytes to Path `dest` (parent created).
-    Returns the byte count. Callers verify content type if they need to."""
-    data, _ = get(url, timeout=timeout)
-    dest = Path(dest)
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_bytes(data)
-    return len(data)

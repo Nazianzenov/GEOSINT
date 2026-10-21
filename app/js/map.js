@@ -67,10 +67,11 @@ let _elevTimer;
 function fetchElevation(ll) {
   clearTimeout(_elevTimer);
   _elevTimer = setTimeout(async () => {
-    const key = `${ll.lat.toFixed(3)},${ll.lng.toFixed(3)}`;
+    const lng = wrapLng(ll.lng);                // a point past the date line reads e.g. 181.5
+    const key = `${ll.lat.toFixed(3)},${lng.toFixed(3)}`;
     if (!_elevCache.has(key)) {
       try {
-        const r = await cachedFetch(`https://api.open-meteo.com/v1/elevation?latitude=${ll.lat.toFixed(4)}&longitude=${ll.lng.toFixed(4)}`);
+        const r = await cachedFetch(`https://api.open-meteo.com/v1/elevation?latitude=${ll.lat.toFixed(4)}&longitude=${lng.toFixed(4)}`);
         const j = await r.json();
         _elevCache.set(key, Math.round(j.elevation[0]));
       } catch { return; }
@@ -296,7 +297,7 @@ async function elevationProfile() {
   $("#elev-panel").hidden = false;
   $("#elev-stats").textContent = "fetching elevations…";
   const lats = samples.map((s) => s.ll.lat.toFixed(5)).join(",");
-  const lngs = samples.map((s) => s.ll.lng.toFixed(5)).join(",");
+  const lngs = samples.map((s) => wrapLng(s.ll.lng).toFixed(5)).join(",");
   try {
     const r = await cachedFetch(`https://api.open-meteo.com/v1/elevation?latitude=${lats}&longitude=${lngs}`);
     const j = await r.json();

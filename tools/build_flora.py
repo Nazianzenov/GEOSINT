@@ -210,14 +210,16 @@ def apply_overrides(d):
 
 
 def build_data(force):
-    if DATA.is_file() and not force:
-        d = json.loads(DATA.read_text(encoding="utf-8"))
-        if datetime.now(timezone.utc) - datetime.fromisoformat(d["fetched"]) < TTL:
-            print(f"  flora.json fresh ({len(d['species'])} species, cache hit)")
-            d = apply_overrides(d)
-            DATA.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
-            return d
-    out = []
+    """flora.json, re-fetched when older than TTL. Returns (data, changed)."""
+    old = json.loads(DATA.read_text(encoding="utf-8")) if DATA.is_file() else None
+    if old and not force and datetime.now(timezone.utc) - datetime.fromisoformat(old["fetched"]) < TTL:
+        print(f"  flora.json fresh ({len(old['species'])} species, cache hit)")
+        d = apply_overrides(json.loads(json.dumps(old)))
+        if d == old:
+            return old, False
+        DATA.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+        return d, True
+    out, failed = [], 0
     for group, common, sci, wp, hint in SPECIES:
         entry = {"group": group, "common": common, "sci": sci, "hint": hint}
         try:
@@ -226,6 +228,7 @@ def build_data(force):
             entry["gbif"] = m.get("usageKey")
         except Exception as e:
             print(f"  WARN gbif {sci}: {e}")
+            failed += 1
         try:
             s = http_json("https://en.wikipedia.org/api/rest_v1/page/summary/"
                           + urllib.parse.quote(wp))
@@ -236,13 +239,19 @@ def build_data(force):
                 entry["img"] = thumb_url(img)
         except Exception as e:
             print(f"  WARN wikipedia {wp}: {e}")
+            failed += 1
         out.append(entry)
         print(f"  {common}: gbif={entry.get('gbif')} img={'y' if entry.get('img') else 'n'}")
         time.sleep(0.5)
+    if failed and old:
+        # An offline / rate-limited run would replace good entries with empty ones
+        # and stamp them fresh for TTL — keep the previous data instead.
+        print(f"  WARN {failed} lookup(s) failed — keeping the existing flora.json")
+        return old, False
     d = apply_overrides({"fetched": datetime.now(timezone.utc).isoformat(), "species": out})
     DATA.parent.mkdir(exist_ok=True)
     DATA.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
-    return d
+    return d, True
 
 
 def write_wiki(d):
@@ -288,8 +297,14 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
-    d = build_data(args.force)
-    write_wiki(d)
+    d, changed = build_data(args.force)
+    # The pages carry remote image URLs that cache_wikimedia (the next build step)
+    # rewrites to local copies — so only regenerate them when the data changed,
+    # never over the committed, localized pages.
+    if changed or not (WIKI / "index.md").is_file():
+        write_wiki(d)
+    else:
+        print("  flora wiki pages unchanged")
     return 0
 
 

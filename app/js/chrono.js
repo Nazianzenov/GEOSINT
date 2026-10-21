@@ -122,7 +122,7 @@ const CHRONO = (function () {
     return { status: "match", confidence, why, tol, twoShadow, windows };
   }
 
-  return { ALT_FLOOR, RATIO_TOL, shadowAt, shadowFit, solve };
+  return { shadowAt, shadowFit, solve };
 })();
 
 /* Legacy page globals: the existing tests/test_js.py call shadowAt/shadowFit by

@@ -14,12 +14,12 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 ### Europe
 
 <div class="gh-gallery">
-<figure><img src="../../../assets/hydrants/fr/fr_1.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France</figcaption></figure>
-<figure><img src="../../../assets/hydrants/fr/fr_2.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France · <a href="/app/index.html#ll=43.520454,7.041893" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/hydrants/fr/fr_3.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France</figcaption></figure>
-<figure><img src="../../../assets/hydrants/fr/fr_4.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France · <a href="/app/index.html#ll=49.018138,0.959635" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/hydrants/fr/fr_5.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France · <a href="/app/index.html#ll=46.679043,5.570705" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/hydrants/fr/fr_6.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France · <a href="/app/index.html#ll=48.9908063,1.0508841" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/hydrants/fr/fr_1.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France · <a href="/app/index.html#ll=49.35771111,6.16705" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/hydrants/fr/fr_2.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France</figcaption></figure>
+<figure><img src="../../../assets/hydrants/fr/fr_3.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France · <a href="/app/index.html#ll=43.520454,7.041893" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/hydrants/fr/fr_4.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France</figcaption></figure>
+<figure><img src="../../../assets/hydrants/fr/fr_5.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France · <a href="/app/index.html#ll=49.018138,0.959635" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/hydrants/fr/fr_6.jpg" loading="lazy" alt="Fire hydrants — France"><figcaption>France · <a href="/app/index.html#ll=46.679043,5.570705" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/hydrants/de/de_1.jpg" loading="lazy" alt="Fire hydrants — Germany"><figcaption>Germany · <a href="/app/index.html#ll=50.806439,6.111841" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/hydrants/de/de_2.jpg" loading="lazy" alt="Fire hydrants — Germany"><figcaption>Germany · <a href="/app/index.html#ll=50.7680416,12.8165054" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/hydrants/de/de_3.jpg" loading="lazy" alt="Fire hydrants — Germany"><figcaption>Germany · <a href="/app/index.html#ll=53.743409,10.340039" target="_blank">map</a></figcaption></figure>
@@ -41,7 +41,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/hydrants/es/es_1.jpg" loading="lazy" alt="Fire hydrants — Spain"><figcaption>Spain · <a href="/app/index.html#ll=42.429466,-8.642292" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/hydrants/es/es_2.jpg" loading="lazy" alt="Fire hydrants — Spain"><figcaption>Spain</figcaption></figure>
 <figure><img src="../../../assets/hydrants/es/es_3.jpg" loading="lazy" alt="Fire hydrants — Spain"><figcaption>Spain</figcaption></figure>
-<figure><img src="../../../assets/hydrants/es/es_4.jpg" loading="lazy" alt="Fire hydrants — Spain"><figcaption>Spain</figcaption></figure>
+<figure><img src="../../../assets/hydrants/es/es_4.jpg" loading="lazy" alt="Fire hydrants — Spain"><figcaption>Spain · <a href="/app/index.html#ll=28.719759,-17.79386" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/hydrants/es/es_5.jpg" loading="lazy" alt="Fire hydrants — Spain"><figcaption>Spain</figcaption></figure>
 <figure><img src="../../../assets/hydrants/es/es_6.jpg" loading="lazy" alt="Fire hydrants — Spain"><figcaption>Spain</figcaption></figure>
 <figure><img src="../../../assets/hydrants/nl/nl_1.jpg" loading="lazy" alt="Fire hydrants — Netherlands"><figcaption>Netherlands</figcaption></figure>
@@ -116,9 +116,9 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/hydrants/cn/cn_1.jpg" loading="lazy" alt="Fire hydrants — China"><figcaption>China</figcaption></figure>
 <figure><img src="../../../assets/hydrants/cn/cn_2.jpg" loading="lazy" alt="Fire hydrants — China"><figcaption>China</figcaption></figure>
 <figure><img src="../../../assets/hydrants/cn/cn_3.jpg" loading="lazy" alt="Fire hydrants — China"><figcaption>China</figcaption></figure>
-<figure><img src="../../../assets/hydrants/cn/cn_4.jpg" loading="lazy" alt="Fire hydrants — China"><figcaption>China · <a href="/app/index.html#ll=22.559085,113.60532" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/hydrants/cn/cn_4.jpg" loading="lazy" alt="Fire hydrants — China"><figcaption>China</figcaption></figure>
 <figure><img src="../../../assets/hydrants/cn/cn_5.jpg" loading="lazy" alt="Fire hydrants — China"><figcaption>China</figcaption></figure>
-<figure><img src="../../../assets/hydrants/cn/cn_6.jpg" loading="lazy" alt="Fire hydrants — China"><figcaption>China</figcaption></figure>
+<figure><img src="../../../assets/hydrants/cn/cn_6.jpg" loading="lazy" alt="Fire hydrants — China"><figcaption>China · <a href="/app/index.html#ll=22.559085,113.60532" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/hydrants/kr/kr_1.jpg" loading="lazy" alt="Fire hydrants — South Korea"><figcaption>South Korea</figcaption></figure>
 <figure><img src="../../../assets/hydrants/kr/kr_2.jpg" loading="lazy" alt="Fire hydrants — South Korea"><figcaption>South Korea</figcaption></figure>
 <figure><img src="../../../assets/hydrants/kr/kr_3.jpg" loading="lazy" alt="Fire hydrants — South Korea"><figcaption>South Korea</figcaption></figure>
@@ -129,6 +129,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/hydrants/in/in_2.jpg" loading="lazy" alt="Fire hydrants — India"><figcaption>India</figcaption></figure>
 <figure><img src="../../../assets/hydrants/in/in_3.jpg" loading="lazy" alt="Fire hydrants — India"><figcaption>India</figcaption></figure>
 <figure><img src="../../../assets/hydrants/in/in_4.jpg" loading="lazy" alt="Fire hydrants — India"><figcaption>India · <a href="/app/index.html#ll=28.6000912,77.2270425" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/hydrants/in/in_5.jpg" loading="lazy" alt="Fire hydrants — India"><figcaption>India</figcaption></figure>
 <figure><img src="../../../assets/hydrants/th/th_1.jpg" loading="lazy" alt="Fire hydrants — Thailand"><figcaption>Thailand</figcaption></figure>
 <figure><img src="../../../assets/hydrants/th/th_2.jpg" loading="lazy" alt="Fire hydrants — Thailand"><figcaption>Thailand · <a href="/app/index.html#ll=13.71994,100.753563" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/hydrants/id/id_1.jpg" loading="lazy" alt="Fire hydrants — Indonesia"><figcaption>Indonesia</figcaption></figure>
@@ -157,7 +158,8 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 
 <div class="gh-gallery">
 <figure><img src="../../../assets/hydrants/za/za_1.jpg" loading="lazy" alt="Fire hydrants — South Africa"><figcaption>South Africa</figcaption></figure>
-<figure><img src="../../../assets/hydrants/za/za_2.jpg" loading="lazy" alt="Fire hydrants — South Africa"><figcaption>South Africa · <a href="/app/index.html#ll=-26.1077,28.0552" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/hydrants/za/za_2.jpg" loading="lazy" alt="Fire hydrants — South Africa"><figcaption>South Africa · <a href="/app/index.html#ll=-33.9319915,18.4443062" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/hydrants/za/za_3.jpg" loading="lazy" alt="Fire hydrants — South Africa"><figcaption>South Africa · <a href="/app/index.html#ll=-26.1077,28.0552" target="_blank">map</a></figcaption></figure>
 </div>
 
 ### North America
@@ -184,7 +186,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/hydrants/br/br_2.jpg" loading="lazy" alt="Fire hydrants — Brazil"><figcaption>Brazil</figcaption></figure>
 <figure><img src="../../../assets/hydrants/ar/ar_1.jpg" loading="lazy" alt="Fire hydrants — Argentina"><figcaption>Argentina · <a href="/app/index.html#ll=-32.91778,-60.80764" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/hydrants/ar/ar_2.jpg" loading="lazy" alt="Fire hydrants — Argentina"><figcaption>Argentina · <a href="/app/index.html#ll=-32.346828,-65.00415" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/hydrants/cl/cl_1.jpg" loading="lazy" alt="Fire hydrants — Chile"><figcaption>Chile</figcaption></figure>
+<figure><img src="../../../assets/hydrants/cl/cl_1.jpg" loading="lazy" alt="Fire hydrants — Chile"><figcaption>Chile · <a href="/app/index.html#ll=-33.046111,-71.619722" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/hydrants/cl/cl_2.jpg" loading="lazy" alt="Fire hydrants — Chile"><figcaption>Chile</figcaption></figure>
 <figure><img src="../../../assets/hydrants/cl/cl_3.jpg" loading="lazy" alt="Fire hydrants — Chile"><figcaption>Chile</figcaption></figure>
 <figure><img src="../../../assets/hydrants/cl/cl_4.jpg" loading="lazy" alt="Fire hydrants — Chile"><figcaption>Chile · <a href="/app/index.html#ll=-46.538495,-71.724712" target="_blank">map</a></figcaption></figure>

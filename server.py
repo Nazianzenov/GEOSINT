@@ -11,7 +11,6 @@ Run:  python server.py [--port 8650] [--no-browser]
 import argparse
 import glob
 import hashlib
-import math
 import json
 import mimetypes
 import os
@@ -120,16 +119,9 @@ PGET_ALLOW = [
 ]
 # Version + User-Agent: single source of truth is geosint/__init__.py, so the
 # version advertised by /api/status, --version and every outbound request can
-# never drift from the package version. Import defensively — a frozen/standalone
-# server.py must still start if the `geosint` package isn't importable.
-try:
-    from geosint import __version__ as VERSION, ua as _ua
-    UA = _ua(VERSION)
-except Exception:                       # pragma: no cover - frozen/standalone fallback
-    VERSION = "1.0.0"
-    UA = (f"GeOSINT-Workbench/{VERSION} "
-          f"(https://github.com/Nazianzenov/GEOSINT; "
-          f"non-commercial personal OSINT tool)")
+# never drift from the package version.
+from geosint import __version__ as VERSION, ua as _ua
+UA = _ua(VERSION)
 LOCALAPPDATA = os.environ.get("LOCALAPPDATA", "")
 
 # Platform flags — the detection + launch layers branch on these so the workbench
@@ -153,10 +145,9 @@ EXIF_SUFFIXES = {
 # endpoints (raw image bytes — RAW/video can be large); JSON_MAX_BYTES is for
 # every other POST (small JSON). do_POST picks the cap by route and each exif
 # handler re-checks EXIF_MAX_BYTES — naming them once means those two checks can
-# never silently diverge. EXIF_TOOL_TIMEOUT bounds each ExifTool subprocess.
+# never silently diverge. (ExifTool's per-call timeout lives in geosint/exif.py.)
 EXIF_MAX_BYTES = 200 * 1024 * 1024
 JSON_MAX_BYTES = 2 * 1024 * 1024
-EXIF_TOOL_TIMEOUT = 30          # seconds per ExifTool invocation
 
 # Host header allowlist (set in main() once the port is known). Defends against
 # DNS rebinding: a remote page that rebinds its hostname to 127.0.0.1 sends
@@ -492,31 +483,11 @@ def atomic_write(path: Path, data: bytes) -> None:
         _enforce_cache_cap()
 
 
-# Pure Web-Mercator tile math lives in geosint/tiles.py (ARC-05 / #88) so it is
-# unit-testable without the HTTP Handler. Imported defensively so a frozen/
-# standalone server.py still starts if the package isn't importable, falling back
-# to a local copy. _lonlat_to_tile keeps its old name (used internally + in tests).
-try:
-    from geosint.tiles import lonlat_to_tile as _lonlat_to_tile, tiles_in_bbox
-except Exception:                       # pragma: no cover - frozen/standalone fallback
-    def _lonlat_to_tile(lon, lat, z):
-        n = 2 ** z
-        x = int((lon + 180.0) / 360.0 * n)
-        lat_r = math.radians(max(-85.0511, min(85.0511, lat)))
-        y = int((1 - math.asinh(math.tan(lat_r)) / math.pi) / 2 * n)
-        return max(0, min(n - 1, x)), max(0, min(n - 1, y))
-
-    def tiles_in_bbox(s, w, n, e, zmin, zmax):
-        for z in range(zmin, zmax + 1):
-            x0, y0 = _lonlat_to_tile(w, n, z)
-            x1, y1 = _lonlat_to_tile(e, s, z)
-            for x in range(min(x0, x1), max(x0, x1) + 1):
-                for y in range(min(y0, y1), max(y0, y1) + 1):
-                    yield z, x, y
-
-# Domain modules extracted from the Handler (#88): ExifTool orchestration + the
-# cached-proxy core. Pure-stdlib and required by the exif/proxy endpoints, so
-# import hard (no frozen fallback).
+# Domain modules extracted from the Handler (#88): pure Web-Mercator tile math,
+# ExifTool orchestration, the cached-proxy core and egress routing. Pure-stdlib
+# and required at runtime, so imported hard (PyInstaller bundles them; the
+# Dockerfile COPYs geosint/).
+from geosint.tiles import tiles_in_bbox
 from geosint import exif as exif_domain
 from geosint import proxy as proxy_domain
 from geosint import egress as egress_domain
@@ -559,13 +530,29 @@ def reload_opsec():
     return _opsec_cfg[0]
 
 
+_verify_lock = threading.Lock()
+_VERIFY_WAIT = 15               # seconds a request waits for another thread's VPN re-check
+
+
 def _egress(feature):
     """Resolve a feature to (opener, user_agent) for this request, enforcing the
     fail-closed VPN gate. Raises egress.EgressError when the route is blocked or
     misconfigured — every caller already treats a raised fetch as a clean upstream
-    failure (cache-or-error), so a blocked route degrades gracefully, never leaks."""
+    failure (cache-or-error), so a blocked route degrades gracefully, never leaks.
+
+    A VPN-gated feature whose last egress check is missing or stale is re-checked
+    here first (one thread at a time; the rest wait for its result), so a tunnel
+    that dropped after verification closes the gate within VERIFY_MAX_AGE."""
     cfg = current_opsec()
-    allowed, reason = egress_domain.egress_allowed(feature, cfg)
+    if egress_domain.check_due(feature, cfg, time.monotonic()) and _verify_lock.acquire(timeout=_VERIFY_WAIT):
+        try:
+            if egress_domain.check_due(feature, cfg, time.monotonic()):   # not re-checked while we waited
+                egress_domain.check_egress(cfg, _NoRedirect, now=time.monotonic())
+        except egress_domain.EgressError as e:
+            sys.stderr.write(f"[geosint] WARN VPN re-check failed (gate closed): {str(e)[:200]}\n")
+        finally:
+            _verify_lock.release()
+    allowed, reason = egress_domain.egress_allowed(feature, cfg, now=time.monotonic())
     if not allowed:
         raise egress_domain.EgressError(reason)
     opener = egress_domain.opener_for(egress_domain.resolve(feature, cfg), cfg, _NoRedirect)
@@ -991,6 +978,13 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"error": "config object required"}, 400)
         with _opsec_lock:
             merged = egress_domain.merge_secrets(cfg, current_opsec())
+            # A route naming a missing or incomplete proxy would only fail closed at
+            # request time — refuse the save so the analyst sees it now.
+            dangling = sorted(f for f, r in merged["routes"].items()
+                              if r.startswith("proxy:") and r[6:] not in merged["proxies"])
+            if dangling:
+                return self.send_json({"error": f"{', '.join(dangling)}: routed to a proxy that is "
+                                                f"missing or incomplete (needs host + port)"}, 400)
             try:
                 egress_domain.save_config(OPSEC_CONFIG_PATH, merged, atomic_write=atomic_write)
             except OSError as e:
@@ -1156,16 +1150,19 @@ class Handler(BaseHTTPRequestHandler):
         # the handler); every other POST is small JSON. Cap the read accordingly.
         cap = EXIF_MAX_BYTES if path in ("/api/exif", "/api/exif-preview") else JSON_MAX_BYTES
         if length < 0 or length > cap:
+            self.close_connection = True      # the unread body must not be parsed as the next request
             return self.send_json({"error": "request too large"}, 413)
-        raw = self.rfile.read(length) if length else b""
 
         # CSRF guard: every POST launches a local app or runs a local binary.
         # Require a custom header the SPA always sends. A custom header forces a
         # CORS preflight cross-origin, which this server never answers — so a
         # drive-by page in the browser cannot reach these endpoints, while
-        # same-origin fetches from /app/ are unaffected.
+        # same-origin fetches from /app/ are unaffected. Checked BEFORE reading the
+        # body, so such a page can't make us buffer up to EXIF_MAX_BYTES either.
         if self.headers.get("X-GeOSINT") != "1":
+            self.close_connection = True
             return self.send_json({"error": "missing X-GeOSINT header"}, 403)
+        raw = self.rfile.read(length) if length else b""
 
         if path == "/api/exif":
             return self.api_exif(raw)
