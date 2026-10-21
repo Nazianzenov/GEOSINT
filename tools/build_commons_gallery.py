@@ -9,11 +9,13 @@ through the unified resilient client (tools/wikimedia.py), caches a handful of
 thumbnails per country into wiki/docs/assets/<topic>/<iso2>/, and writes a wiki
 page grouped by continent. Files keep any GPS coordinate as a map link.
 
-Flag-only-style: image + country (+ map link when geotagged). Re-runs skip
-already-cached files. Run:
+Flag-only-style: image + country (+ map link when geotagged). Re-runs skip a
+cached file while it is still the image at that position (assets/<dir>/
+sources.json records which Commons URL each file holds). Run:
 
     .venv\\Scripts\\python tools\\build_commons_gallery.py [topic ...]
 """
+import json
 import sys
 import urllib.parse
 from pathlib import Path
@@ -116,9 +118,12 @@ GALLERY_CSS = (
 
 
 def ext_of(mime, url):
+    # strip the query first: Commons thumb URLs now end in "?utm_source=commons.wikimedia.org…",
+    # whose dots would otherwise become the "extension"
+    path = url.split("?", 1)[0].rsplit("/", 1)[-1]
     return {"image/jpeg": ".jpg", "image/png": ".png", "image/svg+xml": ".svg",
             "image/gif": ".gif", "image/webp": ".webp"}.get(mime) or \
-        ("." + url.rsplit(".", 1)[-1].split("?")[0].lower() if "." in url else ".jpg")
+        ("." + path.rsplit(".", 1)[-1].lower() if "." in path else ".jpg")
 
 
 def country_phrase(entry):
@@ -128,7 +133,17 @@ def country_phrase(entry):
 
 def build_topic(tkey, topic):
     adir = ASSETS / topic["dir"]
+    # Thumbnails are named by position (fr_1, fr_2…). When a category is reordered,
+    # position n is a different image, whose caption / map link must not be shown
+    # under the old file — so a file is reused only while it still holds the image
+    # now at that position (recorded per file in sources.json), else re-fetched.
+    manifest = adir / "sources.json"
+    try:
+        sources = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        sources = {}
     fetched = skipped = failed = 0
+    lookup_failed = False
     sections = []
     for continent, entries in COUNTRIES.items():
         figs = []
@@ -139,15 +154,18 @@ def build_topic(tkey, topic):
                 imgs = wm.category_images(cat, limit=PER_COUNTRY * 2, thumb_width=THUMB_W)
             except Exception as e:
                 print(f"  WARN {cat}: {e}")
-                imgs = []
+                lookup_failed = True
+                continue
             kept = 0
             for img in imgs:
                 if kept >= PER_COUNTRY:
                     break
                 dest = adir / iso2 / f"{iso2}_{kept + 1}{ext_of(img['mime'], img['url'])}"
-                if not dest.is_file():
+                key = dest.relative_to(adir).as_posix()
+                if not dest.is_file() or sources.get(key) != img["url"]:
                     try:
                         wm.download(img["url"], dest)
+                        sources[key] = img["url"]
                         fetched += 1
                     except Exception as e:
                         print(f"  FAIL {cat} #{kept+1}: {e}")
@@ -169,6 +187,13 @@ def build_topic(tkey, topic):
             sections.append(f'### {continent}\n\n<div class="gh-gallery">\n'
                             + "\n".join(figs) + "\n</div>")
 
+    if fetched:
+        manifest.write_text(json.dumps(sources, indent=1, sort_keys=True) + "\n",
+                            encoding="utf-8", newline="\n")   # assets/** is binary in git: keep LF
+    if lookup_failed and (PAGES / f"{tkey}.md").is_file():
+        # offline / rate-limited: a page missing those countries would replace a good one
+        print(f"  WARN {tkey}: category lookups failed — keeping the existing page")
+        return fetched, skipped, failed
     page = (
         f"# {topic['title']} by country\n\n"
         f"{topic['intro']}\n\n"

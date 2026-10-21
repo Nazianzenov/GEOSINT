@@ -369,6 +369,9 @@ def fetch_submarine_cables():
         rows.append({"n": name, "lat": round(lat, 5), "lng": round(lng, 5),
                      "c": canon_country(country), "url": TG_SOURCE})
 
+    if not cable_feats or not rows:          # upstream changed shape / answered empty
+        raise RuntimeError(f"submarine cables: {len(cable_feats)} cables, {len(rows)} landings — "
+                           f"keeping the existing data")
     out = {
         "fetched": datetime.now(timezone.utc).isoformat(),
         "label": "Submarine cables & landing points",
@@ -384,6 +387,8 @@ def fetch_submarine_cables():
 
 
 def write_dataset(key, label, license_, source, rows):
+    if not rows:                             # an empty answer must not replace good data
+        raise RuntimeError(f"{key}: 0 rows from upstream — keeping the existing file")
     DATA.mkdir(exist_ok=True)
     out = {"fetched": datetime.now(timezone.utc).isoformat(), "label": label,
            "license": license_, "source": source, "rows": rows}
@@ -417,33 +422,46 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
+    failed = []
+
+    def refresh(key, fetch_and_write):
+        # One dataset down (timeout, empty answer) must not stop the others; its
+        # existing file is kept and retried on the next run.
+        try:
+            fetch_and_write()
+        except Exception as e:
+            print(f"  WARN {key}: {e}")
+            failed.append(key)
+
     for key, spec in QUERIES.items():
         path = DATA / f"{key}.json"
         if not args.force and fresh(path):
             print(f"  {key}: fresh (cache hit)")
             continue
         print(f"  fetching {key} from Wikidata…")
-        rows = fetch_wikidata(key, spec)
-        write_dataset(key, spec["label"], spec["license"], spec["source"], rows)
+        refresh(key, lambda: write_dataset(key, spec["label"], spec["license"], spec["source"],
+                                           fetch_wikidata(key, spec)))
         time.sleep(3)
     path = DATA / "airports.json"
     if args.force or not fresh(path):
         print("  fetching airports from OurAirports…")
-        write_dataset("airports", "Airports (large & medium)",
-                      "OurAirports, public domain",
-                      "https://ourairports.com/data/", fetch_airports())
+        refresh("airports", lambda: write_dataset("airports", "Airports (large & medium)",
+                                                  "OurAirports, public domain",
+                                                  "https://ourairports.com/data/", fetch_airports()))
     else:
         print("  airports: fresh (cache hit)")
     # 5D.2 — submarine cables (self-contained GeoJSON) + landing points (searchable).
     path = DATA / "submarine-cables.json"
     if args.force or not fresh(path):
         print("  fetching submarine cables from TeleGeography…")
-        landing_rows = fetch_submarine_cables()
-        write_dataset("cable-landings", "Cable landing points",
-                      TG_LICENSE, TG_SOURCE, landing_rows)
+        refresh("submarine-cables", lambda: write_dataset("cable-landings", "Cable landing points",
+                                                          TG_LICENSE, TG_SOURCE, fetch_submarine_cables()))
     else:
         print("  submarine-cables: fresh (cache hit)")
     write_wiki_pages()
+    if failed:
+        print(f"  {len(failed)} dataset(s) not refreshed (existing files kept): {', '.join(failed)}")
+        return 1
     return 0
 
 

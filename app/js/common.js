@@ -182,3 +182,197 @@ function drawSunChart(sd, lat, lng) {
   ctx.arc((mNow / 1440) * W, y0 - (aNow / 90) * (H * 0.66), 4, 0, 7);
   ctx.fill();
 }
+
+/* ═══════════════════ shared by the workbench and the Sun Studio ═══════════════════
+   The workbench panel (modules/sun.js, core.js) and the standalone Studio (sun.js)
+   used to carry hand-copies of the place search, the sun readout and the solver
+   UI, which drifted apart. One implementation here; each page keeps its own glue. */
+
+/* Geocoder box: typed coordinates offer "go to"; anything else asks Nominatim (via
+   the cached proxy) after a pause. onPick(ll, d) gets the chosen place — `d` is
+   the Nominatim item, or null for typed coordinates. `polygons` also requests the
+   area outline (d.geojson) for the workbench's boundary highlight. */
+function initPlaceSearch(input, box, onPick, { polygons = false } = {}) {
+  let t;
+  const pick = (ll, d) => { onPick(ll, d); box.hidden = true; input.blur(); };
+  input.addEventListener("input", () => {
+    clearTimeout(t);
+    const q = input.value.trim();
+    if (!q) { box.hidden = true; return; }
+    const ll = parseCoords(q);
+    if (ll) {
+      box.innerHTML = `<div class="search-item sel">→ Go to coordinates<small>${fmtDD(ll)} · ${fmtDMS(ll)}</small></div>`;
+      box.hidden = false;
+      box.firstChild.onclick = () => pick(ll, null);
+      return;
+    }
+    t = setTimeout(async () => {
+      try {
+        const poly = polygons ? "&polygon_geojson=1&polygon_threshold=0.001" : "";
+        const r = await cachedFetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=7&accept-language=en${poly}&q=${encodeURIComponent(q)}`);
+        const raw = await r.json();
+        // OSM sometimes stores one place as both a way and a relation (e.g. Windhoek):
+        // identical name/type/coord, different object. Collapse, preferring the relation
+        // (the canonical multipolygon boundary, and the better source for the highlight).
+        const RANK = { relation: 3, way: 2, node: 1 }, seen = new Map();
+        for (const d of raw) {
+          const key = `${d.addresstype}|${(+d.lat).toFixed(4)},${(+d.lon).toFixed(4)}|${d.display_name}`;
+          const prev = seen.get(key);
+          if (!prev || (RANK[d.osm_type] || 0) > (RANK[prev.osm_type] || 0)) seen.set(key, d);
+        }
+        const data = [...seen.values()];
+        box.innerHTML = data.length
+          ? data.map((d, i) =>
+              `<div class="search-item" data-i="${i}"><b>${esc(d.name || d.display_name.split(",")[0])}</b> <span class="tag">${esc(d.addresstype || d.type || "")}</span><small>${esc(d.display_name)}</small></div>`).join("")
+          : `<div class="search-item">no results</div>`;
+        box.hidden = false;
+        box.querySelectorAll("[data-i]").forEach((el) => el.onclick = () => {
+          const d = data[+el.dataset.i];
+          pick(L.latLng(+d.lat, +d.lon), d);
+        });
+      } catch { box.innerHTML = `<div class="search-item">Nominatim unreachable</div>`; box.hidden = false; }
+    }, 450);
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { const f = box.querySelector(".search-item"); if (f) f.click(); }
+    if (e.key === "Escape") { box.hidden = true; input.blur(); }
+  });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".search-wrap")) box.hidden = true;
+  });
+}
+
+/* Studio -> workbench hand-off of a chronolocation finding (same-origin localStorage). */
+const STUDIO_HANDOFF_KEY = "geosint:studio-finding";
+
+/* wrap-aware HH:MM (two-shadow's m+dt2 can push a window past midnight) */
+function hmClock(mins) {
+  const w = ((mins % 1440) + 1440) % 1440;
+  return `${String(Math.floor(w / 60)).padStart(2, "0")}:${String(w % 60).padStart(2, "0")}`;
+}
+
+/* Default #sun-dt to now (viewer's local time), fill #sun-offset, and call
+   onChange when either changes. */
+function initSunInputs(onChange) {
+  const sel = $("#sun-offset");
+  fillUtcOffsets(sel);
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  $("#sun-dt").value = now.toISOString().slice(0, 16);
+  $("#sun-dt").addEventListener("change", onChange);
+  sel.addEventListener("change", onChange);
+}
+
+/* EXIF capture time -> #sun-dt (the camera's wall clock: exifr ignores the offset)
+   and, when the camera recorded it, its UTC offset -> #sun-offset. Without the
+   offset the sun is computed in the analyst's own zone — hours off for a photo
+   taken elsewhere. Returns the capture Date, or null when there is none. */
+function exifToSunInputs(ex) {
+  if (!ex || !ex.DateTimeOriginal) return null;
+  const d = new Date(ex.DateTimeOriginal), pad = (x) => String(x).padStart(2, "0");
+  $("#sun-dt").value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const off = utcOffsetHours(ex.OffsetTimeOriginal || ex.OffsetTime);
+  const opt = off === null ? null : [...$("#sun-offset").options].find((o) => +o.value === off);
+  if (opt) $("#sun-offset").value = opt.value;
+  return d;
+}
+
+/* Sun position cards, day events, moon, chart and deep links for point `p` at
+   #sun-dt / #sun-offset, plus the shadow / sun / sunrise / sunset rays drawn into
+   `layer`. */
+function renderSunReadout(p, layer) {
+  layer.clearLayers();
+  const sd = sunDate();
+  if (!sd) return;
+  const lat = p.lat, lng = wrapLng(p.lng);
+  const pos = SunCalc.getPosition(sd.date, lat, lng);
+  const alt = pos.altitude * 180 / Math.PI;
+  const az = compassAz(pos.azimuth);
+  const shadowAz = (az + 180) % 360;
+  const ratio = alt > 0.2 ? (1 / Math.tan(pos.altitude)) : null;
+
+  $("#sun-cards").innerHTML = `
+    <div class="card"><div class="v">${az.toFixed(1)}°</div><div class="k">sun azimuth (${cardinal(az)})</div></div>
+    <div class="card"><div class="v">${alt.toFixed(1)}°</div><div class="k">elevation ${alt < 0 ? "(below horizon)" : ""}</div></div>
+    <div class="card"><div class="v">${ratio ? ratio.toFixed(2) + "×" : "—"}</div><div class="k">shadow ÷ height</div></div>
+    <div class="card"><div class="v">${shadowAz.toFixed(0)}° ${cardinal(shadowAz)}</div><div class="k">shadow points to</div></div>`;
+
+  const times = SunCalc.getTimes(sd.date, lat, lng);
+  const azOf = (t) => (t && !isNaN(t)) ? compassAz(SunCalc.getPosition(t, lat, lng).azimuth) : null;
+  const rows = [
+    ["Civil dawn", times.dawn], ["Sunrise", times.sunrise, azOf(times.sunrise)],
+    ["Golden hour ends", times.goldenHourEnd], ["Solar noon", times.solarNoon],
+    ["Golden hour starts", times.goldenHour], ["Sunset", times.sunset, azOf(times.sunset)], ["Civil dusk", times.dusk],
+  ];
+  $("#sun-events").innerHTML = rows.map(([k, v, azv]) =>
+    `<tr><td>${k}</td><td>${fmtClock(v, sd.off)}${azv != null ? ` <span class="muted">· ${azv.toFixed(0)}° ${cardinal(azv)}</span>` : ""}</td></tr>`).join("");
+
+  const mi = SunCalc.getMoonIllumination(sd.date);
+  const phases = ["New moon","Waxing crescent","First quarter","Waxing gibbous","Full moon","Waning gibbous","Last quarter","Waning crescent"];
+  const mpos = SunCalc.getMoonPosition(sd.date, lat, lng);
+  $("#sun-moon").innerHTML = `
+    <tr><td>Phase</td><td>${phases[Math.round(mi.phase * 8) % 8]}</td></tr>
+    <tr><td>Illumination</td><td>${(mi.fraction * 100).toFixed(0)}%</td></tr>
+    <tr><td>Moon altitude</td><td>${(mpos.altitude * 180 / Math.PI).toFixed(1)}°</td></tr>`;
+
+  if (alt > 0) {
+    // current shadow direction (thick grey) + sun direction (thin gold)
+    layer.addLayer(L.polyline([p, project(p, shadowAz, 200)], { color: "#30363f", weight: 5, opacity: .85 }));
+    layer.addLayer(L.polyline([p, project(p, az, 160)], { color: "#ffd23e", weight: 2, opacity: .8, dashArray: "2 4" }));
+  }
+  // sunrise / sunset azimuth rays for the chosen date — for "sun on the horizon" chronolocation
+  const ray = (deg, color, label) => {
+    layer.addLayer(L.polyline([p, project(p, deg, 1500)], { color, weight: 2.5, opacity: .9 })
+      .bindTooltip(`${label} ${deg.toFixed(0)}° ${cardinal(deg)}`, { permanent: false }));
+  };
+  const riseAz = azOf(times.sunrise), setAz = azOf(times.sunset);
+  if (riseAz != null) ray(riseAz, "#ff9e3d", "sunrise");
+  if (setAz != null) ray(setAz, "#ff5e62", "sunset");
+  drawSunChart(sd, lat, lng);
+
+  const dstr = `${sd.Y}.${String(sd.M).padStart(2, "0")}.${String(sd.D).padStart(2, "0")}`;
+  const tstr = $("#sun-dt").value.split("T")[1];
+  $("#sun-links").innerHTML = `
+    <a class="btn" target="_blank" href="https://www.suncalc.org/#/${lat.toFixed(5)},${lng.toFixed(5)},15/${dstr}/${tstr}/1/3">SunCalc.org ⇗</a>
+    <a class="btn" target="_blank" href="https://shademap.app/@${lat.toFixed(5)},${lng.toFixed(5)},15z">ShadeMap (3-D shadows) ⇗</a>
+    <a class="btn" target="_blank" href="https://www.peakfinder.com/?lat=${lat.toFixed(4)}&lng=${lng.toFixed(4)}">PeakFinder horizon ⇗</a>`;
+}
+
+/* Read the shadow-solver inputs, run the shared CHRONO engine for point `p` and
+   render the matching windows into #solver-out. Returns the result to keep (the
+   dossier and the Studio hand-off read it), or null when there is nothing to
+   solve yet (`emptyHint` is shown then). */
+function solveShadows(p, emptyHint) {
+  const out = $("#solver-out");
+  const azT = parseFloat($("#solver-az").value);
+  const ratioT = parseFloat($("#solver-ratio").value);
+  const tol = parseFloat($("#solver-tol").value) || 8;
+  if (isNaN(azT) && isNaN(ratioT)) { out.innerHTML = `<p class="hint">${emptyHint}</p>`; return null; }
+  const sd = sunDate();
+  if (!sd) { out.innerHTML = `<p class="nomatch">Set the date and time first.</p>`; return null; }
+  // optional second reading taken Δ minutes after the first (two-shadow mode)
+  const az2 = parseFloat($("#solver-az2").value);
+  const ratio2 = parseFloat($("#solver-ratio2").value);
+  const dt2 = parseFloat($("#solver-dt2").value);
+
+  const res = CHRONO.solve({ sd, lat: p.lat, lng: wrapLng(p.lng), azT, ratioT, tol, second: { az2, ratio2, dt2 } });
+  const result = { status: res.status, confidence: res.confidence, why: res.why, tol, twoShadow: res.twoShadow,
+                   windows: [], inputs: { azT, ratioT, az2, ratio2, dt2 } };
+
+  if (res.status === "inconsistent") {
+    out.innerHTML = `<p class="nomatch">✗ <b>Claim inconsistent (${res.confidence} confidence)</b> — no time on this
+      date matches at this location, within ±${tol}° tolerance. ${res.confidence === "low"
+        ? "Tolerance is wide, so this is weak; tighten your measurement to strengthen it."
+        : "Tighten the tolerance only if you can justify a more precise reading."}</p>`;
+    return result;
+  }
+  const header = res.twoShadow
+    ? `<p class="hint">Two-shadow mode: times where both readings fit (1st reading's time shown; 2nd is ${dt2 > 0 ? "+" : ""}${dt2} min later).</p>`
+    : "";
+  out.innerHTML = header + res.windows.map((w) =>
+    `<div class="match">✓ ${hmClock(w.startMin)}–${hmClock(w.endMin)} local
+      (best ${hmClock(w.bestMin)} · shadow→${w.shAz.toFixed(0)}° · ${w.ratio.toFixed(2)}×)</div>`).join("") +
+    `<div class="solver-conf conf-${res.confidence}">Confidence: <b>${res.confidence}</b> — ${res.why} (tolerance ±${tol}°).</div>`;
+  result.windows = res.windows.map((w) => `${hmClock(w.startMin)}–${hmClock(w.endMin)}`);
+  return result;
+}

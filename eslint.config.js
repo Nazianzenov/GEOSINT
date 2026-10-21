@@ -37,6 +37,9 @@ const commonGlobals = {
   fmtDD: "readonly",
   parseCoords: "readonly", project: "readonly", drawSunChart: "readonly",
   fillUtcOffsets: "readonly", sunDate: "readonly", fmtClock: "readonly",
+  initPlaceSearch: "readonly", STUDIO_HANDOFF_KEY: "readonly", hmClock: "readonly",
+  initSunInputs: "readonly", exifToSunInputs: "readonly",
+  renderSunReadout: "readonly", solveShadows: "readonly",
 };
 
 // Pure utilities DEFINED in app/js/coreutils.js (loaded before common.js): coord
@@ -45,6 +48,7 @@ const commonGlobals = {
 // linted without these so its own declarations are the definitions.
 const coreUtilsGlobals = {
   CoreUtils: "readonly", toDMS: "readonly", fmtDMS: "readonly",
+  wrapLng: "readonly", wrapBbox: "readonly", utcOffsetHours: "readonly",
   compassAz: "readonly", cardinal: "readonly",
   custodyCsv: "readonly", custodyJson: "readonly",
 };
@@ -91,10 +95,11 @@ module.exports = [
     // common.js DEFINES the shared helpers — don't predeclare them here, and
     // don't flag them as "unused": they're the module's public surface, consumed
     // by the other scripts (which ESLint lints as separate files). It may use the
-    // coreutils.js globals (loaded first).
+    // coreutils.js globals (loaded first), and CHRONO at call time (the shared
+    // solveShadows runs only after chrono.js has loaded on the Sun pages).
     ...base,
     files: ["app/js/common.js"],
-    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...coreUtilsGlobals } },
+    languageOptions: { ...base.languageOptions, globals: { ...globals.browser, ...vendorGlobals, ...coreUtilsGlobals, ...chronoGlobals } },
     rules: { ...sharedRules, "no-unused-vars": "off" },
   },
   {

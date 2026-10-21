@@ -20,7 +20,7 @@ from pathlib import Path
 
 from .result import DomainResult
 
-EXIF_TOOL_TIMEOUT = 30          # seconds per ExifTool invocation (matches server.py)
+EXIF_TOOL_TIMEOUT = 30          # seconds per ExifTool invocation
 
 # Generic, path-free client message reused by both failure branches.
 _GENERIC_ERR = "exiftool could not process this file"

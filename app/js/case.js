@@ -110,7 +110,6 @@ function pinFeature(idx) {
     ll: [f.lat, f.lon],
   });
 }
-window.pinFeature = pinFeature;
 
 /* Build a plotted-feature popup as a DOM element with wired listeners — no inline
    onclick (which needed window.setPoint, that was never exported, so the "set
@@ -146,8 +145,8 @@ function setPointPopup(title, subtitle, lat, lng) {
 /* Pick up a chronolocation finding sent from the Sun & Shadow Studio (separate
    tab) via a shared localStorage key. Called on load + when the workbench regains
    focus. Logs it as a sourced observation, sets the active point, and adopts the
-   solver result so the dossier's "Chronolocation finding" reflects the Studio. */
-const STUDIO_HANDOFF_KEY = "geosint:studio-finding";
+   solver result so the dossier's "Chronolocation finding" reflects the Studio.
+   STUDIO_HANDOFF_KEY is shared with the Studio via common.js. */
 function ingestStudioFinding() {
   let r;
   try {
@@ -160,8 +159,8 @@ function ingestStudioFinding() {
   // Validate the (possibly tampered/malformed) handoff before it reaches setPoint/
   // .toFixed()/.join() downstream — a NaN coord or non-array windows would throw
   // and break the custody/timeline/dossier renders.
-  const lat = +r.loc.lat, lng = +r.loc.lng;
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+  const lat = +r.loc.lat, lng = wrapLng(+r.loc.lng);   // the Studio map doesn't wrap either
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90) return;
   const windows = Array.isArray(r.windows) ? r.windows.map(String) : [];
   state.solverResult = {              // shape the dossier/buildDossier already reads
     status: r.status, confidence: r.confidence, why: r.why, tol: r.tol,
@@ -212,7 +211,7 @@ function renderCustodyTable() {
       <td title="${esc(a.source || "")}">${esc((a.source || "—").slice(0, 28))}</td>
       <td>${short(a.sha256)}</td>
       <td>${a.ll ? `${a.ll[0].toFixed(4)}, ${a.ll[1].toFixed(4)}` : "—"}</td>
-      <td class="art-link-cell"><a href="#" class="art-link" data-id="${a.id}" title="Link this artifact to another (builds the case relationship graph)">🔗</a></td>
+      <td class="art-link-cell"><a href="#" class="art-link" data-id="${esc(a.id)}" title="Link this artifact to another (builds the case relationship graph)">🔗</a></td>
     </tr>`).join("");
   t.querySelectorAll(".art-link").forEach((el) =>
     el.addEventListener("click", (e) => { e.preventDefault(); openLinkPicker(+el.dataset.id, el.closest(".art-link-cell")); }));
@@ -232,7 +231,7 @@ function openLinkPicker(fromId, cell) {
   if (!others.length) return status("Need a second artifact to link to.", true);
   cell.innerHTML =
     `<select class="art-link-sel" aria-label="Link to artifact">` +
-    others.map((a) => `<option value="${a.id}">${esc(artLabel(a))}</option>`).join("") +
+    others.map((a) => `<option value="${esc(a.id)}">${esc(artLabel(a))}</option>`).join("") +
     `</select> <a href="#" class="art-link-ok" title="Confirm link">✓</a> ` +
     `<a href="#" class="art-link-cancel" title="Cancel">✕</a>`;
   const sel = cell.querySelector(".art-link-sel");
@@ -280,7 +279,7 @@ function timelineEvents() {
   const ev = [];
   for (const a of state.artifacts) {
     ev.push({ t: a.t, kind: a.kind, sym: ART_SYM[a.kind] || "•",
-              label: a.source || a.text || a.kind,
+              label: a.source || a.text || a.kind, text: a.text,
               detail: a.kind === "image" ? (a.meta && a.meta.camera || "") : (a.text || ""),
               ll: a.ll || null, thumb: a.thumb || null,
               sha: a.sha256 || null });
@@ -422,7 +421,8 @@ async function saveCase() {
    dropped (not fatal — we load the valid parts) and counted so the user is told.
    Returns { case: cleaned, dropped: [reasons] }, or null if it isn't a case. */
 function sanitizeCase(c) {
-  if (!c || typeof c !== "object" || c.app !== "geosint-workbench") return null;
+  // `kind` marks the app's other JSON exports (the chain-of-custody file), not a case.
+  if (!c || typeof c !== "object" || c.app !== "geosint-workbench" || c.kind) return null;
   const dropped = [];
   // Coerce only real numbers / non-empty numeric strings. Critically, reject
   // null/""/[]/booleans — unary + turns those into 0, which would sneak a bogus
@@ -433,8 +433,27 @@ function sanitizeCase(c) {
     return NaN;
   };
   const lat = (v) => { const n = num(v); return Number.isFinite(n) && Math.abs(n) <= 90 ? n : null; };
-  const lng = (v) => { const n = num(v); return Number.isFinite(n) && Math.abs(n) <= 180 ? n : null; };
+  // Longitude is not held to ±180: Leaflet doesn't wrap, so a point clicked east of
+  // the date line is legitimately e.g. 181.5 (API calls wrap it with wrapLng). The
+  // bound only stops absurd values from breaking the map projection.
+  const lng = (v) => { const n = num(v); return Number.isFinite(n) && Math.abs(n) <= 3600 ? n : null; };
   const ll  = (a) => Array.isArray(a) && lat(a[0]) !== null && lng(a[1]) !== null ? [lat(a[0]), lng(a[1])] : null;
+  const str = (v) => typeof v === "string" ? v : undefined;
+  // Artifacts are rendered into the custody table, timeline and dossier, so keep
+  // only the known fields, each coerced to the type those renderers assume (a
+  // string `id` like `"><img onerror=…>` would otherwise reach an HTML attribute).
+  const artifact = (a) => {
+    if (!a || typeof a !== "object" || !Number.isFinite(num(a.id))) return null;
+    const m = (a.meta && typeof a.meta === "object") ? a.meta : null;
+    return {
+      id: num(a.id), kind: String(a.kind || "obs"), t: String(a.t || ""),
+      source: str(a.source), text: str(a.text), sha256: str(a.sha256), thumb: str(a.thumb),
+      ll: ll(a.ll) || undefined,
+      links: Array.isArray(a.links) ? a.links.map(num).filter(Number.isFinite) : undefined,
+      meta: m ? { added: str(m.added), size: Number.isFinite(num(m.size)) ? num(m.size) : undefined,
+                  camera: str(m.camera), taken: str(m.taken) } : undefined,
+    };
+  };
 
   const out = {
     app: c.app, version: c.version,
@@ -442,8 +461,11 @@ function sanitizeCase(c) {
     notes: typeof c.notes === "string" ? c.notes : "",
     module: typeof c.module === "string" ? c.module : null,
     inputs: (c.inputs && typeof c.inputs === "object") ? c.inputs : {},
-    artifacts: Array.isArray(c.artifacts) ? c.artifacts : [],
+    artifacts: Array.isArray(c.artifacts) ? c.artifacts.map(artifact).filter(Boolean) : [],
   };
+  if (Array.isArray(c.artifacts) && out.artifacts.length !== c.artifacts.length) {
+    dropped.push(`${c.artifacts.length - out.artifacts.length} evidence artifact(s)`);
+  }
 
   // active point
   if (c.point != null) {
@@ -465,7 +487,8 @@ function sanitizeCase(c) {
   // annotations — need a valid ll, and arrows also a valid ll2
   if (Array.isArray(c.annos)) {
     const before = c.annos.length;
-    out.annos = c.annos.filter((a) => a && ll(a.ll) && (a.type !== "arrow" || ll(a.ll2)))
+    out.annos = c.annos.filter((a) => a && ["pin", "label", "arrow"].includes(a.type) && ll(a.ll) &&
+                                      (a.type !== "arrow" || ll(a.ll2)))
       .map((a) => ({ type: a.type, ll: ll(a.ll), ll2: ll(a.ll2), text: typeof a.text === "string" ? a.text : "" }));
     if (out.annos.length !== before) dropped.push(`${before - out.annos.length} annotation(s)`);
   } else out.annos = [];
@@ -477,10 +500,20 @@ function sanitizeCase(c) {
   return { case: out, dropped };
 }
 
+/* Replace the workspace with a case. Returns false (and changes nothing) when the
+   file isn't a case or the analyst declines to drop unsaved work — callers must
+   only clear the autosave / record a recent entry on true. */
 function applyCase(raw) {
   const v = sanitizeCase(raw);
-  if (!v) return status("not a GeOSINT case file", true);
+  if (!v) { status("not a GeOSINT case file", true); return false; }
+  if (!_autosaveClean && !confirm("Replace the current case? Its unsaved changes will be lost.")) return false;
   const c = v.case;
+  // Per-case results of the previous case must not carry into this one (its
+  // dossier would state the old chronolocation finding / show old markers).
+  state.solverResult = null;
+  state.imgLayer.clearLayers();
+  Overpass.cancel();
+  Overpass.clear();
   // notes + every field first (so module renders pick them up)
   setVal("#case-notes", c.notes || "");
   // evidence log (v2). Rehydrate _artId past the loaded max so new artifacts
@@ -521,17 +554,17 @@ function applyCase(raw) {
   if (c.module) openModule(c.module);
   const drop = v.dropped.length ? ` — skipped ${v.dropped.join(", ")}` : "";
   status(`case loaded${c.saved ? " (saved " + c.saved.slice(0, 16).replace("T", " ") + ")" : ""}${drop}`, v.dropped.length > 0);
+  return true;
 }
 
 function loadCase(file) {
   const reader = new FileReader();
   reader.onload = () => {
-    try {
-      const c = JSON.parse(reader.result);
-      applyCase(c);
-      clearAutosave();
-      recordRecent(c, file.name);                  // a loaded file is now a working case
-    } catch { status("could not parse case file", true); }
+    let c;
+    try { c = JSON.parse(reader.result); } catch { return status("could not parse case file", true); }
+    if (!applyCase(c)) return;                     // rejected/declined: keep the autosave
+    clearAutosave();
+    recordRecent(c, file.name);                    // a loaded file is now a working case
   };
   reader.readAsText(file);
 }
@@ -601,7 +634,7 @@ function renderRecentMenu() {
   menu.querySelectorAll(".rc-item[data-i]").forEach((el) => el.addEventListener("click", () => {
     const e = list[+el.dataset.i];
     closeRecentMenu();
-    if (e.snapshot) { applyCase(e.snapshot); clearAutosave(); }
+    if (e.snapshot) { if (applyCase(e.snapshot)) clearAutosave(); }
     else { status("snapshot was dropped to save space — opening file picker", false, 4000); $("#case-file").click(); }
   }));
   menu.querySelector("[data-open]").addEventListener("click", () => { closeRecentMenu(); $("#case-file").click(); });
@@ -651,7 +684,7 @@ const SAMPLE_CASE = {
 };
 
 function loadSampleCase() {
-  applyCase(SAMPLE_CASE);
+  if (!applyCase(SAMPLE_CASE)) return;
   clearAutosave();
   status("sample case loaded — see the notes [N] for the workflow", false, 6000);
 }
@@ -783,7 +816,7 @@ function maybeOfferRestore() {
   $("#restore-when").textContent = when;
   bar.hidden = false;
   $("#restore-yes").onclick = () => {
-    applyCase(c);                                 // serializeCase is sync; nothing to await
+    if (!applyCase(c)) return;                    // serializeCase is sync; nothing to await
     bar.hidden = true;
     _autosaveLast = null;                          // restored case becomes the new baseline
   };

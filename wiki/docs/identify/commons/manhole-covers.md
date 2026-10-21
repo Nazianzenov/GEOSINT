@@ -15,16 +15,14 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 
 <div class="gh-gallery">
 <figure><img src="../../../assets/manholes/fr/fr_1.jpg" loading="lazy" alt="Manhole covers — France"><figcaption>France</figcaption></figure>
-<figure><img src="../../../assets/manholes/fr/fr_2.jpg" loading="lazy" alt="Manhole covers — France"><figcaption>France · <a href="/app/index.html#ll=43.481122,-1.558858" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/fr/fr_3.jpg" loading="lazy" alt="Manhole covers — France"><figcaption>France · <a href="/app/index.html#ll=43.322053,-0.760244" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/fr/fr_2.jpg" loading="lazy" alt="Manhole covers — France"><figcaption>France</figcaption></figure>
+<figure><img src="../../../assets/manholes/fr/fr_3.jpg" loading="lazy" alt="Manhole covers — France"><figcaption>France</figcaption></figure>
 <figure><img src="../../../assets/manholes/fr/fr_4.jpg" loading="lazy" alt="Manhole covers — France"><figcaption>France</figcaption></figure>
-<figure><img src="../../../assets/manholes/fr/fr_5.jpg" loading="lazy" alt="Manhole covers — France"><figcaption>France</figcaption></figure>
-<figure><img src="../../../assets/manholes/fr/fr_6.jpg" loading="lazy" alt="Manhole covers — France"><figcaption>France · <a href="/app/index.html#ll=43.389347,-1.659011" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/de/de_1.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany · <a href="/app/index.html#ll=52.3591338,9.7124472" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/de/de_2.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany · <a href="/app/index.html#ll=51.115548,13.904165" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/de/de_3.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany · <a href="/app/index.html#ll=51.9874345,9.8252629" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/de/de_4.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany · <a href="/app/index.html#ll=52.298295,10.51996" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/de/de_5.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany</figcaption></figure>
+<figure><img src="../../../assets/manholes/de/de_2.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany · <a href="/app/index.html#ll=52.35574,9.70001" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/de/de_3.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany · <a href="/app/index.html#ll=51.115548,13.904165" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/de/de_4.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany · <a href="/app/index.html#ll=51.9874345,9.8252629" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/de/de_5.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany · <a href="/app/index.html#ll=52.298295,10.51996" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/de/de_6.jpg" loading="lazy" alt="Manhole covers — Germany"><figcaption>Germany</figcaption></figure>
 <figure><img src="../../../assets/manholes/gb/gb_1.jpg" loading="lazy" alt="Manhole covers — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=54.66348936,-5.67467484" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/gb/gb_2.jpg" loading="lazy" alt="Manhole covers — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=51.447562,-2.609373" target="_blank">map</a></figcaption></figure>
@@ -39,9 +37,6 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/manholes/it/it_5.jpg" loading="lazy" alt="Manhole covers — Italy"><figcaption>Italy · <a href="/app/index.html#ll=46.215663,10.167182" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/it/it_6.jpg" loading="lazy" alt="Manhole covers — Italy"><figcaption>Italy · <a href="/app/index.html#ll=46.214147,10.168822" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/es/es_1.jpg" loading="lazy" alt="Manhole covers — Spain"><figcaption>Spain</figcaption></figure>
-<figure><img src="../../../assets/manholes/es/es_2.jpg" loading="lazy" alt="Manhole covers — Spain"><figcaption>Spain · <a href="/app/index.html#ll=40.995433,-3.636564" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/es/es_3.jpg" loading="lazy" alt="Manhole covers — Spain"><figcaption>Spain</figcaption></figure>
-<figure><img src="../../../assets/manholes/es/es_4.jpg" loading="lazy" alt="Manhole covers — Spain"><figcaption>Spain</figcaption></figure>
 <figure><img src="../../../assets/manholes/nl/nl_1.jpg" loading="lazy" alt="Manhole covers — Netherlands"><figcaption>Netherlands</figcaption></figure>
 <figure><img src="../../../assets/manholes/nl/nl_2.jpg" loading="lazy" alt="Manhole covers — Netherlands"><figcaption>Netherlands</figcaption></figure>
 <figure><img src="../../../assets/manholes/nl/nl_3.jpg" loading="lazy" alt="Manhole covers — Netherlands"><figcaption>Netherlands</figcaption></figure>
@@ -54,10 +49,10 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/manholes/ch/ch_4.jpg" loading="lazy" alt="Manhole covers — Switzerland"><figcaption>Switzerland · <a href="/app/index.html#ll=46.023624,7.747803" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/ch/ch_5.jpg" loading="lazy" alt="Manhole covers — Switzerland"><figcaption>Switzerland · <a href="/app/index.html#ll=46.021785,7.747051" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/ch/ch_6.jpg" loading="lazy" alt="Manhole covers — Switzerland"><figcaption>Switzerland</figcaption></figure>
-<figure><img src="../../../assets/manholes/at/at_1.jpg" loading="lazy" alt="Manhole covers — Austria"><figcaption>Austria</figcaption></figure>
+<figure><img src="../../../assets/manholes/at/at_1.jpg" loading="lazy" alt="Manhole covers — Austria"><figcaption>Austria · <a href="/app/index.html#ll=47.492641,9.700252" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/at/at_2.jpg" loading="lazy" alt="Manhole covers — Austria"><figcaption>Austria</figcaption></figure>
 <figure><img src="../../../assets/manholes/at/at_3.jpg" loading="lazy" alt="Manhole covers — Austria"><figcaption>Austria</figcaption></figure>
-<figure><img src="../../../assets/manholes/at/at_4.jpg" loading="lazy" alt="Manhole covers — Austria"><figcaption>Austria · <a href="/app/index.html#ll=47.492641,9.700252" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/at/at_4.jpg" loading="lazy" alt="Manhole covers — Austria"><figcaption>Austria</figcaption></figure>
 <figure><img src="../../../assets/manholes/at/at_5.jpg" loading="lazy" alt="Manhole covers — Austria"><figcaption>Austria</figcaption></figure>
 <figure><img src="../../../assets/manholes/at/at_6.jpg" loading="lazy" alt="Manhole covers — Austria"><figcaption>Austria</figcaption></figure>
 <figure><img src="../../../assets/manholes/be/be_1.jpg" loading="lazy" alt="Manhole covers — Belgium"><figcaption>Belgium</figcaption></figure>
@@ -104,10 +99,12 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/manholes/ru/ru_2.jpg" loading="lazy" alt="Manhole covers — Russia"><figcaption>Russia</figcaption></figure>
 <figure><img src="../../../assets/manholes/ru/ru_3.jpg" loading="lazy" alt="Manhole covers — Russia"><figcaption>Russia</figcaption></figure>
 <figure><img src="../../../assets/manholes/ru/ru_4.jpg" loading="lazy" alt="Manhole covers — Russia"><figcaption>Russia</figcaption></figure>
+<figure><img src="../../../assets/manholes/ru/ru_5.jpg" loading="lazy" alt="Manhole covers — Russia"><figcaption>Russia</figcaption></figure>
 <figure><img src="../../../assets/manholes/ua/ua_1.jpg" loading="lazy" alt="Manhole covers — Ukraine"><figcaption>Ukraine · <a href="/app/index.html#ll=50.443295,30.544867" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/ua/ua_2.jpg" loading="lazy" alt="Manhole covers — Ukraine"><figcaption>Ukraine</figcaption></figure>
 <figure><img src="../../../assets/manholes/ua/ua_3.jpg" loading="lazy" alt="Manhole covers — Ukraine"><figcaption>Ukraine</figcaption></figure>
 <figure><img src="../../../assets/manholes/ua/ua_4.jpg" loading="lazy" alt="Manhole covers — Ukraine"><figcaption>Ukraine</figcaption></figure>
+<figure><img src="../../../assets/manholes/ua/ua_5.jpg" loading="lazy" alt="Manhole covers — Ukraine"><figcaption>Ukraine</figcaption></figure>
 </div>
 
 ### Asia
@@ -134,6 +131,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/manholes/in/in_3.jpg" loading="lazy" alt="Manhole covers — India"><figcaption>India · <a href="/app/index.html#ll=17.362781,78.474881" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/in/in_4.jpg" loading="lazy" alt="Manhole covers — India"><figcaption>India · <a href="/app/index.html#ll=10.786111,78.710556" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/in/in_5.jpg" loading="lazy" alt="Manhole covers — India"><figcaption>India · <a href="/app/index.html#ll=10.785,78.713056" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/in/in_6.jpg" loading="lazy" alt="Manhole covers — India"><figcaption>India</figcaption></figure>
 <figure><img src="../../../assets/manholes/id/id_1.jpg" loading="lazy" alt="Manhole covers — Indonesia"><figcaption>Indonesia</figcaption></figure>
 <figure><img src="../../../assets/manholes/id/id_2.png" loading="lazy" alt="Manhole covers — Indonesia"><figcaption>Indonesia</figcaption></figure>
 <figure><img src="../../../assets/manholes/id/id_3.jpg" loading="lazy" alt="Manhole covers — Indonesia"><figcaption>Indonesia</figcaption></figure>
@@ -143,15 +141,15 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/manholes/tr/tr_1.jpg" loading="lazy" alt="Manhole covers — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=41.243494,32.693938" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/tr/tr_2.jpg" loading="lazy" alt="Manhole covers — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=40.729317,30.380272" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/tr/tr_3.jpg" loading="lazy" alt="Manhole covers — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=40.57949722,27.56831389" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/tr/tr_4.png" loading="lazy" alt="Manhole covers — Turkey"><figcaption>Turkey</figcaption></figure>
-<figure><img src="../../../assets/manholes/tr/tr_5.jpg" loading="lazy" alt="Manhole covers — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=37.087283,27.454522" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/tr/tr_6.jpg" loading="lazy" alt="Manhole covers — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=40.646469,29.123328" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/tr/tr_4.jpg" loading="lazy" alt="Manhole covers — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=37.087283,27.454522" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/tr/tr_5.jpg" loading="lazy" alt="Manhole covers — Turkey"><figcaption>Turkey · <a href="/app/index.html#ll=40.646469,29.123328" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/tr/tr_6.jpg" loading="lazy" alt="Manhole covers — Turkey"><figcaption>Turkey</figcaption></figure>
 <figure><img src="../../../assets/manholes/il/il_1.jpg" loading="lazy" alt="Manhole covers — Israel"><figcaption>Israel</figcaption></figure>
 <figure><img src="../../../assets/manholes/il/il_2.jpg" loading="lazy" alt="Manhole covers — Israel"><figcaption>Israel</figcaption></figure>
 <figure><img src="../../../assets/manholes/il/il_3.jpg" loading="lazy" alt="Manhole covers — Israel"><figcaption>Israel · <a href="/app/index.html#ll=31.96297,34.800355" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/il/il_4.jpg" loading="lazy" alt="Manhole covers — Israel"><figcaption>Israel · <a href="/app/index.html#ll=31.962854,34.799958" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/il/il_5.jpg" loading="lazy" alt="Manhole covers — Israel"><figcaption>Israel</figcaption></figure>
-<figure><img src="../../../assets/manholes/il/il_6.jpg" loading="lazy" alt="Manhole covers — Israel"><figcaption>Israel</figcaption></figure>
+<figure><img src="../../../assets/manholes/il/il_5.jpg" loading="lazy" alt="Manhole covers — Israel"><figcaption>Israel · <a href="/app/index.html#ll=32.068445,34.808563" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/manholes/il/il_6.jpg" loading="lazy" alt="Manhole covers — Israel"><figcaption>Israel · <a href="/app/index.html#ll=32.069252,34.808564" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/tw/tw_1.jpg" loading="lazy" alt="Manhole covers — Taiwan"><figcaption>Taiwan · <a href="/app/index.html#ll=25.027917,121.479355" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/tw/tw_2.jpg" loading="lazy" alt="Manhole covers — Taiwan"><figcaption>Taiwan</figcaption></figure>
 <figure><img src="../../../assets/manholes/tw/tw_3.jpg" loading="lazy" alt="Manhole covers — Taiwan"><figcaption>Taiwan · <a href="/app/index.html#ll=25.058633,121.566003" target="_blank">map</a></figcaption></figure>
@@ -165,10 +163,6 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <div class="gh-gallery">
 <figure><img src="../../../assets/manholes/za/za_1.jpg" loading="lazy" alt="Manhole covers — South Africa"><figcaption>South Africa</figcaption></figure>
 <figure><img src="../../../assets/manholes/za/za_2.jpg" loading="lazy" alt="Manhole covers — South Africa"><figcaption>South Africa</figcaption></figure>
-<figure><img src="../../../assets/manholes/za/za_3.jpg" loading="lazy" alt="Manhole covers — South Africa"><figcaption>South Africa</figcaption></figure>
-<figure><img src="../../../assets/manholes/za/za_4.jpg" loading="lazy" alt="Manhole covers — South Africa"><figcaption>South Africa · <a href="/app/index.html#ll=-33.905043,18.420092" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/za/za_5.jpg" loading="lazy" alt="Manhole covers — South Africa"><figcaption>South Africa</figcaption></figure>
-<figure><img src="../../../assets/manholes/za/za_6.jpg" loading="lazy" alt="Manhole covers — South Africa"><figcaption>South Africa</figcaption></figure>
 <figure><img src="../../../assets/manholes/eg/eg_1.jpg" loading="lazy" alt="Manhole covers — Egypt"><figcaption>Egypt · <a href="/app/index.html#ll=27.049438,33.898225" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/eg/eg_2.jpg" loading="lazy" alt="Manhole covers — Egypt"><figcaption>Egypt</figcaption></figure>
 <figure><img src="../../../assets/manholes/ma/ma_1.jpg" loading="lazy" alt="Manhole covers — Morocco"><figcaption>Morocco</figcaption></figure>
@@ -219,7 +213,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/manholes/co/co_1.jpg" loading="lazy" alt="Manhole covers — Colombia"><figcaption>Colombia · <a href="/app/index.html#ll=6.08400286,-75.33686981" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/co/co_2.jpg" loading="lazy" alt="Manhole covers — Colombia"><figcaption>Colombia · <a href="/app/index.html#ll=5.7919352,-75.7853108" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/co/co_3.jpg" loading="lazy" alt="Manhole covers — Colombia"><figcaption>Colombia · <a href="/app/index.html#ll=5.7924801,-75.7856533" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/manholes/co/co_4.jpg" loading="lazy" alt="Manhole covers — Colombia"><figcaption>Colombia</figcaption></figure>
+<figure><img src="../../../assets/manholes/co/co_4.jpg" loading="lazy" alt="Manhole covers — Colombia"><figcaption>Colombia · <a href="/app/index.html#ll=5.7904825,-75.7877082" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/co/co_5.jpg" loading="lazy" alt="Manhole covers — Colombia"><figcaption>Colombia · <a href="/app/index.html#ll=5.59881641,-75.81945419" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/manholes/co/co_6.jpg" loading="lazy" alt="Manhole covers — Colombia"><figcaption>Colombia · <a href="/app/index.html#ll=6.08060517,-75.33362496" target="_blank">map</a></figcaption></figure>
 </div>

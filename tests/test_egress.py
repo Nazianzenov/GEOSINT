@@ -25,12 +25,16 @@ def test_defaults_all_direct():
     assert cfg["ua"] == "default"
 
 
-def test_normalize_drops_unknown_route_and_dangling_proxy():
+def test_normalize_drops_unknown_route_but_keeps_dangling_proxy():
     cfg = egress.normalize({
         "routes": {"tiles": "bogus", "geocode": "proxy:ghost", "weather": "tor"},
     })
     assert cfg["routes"]["tiles"] == "direct"       # unknown route -> direct
-    assert cfg["routes"]["geocode"] == "direct"     # proxy id doesn't exist -> direct
+    # a proxy route whose proxy is missing (renamed / failed validation) must NOT
+    # degrade to direct (real IP) — it stays, and the opener fails closed
+    assert cfg["routes"]["geocode"] == "proxy:ghost"
+    with pytest.raises(egress.EgressError):
+        egress.opener_for(egress.resolve("geocode", cfg), cfg, _NoRedirect)
     assert cfg["routes"]["weather"] == "tor"
     cfg2 = egress.normalize({"routes": {"tiles": "proxy:p"},
                              "proxies": {"p": {"scheme": "http", "host": "h", "port": 8080}}})
@@ -99,30 +103,70 @@ def test_opener_http_proxy_routes_through_configured_host():
 
 def test_egress_allowed_vpn_gate():
     egress._verify_state.clear()
-    assert egress.egress_allowed("tiles", egress.normalize({"routes": {"tiles": "direct"}}))[0] is True
+    now = 1000.0
+    allowed = lambda f, c, t=now: egress.egress_allowed(f, c, now=t)[0]
+    assert allowed("tiles", egress.normalize({"routes": {"tiles": "direct"}})) is True
     # vpn + verify + no provider -> blocked
     cfg = egress.normalize({"routes": {"tiles": "vpn"}, "vpn": {"provider": None, "verify": True}})
-    assert egress.egress_allowed("tiles", cfg)[0] is False
+    assert allowed("tiles", cfg) is False
     # vpn + proton + no check yet -> blocked (fail closed)
     cfg = egress.normalize({"routes": {"tiles": "vpn"}, "vpn": {"provider": "protonvpn", "verify": True}})
-    assert egress.egress_allowed("tiles", cfg)[0] is False
-    egress._verify_state["protonvpn"] = {"on_vpn": True, "at": 0}     # positive check
-    assert egress.egress_allowed("tiles", cfg)[0] is True
-    egress._verify_state["protonvpn"] = {"on_vpn": False, "at": 0}    # tunnel down
-    assert egress.egress_allowed("tiles", cfg)[0] is False
+    assert allowed("tiles", cfg) is False
+    egress._verify_state["protonvpn"] = {"on_vpn": True, "at": now}     # positive check
+    assert allowed("tiles", cfg) is True
+    # the same positive check, VERIFY_MAX_AGE later, no longer opens the gate
+    assert allowed("tiles", cfg, now + egress.VERIFY_MAX_AGE) is False
+    egress._verify_state["protonvpn"] = {"on_vpn": False, "at": now}    # tunnel down
+    assert allowed("tiles", cfg) is False
     # verify disabled -> always allowed
     cfg = egress.normalize({"routes": {"tiles": "vpn"}, "vpn": {"provider": "protonvpn", "verify": False}})
-    assert egress.egress_allowed("tiles", cfg)[0] is True
+    assert allowed("tiles", cfg) is True
     # generic provider can't be auto-verified -> allowed (the UI warns)
     cfg = egress.normalize({"routes": {"tiles": "vpn"}, "vpn": {"provider": "generic", "verify": True}})
-    assert egress.egress_allowed("tiles", cfg)[0] is True
+    assert allowed("tiles", cfg) is True
     # ...but a generic VPN WITH an explicit expected-exit signature is enforced
     cfg = egress.normalize({"routes": {"tiles": "vpn"},
                             "vpn": {"provider": "generic", "verify": True, "match": "M247"}})
-    assert egress.egress_allowed("tiles", cfg)[0] is False     # no check yet -> blocked
-    egress._verify_state["generic"] = {"on_vpn": True, "at": 0}
-    assert egress.egress_allowed("tiles", cfg)[0] is True
+    assert allowed("tiles", cfg) is False     # no check yet -> blocked
+    egress._verify_state["generic"] = {"on_vpn": True, "at": now}
+    assert allowed("tiles", cfg) is True
     egress._verify_state.clear()
+
+
+def test_check_due_rechecks_stale_and_backs_off_after_failure():
+    egress._verify_state.clear()
+    cfg = egress.normalize({"routes": {"tiles": "vpn"}, "vpn": {"provider": "protonvpn", "verify": True}})
+    assert egress.check_due("tiles", cfg, 0) is True                       # never checked
+    assert egress.check_due("geocode", cfg, 0) is False                    # direct: not gated
+    egress._verify_state["protonvpn"] = {"on_vpn": True, "at": 100.0}
+    assert egress.check_due("tiles", cfg, 100.0 + egress.VERIFY_MAX_AGE - 1) is False
+    assert egress.check_due("tiles", cfg, 100.0 + egress.VERIFY_MAX_AGE) is True
+    egress._verify_state["protonvpn"] = {"on_vpn": None, "at": 100.0}     # last check failed
+    assert egress.check_due("tiles", cfg, 100.0 + egress.VERIFY_RETRY - 1) is False
+    assert egress.check_due("tiles", cfg, 100.0 + egress.VERIFY_RETRY) is True
+    egress._verify_state.clear()
+
+
+def test_failed_check_closes_a_previously_open_gate(monkeypatch):
+    # verified at t=0, then the echo endpoints become unreachable: the re-check must
+    # record the failure instead of leaving the old positive result in place
+    cfg = egress.normalize({"routes": {"tiles": "vpn"}, "vpn": {"provider": "protonvpn", "verify": True}})
+    egress._verify_state["protonvpn"] = {"on_vpn": True, "at": 0.0}
+
+    class _Down:
+        def open(self, *a, **k):
+            raise OSError("network unreachable")
+    monkeypatch.setattr(egress, "opener_for", lambda *a, **k: _Down())
+    with pytest.raises(egress.EgressError):
+        egress.check_egress(cfg, _NoRedirect, now=50.0)
+    assert egress.egress_allowed("tiles", cfg, now=51.0)[0] is False
+    egress._verify_state.clear()
+
+
+def test_reset_openers_drops_verification():
+    egress._verify_state["protonvpn"] = {"on_vpn": True, "at": 0.0}
+    egress.reset_openers()
+    assert egress._verify_state == {}
 
 
 def test_normalize_keeps_vpn_match():

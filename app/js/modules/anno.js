@@ -115,7 +115,7 @@ window.Anno = (function () {
     const div = document.createElement("div");
     div.className = "anno-pop";
     div.innerHTML = `<input class="anno-text" value="${esc(a.text)}" spellcheck="false">
-      <div class="anno-pop-row"><span class="muted">${a.type}</span>
+      <div class="anno-pop-row"><span class="muted">${esc(a.type)}</span>
         <button class="btn anno-del">delete</button></div>`;
     div.querySelector(".anno-text").addEventListener("change", (e) => {
       a.text = e.target.value || a.type;

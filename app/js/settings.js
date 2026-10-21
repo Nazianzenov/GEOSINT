@@ -32,6 +32,9 @@ function routeOptions(selected) {
     ["tor", "Tor (socks5h)"],
   ];
   Object.keys(CFG.proxies).forEach((id) => opts.push(["proxy:" + id, "Proxy: " + id]));
+  // A route to a missing proxy fails closed server-side; show it rather than letting
+  // the select fall back to "Direct" (which the next Save would persist).
+  if (selected && !opts.some(([v]) => v === selected)) opts.push([selected, selected + " (missing!)"]);
   return opts.map(([v, l]) =>
     `<option value="${esc(v)}"${v === selected ? " selected" : ""}>${esc(l)}</option>`).join("");
 }
@@ -77,14 +80,12 @@ function render() {
    ("********") is sent verbatim — the server keeps the stored secret rather than
    overwriting it with the mask. */
 function collect() {
-  const routes = {};
-  document.querySelectorAll('#routes select[data-feat]').forEach((s) => {
-    routes[s.getAttribute("data-feat")] = s.value;
-  });
-  const proxies = {};
+  const proxies = {}, renamed = {};
   document.querySelectorAll(".prow").forEach((row) => {
     const id = row.querySelector(".px-id").value.trim();
     if (!id) return;
+    const was = row.getAttribute("data-id");
+    if (was !== id) renamed["proxy:" + was] = "proxy:" + id;   // routes follow a renamed proxy
     proxies[id] = {
       scheme: row.querySelector(".px-scheme").value,
       host: row.querySelector(".px-host").value.trim(),
@@ -92,6 +93,10 @@ function collect() {
       user: row.querySelector(".px-user").value,
       pass: row.querySelector(".px-pass").value,
     };
+  });
+  const routes = {};
+  document.querySelectorAll('#routes select[data-feat]').forEach((s) => {
+    routes[s.getAttribute("data-feat")] = renamed[s.value] || s.value;
   });
   const uaMode = $("#ua-mode").value;
   const ua = uaMode === "custom" ? ($("#ua-custom").value.trim() || "default") : uaMode;

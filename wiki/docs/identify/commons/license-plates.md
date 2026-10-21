@@ -22,16 +22,16 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/plates/fr/fr_6.jpg" loading="lazy" alt="License plates — France"><figcaption>France</figcaption></figure>
 <figure><img src="../../../assets/plates/de/de_1.jpg" loading="lazy" alt="License plates — Germany"><figcaption>Germany</figcaption></figure>
 <figure><img src="../../../assets/plates/de/de_2.jpg" loading="lazy" alt="License plates — Germany"><figcaption>Germany</figcaption></figure>
-<figure><img src="../../../assets/plates/de/de_3.jpg" loading="lazy" alt="License plates — Germany"><figcaption>Germany</figcaption></figure>
-<figure><img src="../../../assets/plates/de/de_4.jpg" loading="lazy" alt="License plates — Germany"><figcaption>Germany · <a href="/app/index.html#ll=51.48269167,10.26182331" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/plates/de/de_3.png" loading="lazy" alt="License plates — Germany"><figcaption>Germany</figcaption></figure>
+<figure><img src="../../../assets/plates/de/de_4.jpg" loading="lazy" alt="License plates — Germany"><figcaption>Germany</figcaption></figure>
 <figure><img src="../../../assets/plates/de/de_5.jpg" loading="lazy" alt="License plates — Germany"><figcaption>Germany</figcaption></figure>
-<figure><img src="../../../assets/plates/de/de_6.svg" loading="lazy" alt="License plates — Germany"><figcaption>Germany</figcaption></figure>
-<figure><img src="../../../assets/plates/gb/gb_1.jpg" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=50.863793,-0.739993" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/plates/gb/gb_2.jpg" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
+<figure><img src="../../../assets/plates/de/de_6.jpg" loading="lazy" alt="License plates — Germany"><figcaption>Germany · <a href="/app/index.html#ll=51.48269167,10.26182331" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/plates/gb/gb_1.jpg" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=51.400499,-0.336913" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/plates/gb/gb_2.jpg" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom · <a href="/app/index.html#ll=50.863793,-0.739993" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/plates/gb/gb_3.jpg" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
-<figure><img src="../../../assets/plates/gb/gb_4.png" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
-<figure><img src="../../../assets/plates/gb/gb_5.jpg" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
-<figure><img src="../../../assets/plates/gb/gb_6.svg" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
+<figure><img src="../../../assets/plates/gb/gb_4.jpg" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
+<figure><img src="../../../assets/plates/gb/gb_5.png" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
+<figure><img src="../../../assets/plates/gb/gb_6.jpg" loading="lazy" alt="License plates — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
 <figure><img src="../../../assets/plates/it/it_1.svg" loading="lazy" alt="License plates — Italy"><figcaption>Italy</figcaption></figure>
 <figure><img src="../../../assets/plates/it/it_2.jpg" loading="lazy" alt="License plates — Italy"><figcaption>Italy</figcaption></figure>
 <figure><img src="../../../assets/plates/it/it_3.jpg" loading="lazy" alt="License plates — Italy"><figcaption>Italy</figcaption></figure>
@@ -52,9 +52,11 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/plates/nl/nl_6.jpg" loading="lazy" alt="License plates — Netherlands"><figcaption>Netherlands · <a href="/app/index.html#ll=53.105833,6.865278" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/plates/ch/ch_1.png" loading="lazy" alt="License plates — Switzerland"><figcaption>Switzerland</figcaption></figure>
 <figure><img src="../../../assets/plates/ch/ch_2.jpg" loading="lazy" alt="License plates — Switzerland"><figcaption>Switzerland · <a href="/app/index.html#ll=47.421743,9.370962" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/plates/at/at_1.jpg" loading="lazy" alt="License plates — Austria"><figcaption>Austria</figcaption></figure>
-<figure><img src="../../../assets/plates/at/at_2.png" loading="lazy" alt="License plates — Austria"><figcaption>Austria</figcaption></figure>
-<figure><img src="../../../assets/plates/at/at_3.svg" loading="lazy" alt="License plates — Austria"><figcaption>Austria</figcaption></figure>
+<figure><img src="../../../assets/plates/at/at_1.svg" loading="lazy" alt="License plates — Austria"><figcaption>Austria</figcaption></figure>
+<figure><img src="../../../assets/plates/at/at_2.jpg" loading="lazy" alt="License plates — Austria"><figcaption>Austria</figcaption></figure>
+<figure><img src="../../../assets/plates/at/at_3.png" loading="lazy" alt="License plates — Austria"><figcaption>Austria</figcaption></figure>
+<figure><img src="../../../assets/plates/at/at_4.jpg" loading="lazy" alt="License plates — Austria"><figcaption>Austria · <a href="/app/index.html#ll=49.3833,8.561" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/plates/at/at_5.svg" loading="lazy" alt="License plates — Austria"><figcaption>Austria</figcaption></figure>
 <figure><img src="../../../assets/plates/be/be_1.jpg" loading="lazy" alt="License plates — Belgium"><figcaption>Belgium</figcaption></figure>
 <figure><img src="../../../assets/plates/be/be_2.jpg" loading="lazy" alt="License plates — Belgium"><figcaption>Belgium · <a href="/app/index.html#ll=50.64569167,5.57067333" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/plates/be/be_3.jpg" loading="lazy" alt="License plates — Belgium"><figcaption>Belgium</figcaption></figure>
@@ -64,9 +66,9 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/plates/pl/pl_1.jpg" loading="lazy" alt="License plates — Poland"><figcaption>Poland · <a href="/app/index.html#ll=53.132069,23.172171" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/plates/pl/pl_2.jpg" loading="lazy" alt="License plates — Poland"><figcaption>Poland</figcaption></figure>
 <figure><img src="../../../assets/plates/pl/pl_3.jpg" loading="lazy" alt="License plates — Poland"><figcaption>Poland</figcaption></figure>
-<figure><img src="../../../assets/plates/pl/pl_4.jpg" loading="lazy" alt="License plates — Poland"><figcaption>Poland</figcaption></figure>
-<figure><img src="../../../assets/plates/pl/pl_5.jpg" loading="lazy" alt="License plates — Poland"><figcaption>Poland · <a href="/app/index.html#ll=52.50401464,13.27299597" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/plates/pl/pl_6.jpg" loading="lazy" alt="License plates — Poland"><figcaption>Poland · <a href="/app/index.html#ll=49.5848894,6.1261148" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/plates/pl/pl_4.jpg" loading="lazy" alt="License plates — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.068706,19.946075" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/plates/pl/pl_5.jpg" loading="lazy" alt="License plates — Poland"><figcaption>Poland</figcaption></figure>
+<figure><img src="../../../assets/plates/pl/pl_6.jpg" loading="lazy" alt="License plates — Poland"><figcaption>Poland</figcaption></figure>
 <figure><img src="../../../assets/plates/se/se_1.jpg" loading="lazy" alt="License plates — Sweden"><figcaption>Sweden</figcaption></figure>
 <figure><img src="../../../assets/plates/se/se_2.jpg" loading="lazy" alt="License plates — Sweden"><figcaption>Sweden · <a href="/app/index.html#ll=57.7267,12.005367" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/plates/se/se_3.jpg" loading="lazy" alt="License plates — Sweden"><figcaption>Sweden</figcaption></figure>
@@ -84,7 +86,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/plates/fi/fi_3.jpg" loading="lazy" alt="License plates — Finland"><figcaption>Finland</figcaption></figure>
 <figure><img src="../../../assets/plates/fi/fi_4.jpg" loading="lazy" alt="License plates — Finland"><figcaption>Finland</figcaption></figure>
 <figure><img src="../../../assets/plates/fi/fi_5.jpg" loading="lazy" alt="License plates — Finland"><figcaption>Finland</figcaption></figure>
-<figure><img src="../../../assets/plates/fi/fi_6.png" loading="lazy" alt="License plates — Finland"><figcaption>Finland</figcaption></figure>
+<figure><img src="../../../assets/plates/fi/fi_6.jpg" loading="lazy" alt="License plates — Finland"><figcaption>Finland</figcaption></figure>
 <figure><img src="../../../assets/plates/cz/cz_1.jpg" loading="lazy" alt="License plates — Czech Republic"><figcaption>Czech Republic</figcaption></figure>
 <figure><img src="../../../assets/plates/cz/cz_2.jpg" loading="lazy" alt="License plates — Czech Republic"><figcaption>Czech Republic</figcaption></figure>
 <figure><img src="../../../assets/plates/cz/cz_3.jpg" loading="lazy" alt="License plates — Czech Republic"><figcaption>Czech Republic</figcaption></figure>
@@ -198,9 +200,9 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/plates/ke/ke_5.png" loading="lazy" alt="License plates — Kenya"><figcaption>Kenya</figcaption></figure>
 <figure><img src="../../../assets/plates/ke/ke_6.jpg" loading="lazy" alt="License plates — Kenya"><figcaption>Kenya · <a href="/app/index.html#ll=-1.21476,36.83484" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/plates/ng/ng_1.jpg" loading="lazy" alt="License plates — Nigeria"><figcaption>Nigeria</figcaption></figure>
-<figure><img src="../../../assets/plates/ng/ng_2.jpg" loading="lazy" alt="License plates — Nigeria"><figcaption>Nigeria · <a href="/app/index.html#ll=6.44631667,3.36181667" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/plates/ng/ng_3.jpg" loading="lazy" alt="License plates — Nigeria"><figcaption>Nigeria</figcaption></figure>
-<figure><img src="../../../assets/plates/ng/ng_4.gif" loading="lazy" alt="License plates — Nigeria"><figcaption>Nigeria</figcaption></figure>
+<figure><img src="../../../assets/plates/ng/ng_2.jpg" loading="lazy" alt="License plates — Nigeria"><figcaption>Nigeria</figcaption></figure>
+<figure><img src="../../../assets/plates/ng/ng_3.jpg" loading="lazy" alt="License plates — Nigeria"><figcaption>Nigeria · <a href="/app/index.html#ll=6.44631667,3.36181667" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/plates/ng/ng_4.jpg" loading="lazy" alt="License plates — Nigeria"><figcaption>Nigeria</figcaption></figure>
 <figure><img src="../../../assets/plates/ng/ng_5.gif" loading="lazy" alt="License plates — Nigeria"><figcaption>Nigeria</figcaption></figure>
 <figure><img src="../../../assets/plates/ng/ng_6.gif" loading="lazy" alt="License plates — Nigeria"><figcaption>Nigeria</figcaption></figure>
 </div>
@@ -214,11 +216,10 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/plates/us/us_4.jpg" loading="lazy" alt="License plates — United States"><figcaption>United States</figcaption></figure>
 <figure><img src="../../../assets/plates/us/us_5.jpg" loading="lazy" alt="License plates — United States"><figcaption>United States</figcaption></figure>
 <figure><img src="../../../assets/plates/us/us_6.jpg" loading="lazy" alt="License plates — United States"><figcaption>United States</figcaption></figure>
-<figure><img src="../../../assets/plates/ca/ca_1.jpg" loading="lazy" alt="License plates — Canada"><figcaption>Canada</figcaption></figure>
-<figure><img src="../../../assets/plates/ca/ca_2.png" loading="lazy" alt="License plates — Canada"><figcaption>Canada</figcaption></figure>
+<figure><img src="../../../assets/plates/ca/ca_1.png" loading="lazy" alt="License plates — Canada"><figcaption>Canada</figcaption></figure>
+<figure><img src="../../../assets/plates/ca/ca_2.jpg" loading="lazy" alt="License plates — Canada"><figcaption>Canada</figcaption></figure>
 <figure><img src="../../../assets/plates/ca/ca_3.jpg" loading="lazy" alt="License plates — Canada"><figcaption>Canada</figcaption></figure>
 <figure><img src="../../../assets/plates/ca/ca_4.jpg" loading="lazy" alt="License plates — Canada"><figcaption>Canada</figcaption></figure>
-<figure><img src="../../../assets/plates/ca/ca_5.jpg" loading="lazy" alt="License plates — Canada"><figcaption>Canada</figcaption></figure>
 <figure><img src="../../../assets/plates/mx/mx_1.jpg" loading="lazy" alt="License plates — Mexico"><figcaption>Mexico</figcaption></figure>
 <figure><img src="../../../assets/plates/mx/mx_2.jpg" loading="lazy" alt="License plates — Mexico"><figcaption>Mexico · <a href="/app/index.html#ll=18.735013,-87.696427" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/plates/mx/mx_3.jpg" loading="lazy" alt="License plates — Mexico"><figcaption>Mexico · <a href="/app/index.html#ll=18.724603,-87.701865" target="_blank">map</a></figcaption></figure>
@@ -244,7 +245,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/plates/cl/cl_3.jpg" loading="lazy" alt="License plates — Chile"><figcaption>Chile</figcaption></figure>
 <figure><img src="../../../assets/plates/cl/cl_4.jpg" loading="lazy" alt="License plates — Chile"><figcaption>Chile</figcaption></figure>
 <figure><img src="../../../assets/plates/cl/cl_5.jpg" loading="lazy" alt="License plates — Chile"><figcaption>Chile</figcaption></figure>
-<figure><img src="../../../assets/plates/cl/cl_6.jpg" loading="lazy" alt="License plates — Chile"><figcaption>Chile</figcaption></figure>
+<figure><img src="../../../assets/plates/cl/cl_6.png" loading="lazy" alt="License plates — Chile"><figcaption>Chile</figcaption></figure>
 <figure><img src="../../../assets/plates/co/co_1.jpg" loading="lazy" alt="License plates — Colombia"><figcaption>Colombia</figcaption></figure>
 <figure><img src="../../../assets/plates/co/co_2.jpg" loading="lazy" alt="License plates — Colombia"><figcaption>Colombia</figcaption></figure>
 <figure><img src="../../../assets/plates/co/co_3.jpg" loading="lazy" alt="License plates — Colombia"><figcaption>Colombia</figcaption></figure>

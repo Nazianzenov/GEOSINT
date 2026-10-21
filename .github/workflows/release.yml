@@ -7,9 +7,10 @@ on:
   push:
     tags: ["v*"]
 
+# Least privilege: read-only by default; only the job that needs a write scope
+# gets it (the exe builds pip-install third-party packages and must not hold one).
 permissions:
-  contents: write          # create the release + upload assets
-  packages: write          # push the image to GHCR
+  contents: read
 
 jobs:
   build-exe:
@@ -37,11 +38,12 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r requirements-build.txt
       - name: Build wiki + search index
+        # Data + localized pages are committed: no fetch (it re-hotlinked Wikimedia).
+        # bash (-e) on every runner so a failing step fails the job; pwsh would not.
+        shell: bash
         run: |
-          python tools/fetch_datasets.py || true
-          python tools/build_flora.py || true
           mkdocs build -f wiki/mkdocs.yml
-          python tools/build_search_index.py || true
+          python tools/build_search_index.py
       - name: Build portable executable
         run: pyinstaller --noconfirm --clean geosint.spec
       - name: Rename + checksum
@@ -58,14 +60,17 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write        # push the image to GHCR
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9   # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8   # v6
         with:
           context: .
           push: true
@@ -76,11 +81,13 @@ jobs:
   release:
     needs: [build-exe, docker]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write        # create the release + upload assets
     steps:
       - uses: actions/download-artifact@v4
         with: { path: artifacts }
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65   # v2
         with:
           files: artifacts/**/*
           generate_release_notes: true

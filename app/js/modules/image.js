@@ -268,15 +268,11 @@ window.ImageIntel = (function () {
     // 3. GPS vs stated timezone: the camera's UTC offset should roughly match the
     //    GPS longitude (~15° per hour). A big gap suggests a spoofed time or place.
     const off = ex.OffsetTimeOriginal || ex.OffsetTime;
-    if (off && ex.longitude != null) {
-      const m = /([+-])(\d{2}):?(\d{2})/.exec(off);
-      if (m) {
-        const statedHrs = (m[1] === "-" ? -1 : 1) * (+m[2] + (+m[3]) / 60);
-        const expectedHrs = ex.longitude / 15;
-        const gap = Math.abs(statedHrs - expectedHrs);
-        if (gap > 3) out.push({ sev: "med",
-          msg: `Timezone (${off}) is ~${gap.toFixed(1)}h off the GPS longitude's solar time — possible spoofed time or location.` });
-      }
+    const statedHrs = utcOffsetHours(off);
+    if (statedHrs !== null && ex.longitude != null) {
+      const gap = Math.abs(statedHrs - ex.longitude / 15);
+      if (gap > 3) out.push({ sev: "med",
+        msg: `Timezone (${off}) is ~${gap.toFixed(1)}h off the GPS longitude's solar time — possible spoofed time or location.` });
     }
     return out;
   }
@@ -357,21 +353,17 @@ window.ImageIntel = (function () {
       $("#exif-goto").onclick = () => App.setPoint(L.latLng(ex.latitude, ex.longitude), { fly: true, zoom: 16 });
       $("#exif-copy").onclick = () => App.copyText(`${ex.latitude.toFixed(6)}, ${ex.longitude.toFixed(6)}`);
     }
-    if (ex.DateTimeOriginal) {
-      const d = new Date(ex.DateTimeOriginal);
-      const pad = (x) => String(x).padStart(2, "0");
-      $("#sun-dt").value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      $("#wx-date").value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    if (exifToSunInputs(ex)) {                     // also sets the photo's UTC offset
+      $("#wx-date").value = $("#sun-dt").value.slice(0, 10);
       App.status("EXIF timestamp copied to Sun & Weather modules");
     }
   }
 
-  return { initImage, loadImage, renderUrlButtons };
+  return { initImage, renderUrlButtons };
 })();
 
-/* Cross-file entry points kept on window (app.js bootstrap → initImage; the
-   case engine + dropzone wiring → loadImage; case restore → renderUrlButtons,
-   which repopulates the reverse-search buttons after #img-url is restored). */
+/* Cross-file entry points kept on window (app.js bootstrap → initImage; case
+   restore → renderUrlButtons, which repopulates the reverse-search buttons after
+   #img-url is restored). */
 window.initImage = ImageIntel.initImage;
-window.loadImage = ImageIntel.loadImage;
 window.renderUrlButtons = ImageIntel.renderUrlButtons;

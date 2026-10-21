@@ -54,6 +54,53 @@ versioning (`server.py --version`, surfaced in `/api/status`).
   256 squashed every tile into a quarter-slot). A softer client-rendered radial
   heatmap is tracked separately (#69).
 
+### Audit 2026-10-21 — must/should fixes (#137–#145)
+- **OPSEC egress (#137):** a VPN check now expires after 2 min and the server
+  re-runs it on the next VPN-routed request (one thread checks, the rest wait;
+  a failed check closes the gate). Before, one positive check kept the gate open
+  forever, so a tunnel that dropped later leaked coordinates from the real IP. The
+  re-check contacts the same neutral IP-echo service as the manual check and sends
+  no coordinates. A
+  route naming a missing/incomplete proxy no longer silently becomes `direct`: it
+  fails closed, the save is refused with a 400 naming the route, and the settings
+  form carries routes along when a proxy is renamed.
+- **Case-file XSS (#138):** `sanitizeCase` keeps only known annotation types and
+  coerces every artifact field; the custody table, link picker and annotation
+  popup escape what they render. A shared `.geosint.json` could run script on load.
+- **Redacted dossier (#139):** labels and annotation text that hold coordinates or
+  just repeat the source (e.g. `OSM way/…`) are masked; the redacted timeline leads
+  with the finding text.
+- **Case load (#140):** loading asks before replacing unsaved work; a rejected file
+  (e.g. the custody export) no longer deletes the autosave; the previous case's
+  solver result, image markers and plotted OSM data are cleared.
+- **Data build (#141):** a host that fails every connection attempt fails fast for
+  the rest of the run (an offline first build took hours); numeric `Retry-After`
+  is capped. `build_flora` keeps `flora.json` when lookups fail and only rewrites
+  its pages when the data changed; the Commons galleries keep their page when
+  lookups fail and record which image each thumbnail holds (`sources.json`), so a
+  reordered category can't pair a photo with another photo's map link. The
+  manifests were seeded by keeping every thumbnail whose committed caption still
+  matched; 108 thumbnails whose Commons category had drifted since June were
+  replaced (they had been shown under another photo's caption) and 31 added where
+  categories grew. Also
+  fixed `ext_of`: Commons thumb URLs now carry a `?utm_source=…` query whose dots
+  became the file extension.
+  `fetch_datasets` isolates failing datasets and refuses empty answers.
+  `run.ps1` stops on a failed build. Removed `tools/update_data.py` (it could not
+  refresh flags).
+- **Docker / release (#142):** builds no longer re-run the fetchers (they rewrote
+  the flora pages to hotlink Wikimedia) and no longer mask a failed search index;
+  the CI smoke test checks the index ships. Release jobs get least-privilege
+  tokens and third-party actions are pinned to commit SHAs.
+- **Date line + EXIF offset (#143):** longitudes past ±180° are wrapped where they
+  leave the map (weather, elevation, tools, Overpass/prefetch bboxes) and kept in
+  case files; a dropped photo's `OffsetTimeOriginal` now sets the Sun module's UTC
+  offset.
+- **POST body (#144):** the CSRF header is checked before the body is read.
+- **Simplicity (#145):** the workbench Sun panel and the Sun Studio share one place
+  search, readout and solver UI (`common.js`; they had drifted); removed dead
+  server fallbacks and unused exports.
+
 ### Production-readiness pass (security, data integrity, resilience, hygiene)
 
 A staff-level review cycle to bring the workbench to production quality,

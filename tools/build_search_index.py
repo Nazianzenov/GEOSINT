@@ -155,7 +155,7 @@ CONTINENT_ALIAS = {
 CATEGORY_ALIAS = {
     "bollard": "bollards", "bollards": "bollards", "delineator": "bollards",
     "pole": "utility-poles", "poles": "utility-poles", "utility pole": "utility-poles",
-    "utility poles": "utility-poles", "pylon": "utility-poles", "lamp post": "utility-poles",
+    "utility poles": "utility-poles", "lamp post": "utility-poles",
     "lamppost": "utility-poles", "street light": "utility-poles", "streetlight": "utility-poles",
     "traffic light": "traffic-lights", "traffic lights": "traffic-lights",
     "signal": "traffic-lights", "stoplight": "traffic-lights",
@@ -180,8 +180,7 @@ CATEGORY_ALIAS = {
     "camera": "streetview-meta", "google car": "streetview-meta",
     "street view": "streetview-meta", "coverage": "streetview-meta",
     "vegetation": "vegetation-climate", "climate": "vegetation-climate",
-    "koppen": "vegetation-climate", "köppen": "vegetation-climate", "tree": "vegetation-climate",
-    "trees": "vegetation-climate", "plants": "vegetation-climate",
+    "koppen": "vegetation-climate", "köppen": "vegetation-climate",
     "landmark": "landmarks", "landmarks": "landmarks", "mountain": "landmarks",
     "mountains": "landmarks", "tower": "landmarks", "bridge": "landmarks",
     "facts": "country-facts", "recognition": "recognition",

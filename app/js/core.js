@@ -55,58 +55,14 @@ async function copyText(t) {
 
 /* ════════════════════════ geocoding search ═════════════════════ */
 function initSearch() {
-  const input = $("#search"), box = $("#search-results");
-  let t;
-  input.addEventListener("input", () => {
-    clearTimeout(t);
-    const q = input.value.trim();
-    if (!q) { box.hidden = true; return; }
-    const ll = parseCoords(q);
-    if (ll) {
-      box.innerHTML = `<div class="search-item sel">→ Go to coordinates<small>${fmtDD(ll)} · ${fmtDMS(ll)}</small></div>`;
-      box.hidden = false;
-      box.firstChild.onclick = () => { setPoint(ll, { fly: true }); box.hidden = true; input.blur(); };
-      return;
-    }
-    t = setTimeout(async () => {
-      try {
-        const r = await cachedFetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=7&accept-language=en&polygon_geojson=1&polygon_threshold=0.001&q=${encodeURIComponent(q)}`);
-        const raw = await r.json();
-        // OSM sometimes stores one place as both a way and a relation (e.g. Windhoek):
-        // identical name/type/coord, different object. Collapse, preferring the relation
-        // (the canonical multipolygon boundary, and the better source for the highlight).
-        const RANK = { relation: 3, way: 2, node: 1 };
-        const seen = new Map();
-        for (const d of raw) {
-          const key = `${d.addresstype}|${(+d.lat).toFixed(4)},${(+d.lon).toFixed(4)}|${d.display_name}`;
-          const prev = seen.get(key);
-          if (!prev || (RANK[d.osm_type] || 0) > (RANK[prev.osm_type] || 0)) seen.set(key, d);
-        }
-        const data = [...seen.values()];
-        box.innerHTML = data.length
-          ? data.map((d, i) =>
-              `<div class="search-item" data-i="${i}"><b>${esc(d.name || d.display_name.split(",")[0])}</b> <span class="tag">${esc(d.addresstype || d.type || "")}</span><small>${esc(d.display_name)}</small></div>`).join("")
-          : `<div class="search-item">no results</div>`;
-        box.hidden = false;
-        box.querySelectorAll("[data-i]").forEach((el) => el.onclick = () => {
-          const d = data[+el.dataset.i];
-          const poly = d.geojson && /Polygon$/.test(d.geojson.type);   // Polygon | MultiPolygon
-          // for an area, fitBounds to the polygon instead of flying to the label point
-          setPoint(L.latLng(+d.lat, +d.lon),
-            poly ? {} : { fly: true, zoom: d.addresstype === "country" ? 6 : 13 });
-          if (poly) showBoundary(d.geojson);
-          box.hidden = true; input.blur();
-        });
-      } catch { box.innerHTML = `<div class="search-item">Nominatim unreachable</div>`; box.hidden = false; }
-    }, 450);
-  });
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { const f = box.querySelector(".search-item"); if (f) f.click(); }
-    if (e.key === "Escape") { box.hidden = true; input.blur(); }
-  });
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".search-wrap")) box.hidden = true;
-  });
+  // shared with the Sun Studio (common.js); the workbench adds the area outline
+  initPlaceSearch($("#search"), $("#search-results"), (ll, d) => {
+    const poly = d && d.geojson && /Polygon$/.test(d.geojson.type);   // Polygon | MultiPolygon
+    // for an area, fitBounds to the polygon instead of flying to the label point
+    const zoom = !d ? undefined : d.addresstype === "country" ? 6 : 13;   // typed coords: setPoint's default
+    setPoint(ll, poly ? {} : { fly: true, zoom });
+    if (poly) showBoundary(d.geojson);
+  }, { polygons: true });
 }
 
 /* ════════════════════════ panel / modules ══════════════════════ */

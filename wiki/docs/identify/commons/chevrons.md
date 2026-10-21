@@ -72,12 +72,12 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 ### Asia
 
 <div class="gh-gallery">
-<figure><img src="../../../assets/chevrons/jp/jp_1.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=37.2533,138.8545" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/chevrons/jp/jp_1.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=37.3193,138.7207" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/chevrons/jp/jp_2.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=37.2533,138.8545" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/chevrons/jp/jp_3.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=37.2663,138.8356" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/chevrons/jp/jp_4.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=37.3004,138.7812" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/chevrons/jp/jp_5.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=40.72646667,140.655775" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/chevrons/jp/jp_6.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan</figcaption></figure>
+<figure><img src="../../../assets/chevrons/jp/jp_3.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=37.2533,138.8545" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/chevrons/jp/jp_4.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=37.2663,138.8356" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/chevrons/jp/jp_5.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=37.3004,138.7812" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/chevrons/jp/jp_6.jpg" loading="lazy" alt="Chevron signs & guardrails — Japan"><figcaption>Japan · <a href="/app/index.html#ll=37.2359,138.7117" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/chevrons/cn/cn_1.jpg" loading="lazy" alt="Chevron signs & guardrails — China"><figcaption>China</figcaption></figure>
 <figure><img src="../../../assets/chevrons/tw/tw_1.jpg" loading="lazy" alt="Chevron signs & guardrails — Taiwan"><figcaption>Taiwan · <a href="/app/index.html#ll=23.26191057,121.38736479" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/chevrons/tw/tw_2.jpg" loading="lazy" alt="Chevron signs & guardrails — Taiwan"><figcaption>Taiwan</figcaption></figure>

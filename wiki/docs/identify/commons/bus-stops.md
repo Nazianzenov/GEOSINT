@@ -24,27 +24,27 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/busstops/de/de_2.jpg" loading="lazy" alt="Bus stops & shelters — Germany"><figcaption>Germany · <a href="/app/index.html#ll=47.59607222,11.06688333" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/de/de_3.jpg" loading="lazy" alt="Bus stops & shelters — Germany"><figcaption>Germany · <a href="/app/index.html#ll=49.50004958,9.48578167" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/de/de_4.jpg" loading="lazy" alt="Bus stops & shelters — Germany"><figcaption>Germany</figcaption></figure>
-<figure><img src="../../../assets/busstops/de/de_5.jpg" loading="lazy" alt="Bus stops & shelters — Germany"><figcaption>Germany</figcaption></figure>
+<figure><img src="../../../assets/busstops/de/de_5.jpg" loading="lazy" alt="Bus stops & shelters — Germany"><figcaption>Germany · <a href="/app/index.html#ll=48.13506015,11.51689291" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/de/de_6.jpg" loading="lazy" alt="Bus stops & shelters — Germany"><figcaption>Germany</figcaption></figure>
 <figure><img src="../../../assets/busstops/gb/gb_1.jpg" loading="lazy" alt="Bus stops & shelters — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
+<figure><img src="../../../assets/busstops/gb/gb_2.jpg" loading="lazy" alt="Bus stops & shelters — United Kingdom"><figcaption>United Kingdom</figcaption></figure>
 <figure><img src="../../../assets/busstops/it/it_1.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy</figcaption></figure>
-<figure><img src="../../../assets/busstops/it/it_2.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy · <a href="/app/index.html#ll=45.740013,7.352747" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/it/it_3.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy · <a href="/app/index.html#ll=45.386057,11.470138" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/it/it_4.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy</figcaption></figure>
-<figure><img src="../../../assets/busstops/it/it_5.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy · <a href="/app/index.html#ll=38.41333056,16.37152778" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/it/it_2.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy</figcaption></figure>
+<figure><img src="../../../assets/busstops/it/it_3.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy</figcaption></figure>
+<figure><img src="../../../assets/busstops/it/it_4.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy · <a href="/app/index.html#ll=45.740013,7.352747" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/it/it_5.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy · <a href="/app/index.html#ll=45.386057,11.470138" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/it/it_6.jpg" loading="lazy" alt="Bus stops & shelters — Italy"><figcaption>Italy</figcaption></figure>
 <figure><img src="../../../assets/busstops/es/es_1.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=40.415489,-3.709087" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/es/es_2.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=39.47053,3.27444" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/es/es_3.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=39.57204722,2.63610833" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/es/es_4.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=43.32598494,-8.40663336" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/es/es_5.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=43.31223889,-3.00715556" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/es/es_6.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=43.31221389,-3.00668611" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/es/es_2.png" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain</figcaption></figure>
+<figure><img src="../../../assets/busstops/es/es_3.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=39.47053,3.27444" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/es/es_4.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=39.57204722,2.63610833" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/es/es_5.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=43.32598494,-8.40663336" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/es/es_6.jpg" loading="lazy" alt="Bus stops & shelters — Spain"><figcaption>Spain · <a href="/app/index.html#ll=39.849394,3.129258" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/nl/nl_1.jpg" loading="lazy" alt="Bus stops & shelters — Netherlands"><figcaption>Netherlands</figcaption></figure>
 <figure><img src="../../../assets/busstops/nl/nl_2.jpg" loading="lazy" alt="Bus stops & shelters — Netherlands"><figcaption>Netherlands</figcaption></figure>
 <figure><img src="../../../assets/busstops/nl/nl_3.jpg" loading="lazy" alt="Bus stops & shelters — Netherlands"><figcaption>Netherlands</figcaption></figure>
-<figure><img src="../../../assets/busstops/nl/nl_4.jpg" loading="lazy" alt="Bus stops & shelters — Netherlands"><figcaption>Netherlands</figcaption></figure>
-<figure><img src="../../../assets/busstops/nl/nl_5.jpg" loading="lazy" alt="Bus stops & shelters — Netherlands"><figcaption>Netherlands</figcaption></figure>
-<figure><img src="../../../assets/busstops/nl/nl_6.jpg" loading="lazy" alt="Bus stops & shelters — Netherlands"><figcaption>Netherlands</figcaption></figure>
+<figure><img src="../../../assets/busstops/nl/nl_4.jpg" loading="lazy" alt="Bus stops & shelters — Netherlands"><figcaption>Netherlands · <a href="/app/index.html#ll=53.40666667,6.20166667" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/nl/nl_5.jpg" loading="lazy" alt="Bus stops & shelters — Netherlands"><figcaption>Netherlands · <a href="/app/index.html#ll=53.40666667,6.20194444" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/ch/ch_1.jpg" loading="lazy" alt="Bus stops & shelters — Switzerland"><figcaption>Switzerland · <a href="/app/index.html#ll=47.38721,8.06653" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/ch/ch_2.jpg" loading="lazy" alt="Bus stops & shelters — Switzerland"><figcaption>Switzerland</figcaption></figure>
 <figure><img src="../../../assets/busstops/ch/ch_3.jpg" loading="lazy" alt="Bus stops & shelters — Switzerland"><figcaption>Switzerland · <a href="/app/index.html#ll=46.59130556,7.91119444" target="_blank">map</a></figcaption></figure>
@@ -59,36 +59,36 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/busstops/be/be_4.jpg" loading="lazy" alt="Bus stops & shelters — Belgium"><figcaption>Belgium · <a href="/app/index.html#ll=50.477239,4.180443" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/be/be_5.jpg" loading="lazy" alt="Bus stops & shelters — Belgium"><figcaption>Belgium · <a href="/app/index.html#ll=49.83742222,4.96928611" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/be/be_6.jpg" loading="lazy" alt="Bus stops & shelters — Belgium"><figcaption>Belgium · <a href="/app/index.html#ll=49.837225,4.96942778" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/pl/pl_1.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.39016667,18.04516667" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/pl/pl_2.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.92876434,19.91353086" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/pl/pl_3.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.443842,16.584163" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/pl/pl_4.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.16447333,17.94776167" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/pl/pl_5.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.818447,18.45936" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/pl/pl_6.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=52.806004,18.245069" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/pl/pl_1.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=50.92876434,19.91353086" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/pl/pl_2.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=52.806004,18.245069" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/pl/pl_3.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=52.806004,18.245069" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/pl/pl_4.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland</figcaption></figure>
+<figure><img src="../../../assets/busstops/pl/pl_5.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=52.277519,17.047157" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/pl/pl_6.jpg" loading="lazy" alt="Bus stops & shelters — Poland"><figcaption>Poland · <a href="/app/index.html#ll=54.185809,21.155385" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/se/se_1.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden</figcaption></figure>
 <figure><img src="../../../assets/busstops/se/se_2.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden</figcaption></figure>
-<figure><img src="../../../assets/busstops/se/se_3.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden</figcaption></figure>
-<figure><img src="../../../assets/busstops/se/se_4.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden · <a href="/app/index.html#ll=59.644172,17.929833" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/se/se_5.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden · <a href="/app/index.html#ll=59.458608,18.141544" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/se/se_6.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden · <a href="/app/index.html#ll=59.458608,18.141544" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/se/se_3.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden · <a href="/app/index.html#ll=60.130528,16.211264" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/se/se_4.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden · <a href="/app/index.html#ll=56.255397,14.075472" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/se/se_5.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden</figcaption></figure>
+<figure><img src="../../../assets/busstops/se/se_6.jpg" loading="lazy" alt="Bus stops & shelters — Sweden"><figcaption>Sweden</figcaption></figure>
 <figure><img src="../../../assets/busstops/no/no_1.jpg" loading="lazy" alt="Bus stops & shelters — Norway"><figcaption>Norway · <a href="/app/index.html#ll=61.564065,5.059052" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/no/no_2.jpg" loading="lazy" alt="Bus stops & shelters — Norway"><figcaption>Norway</figcaption></figure>
 <figure><img src="../../../assets/busstops/no/no_3.jpg" loading="lazy" alt="Bus stops & shelters — Norway"><figcaption>Norway</figcaption></figure>
 <figure><img src="../../../assets/busstops/no/no_4.jpg" loading="lazy" alt="Bus stops & shelters — Norway"><figcaption>Norway · <a href="/app/index.html#ll=66.311989,14.134169" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/no/no_5.jpg" loading="lazy" alt="Bus stops & shelters — Norway"><figcaption>Norway · <a href="/app/index.html#ll=69.838,21.956998" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/no/no_6.jpg" loading="lazy" alt="Bus stops & shelters — Norway"><figcaption>Norway · <a href="/app/index.html#ll=67.29416667,14.4235" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/fi/fi_1.jpg" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland · <a href="/app/index.html#ll=60.31835557,24.9680829" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/fi/fi_2.jpg" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland · <a href="/app/index.html#ll=60.31828385,24.96741772" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/fi/fi_3.jpg" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland · <a href="/app/index.html#ll=60.31796508,24.96704221" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/fi/fi_4.jpg" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland · <a href="/app/index.html#ll=60.318159,24.96750891" target="_blank">map</a></figcaption></figure>
-<figure><img src="../../../assets/busstops/fi/fi_5.jpg" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland · <a href="/app/index.html#ll=60.31808462,24.96727288" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/fi/fi_1.jpg" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland</figcaption></figure>
+<figure><img src="../../../assets/busstops/fi/fi_2.png" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland</figcaption></figure>
+<figure><img src="../../../assets/busstops/fi/fi_3.jpg" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland</figcaption></figure>
+<figure><img src="../../../assets/busstops/fi/fi_4.jpg" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland</figcaption></figure>
+<figure><img src="../../../assets/busstops/fi/fi_5.png" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland</figcaption></figure>
 <figure><img src="../../../assets/busstops/fi/fi_6.jpg" loading="lazy" alt="Bus stops & shelters — Finland"><figcaption>Finland</figcaption></figure>
 <figure><img src="../../../assets/busstops/cz/cz_1.png" loading="lazy" alt="Bus stops & shelters — Czech Republic"><figcaption>Czech Republic</figcaption></figure>
 <figure><img src="../../../assets/busstops/cz/cz_2.jpg" loading="lazy" alt="Bus stops & shelters — Czech Republic"><figcaption>Czech Republic · <a href="/app/index.html#ll=49.0487469,16.3123367" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/cz/cz_3.jpg" loading="lazy" alt="Bus stops & shelters — Czech Republic"><figcaption>Czech Republic · <a href="/app/index.html#ll=49.048609,16.3129177" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/cz/cz_4.jpg" loading="lazy" alt="Bus stops & shelters — Czech Republic"><figcaption>Czech Republic</figcaption></figure>
-<figure><img src="../../../assets/busstops/cz/cz_5.jpg" loading="lazy" alt="Bus stops & shelters — Czech Republic"><figcaption>Czech Republic</figcaption></figure>
-<figure><img src="../../../assets/busstops/cz/cz_6.png" loading="lazy" alt="Bus stops & shelters — Czech Republic"><figcaption>Czech Republic</figcaption></figure>
+<figure><img src="../../../assets/busstops/cz/cz_5.jpg" loading="lazy" alt="Bus stops & shelters — Czech Republic"><figcaption>Czech Republic · <a href="/app/index.html#ll=49.148801,15.002647" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/cz/cz_6.jpg" loading="lazy" alt="Bus stops & shelters — Czech Republic"><figcaption>Czech Republic</figcaption></figure>
 <figure><img src="../../../assets/busstops/pt/pt_1.jpg" loading="lazy" alt="Bus stops & shelters — Portugal"><figcaption>Portugal · <a href="/app/index.html#ll=32.64694444,-16.90666667" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/pt/pt_2.jpg" loading="lazy" alt="Bus stops & shelters — Portugal"><figcaption>Portugal</figcaption></figure>
 <figure><img src="../../../assets/busstops/pt/pt_3.jpg" loading="lazy" alt="Bus stops & shelters — Portugal"><figcaption>Portugal</figcaption></figure>
@@ -106,7 +106,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/busstops/ua/ua_3.jpg" loading="lazy" alt="Bus stops & shelters — Ukraine"><figcaption>Ukraine</figcaption></figure>
 <figure><img src="../../../assets/busstops/ua/ua_4.jpg" loading="lazy" alt="Bus stops & shelters — Ukraine"><figcaption>Ukraine</figcaption></figure>
 <figure><img src="../../../assets/busstops/ua/ua_5.jpg" loading="lazy" alt="Bus stops & shelters — Ukraine"><figcaption>Ukraine</figcaption></figure>
-<figure><img src="../../../assets/busstops/ua/ua_6.jpg" loading="lazy" alt="Bus stops & shelters — Ukraine"><figcaption>Ukraine · <a href="/app/index.html#ll=50.8635931,31.05602046" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/ua/ua_6.jpg" loading="lazy" alt="Bus stops & shelters — Ukraine"><figcaption>Ukraine</figcaption></figure>
 </div>
 
 ### Asia
@@ -129,7 +129,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <figure><img src="../../../assets/busstops/kr/kr_3.jpg" loading="lazy" alt="Bus stops & shelters — South Korea"><figcaption>South Korea</figcaption></figure>
 <figure><img src="../../../assets/busstops/kr/kr_4.jpg" loading="lazy" alt="Bus stops & shelters — South Korea"><figcaption>South Korea</figcaption></figure>
 <figure><img src="../../../assets/busstops/kr/kr_5.jpg" loading="lazy" alt="Bus stops & shelters — South Korea"><figcaption>South Korea</figcaption></figure>
-<figure><img src="../../../assets/busstops/kr/kr_6.jpg" loading="lazy" alt="Bus stops & shelters — South Korea"><figcaption>South Korea · <a href="/app/index.html#ll=37.524101,126.963012" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/kr/kr_6.jpg" loading="lazy" alt="Bus stops & shelters — South Korea"><figcaption>South Korea</figcaption></figure>
 <figure><img src="../../../assets/busstops/in/in_1.jpg" loading="lazy" alt="Bus stops & shelters — India"><figcaption>India</figcaption></figure>
 <figure><img src="../../../assets/busstops/in/in_2.jpg" loading="lazy" alt="Bus stops & shelters — India"><figcaption>India</figcaption></figure>
 <figure><img src="../../../assets/busstops/in/in_3.jpg" loading="lazy" alt="Bus stops & shelters — India"><figcaption>India</figcaption></figure>
@@ -198,6 +198,7 @@ Reference thumbnails from [Wikimedia Commons](https://commons.wikimedia.org/) (`
 <div class="gh-gallery">
 <figure><img src="../../../assets/busstops/us/us_1.png" loading="lazy" alt="Bus stops & shelters — United States"><figcaption>United States</figcaption></figure>
 <figure><img src="../../../assets/busstops/us/us_2.jpg" loading="lazy" alt="Bus stops & shelters — United States"><figcaption>United States · <a href="/app/index.html#ll=34.364717,-89.536453" target="_blank">map</a></figcaption></figure>
+<figure><img src="../../../assets/busstops/us/us_3.jpg" loading="lazy" alt="Bus stops & shelters — United States"><figcaption>United States</figcaption></figure>
 <figure><img src="../../../assets/busstops/ca/ca_1.jpg" loading="lazy" alt="Bus stops & shelters — Canada"><figcaption>Canada · <a href="/app/index.html#ll=79.989,-85.93916667" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/ca/ca_2.jpg" loading="lazy" alt="Bus stops & shelters — Canada"><figcaption>Canada · <a href="/app/index.html#ll=44.648582,-63.617963" target="_blank">map</a></figcaption></figure>
 <figure><img src="../../../assets/busstops/ca/ca_3.jpg" loading="lazy" alt="Bus stops & shelters — Canada"><figcaption>Canada</figcaption></figure>

@@ -6,7 +6,7 @@
 
    Why getters / wrapper methods rather than captured references: this file is
    loaded right after core.js but BEFORE map.js (setPoint) and case.js
-   (logObservation), so those names aren't defined yet at eval time. Forwarding
+   (markDirty), so those names aren't defined yet at eval time. Forwarding
    lazily (resolved at call time) sidesteps the load-order trap, and keeps the
    bare globals intact for the browser test-suite that calls them directly. */
 "use strict";
@@ -18,7 +18,6 @@ window.App = {
 
   // ── actions (resolved lazily — defined in map.js / case.js / core.js) ──
   setPoint(ll, opts) { return setPoint(ll, opts); },
-  logObservation(o) { return logObservation(o); },
   status(msg, isErr, ms) { return status(msg, isErr, ms); },
   markDirty() { return markDirty(); },
   copyText(t) { return copyText(t); },

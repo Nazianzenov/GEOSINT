@@ -74,8 +74,5 @@ window.Cables = (function () {
     } catch (err) { App.status(err.message || "local server unreachable", true); }
   }
 
-  return { load, toggle, toQgis };
+  return { toggle, toQgis };
 })();
-
-window.toggleCables = Cables.toggle;
-window.cablesToQgis = Cables.toQgis;
